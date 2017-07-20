@@ -1,0 +1,32 @@
+
+.hrepr-int {
+	font-weight: bold;
+	color: #88f;
+}
+
+.hrepr-str {
+	color: #666;
+	white-space: pre;
+}
+
+.hrepr-str:before {
+	content: "“";
+	color: #888;
+}
+
+.hrepr-str:after {
+	content: "”";
+	color: #888;
+}
+
+.hrepr-list, .hrepr-tuple, .hrepr-set, .hrepr-frozenset, .hrepr-dict {
+	display: inline-block;
+}
+
+.hrepr-list > *,
+.hrepr-tuple > *,
+.hrepr-set > *,
+.hrepr-frozenset > *,
+.hrepr-dict > * {
+	vertical-align: middle;
+}

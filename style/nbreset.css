@@ -1,0 +1,7 @@
+/*
+ * Override Jupyter's default css inside elements with the hrepr class.
+ */
+
+.hrepr td {
+	text-align: left;
+}

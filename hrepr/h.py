@@ -4,7 +4,7 @@ from html import escape
 
 
 # CSS for hrepr
-styledir = f'{os.path.dirname(__file__)}/../style'
+styledir = f'{os.path.dirname(__file__)}/style'
 css_nbreset = open(f'{styledir}/nbreset.css').read()
 css_hrepr = open(f'{styledir}/hrepr.css').read()
 

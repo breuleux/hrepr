@@ -1,6 +1,9 @@
 
-.hrepr-int {
+.hrepr-True, .hrepr-False, .hrepr-NoneType, .hrepr-int {
 	font-weight: bold;
+}
+
+.hrepr-int {
 	color: #88f;
 }
 
@@ -17,6 +20,18 @@
 .hrepr-str:after {
 	content: "”";
 	color: #888;
+}
+
+.hrepr-True {
+	color: green;
+}
+
+.hrepr-False {
+	color: red;
+}
+
+.hrepr-NoneType {
+	color: grey;
 }
 
 .hrepr-list, .hrepr-tuple, .hrepr-set, .hrepr-frozenset, .hrepr-dict {

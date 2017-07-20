@@ -183,6 +183,12 @@ class StdHRepr(HRepr):
                 for k, v in obj.items()]
         return self.H.table['hrepr-dict'](*rows)
 
+    def repr_bool(self, obj):
+        if obj is True:
+            return self.H.span['hrepr-True', 'hrepr-bool']("True")
+        else:
+            return self.H.span['hrepr-False', 'hrepr-bool']("False")
+
     def repr_Tag(self, obj):
         """
         Returns the default representation for a tag, which is the tag itself.

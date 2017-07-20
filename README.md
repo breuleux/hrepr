@@ -78,10 +78,15 @@ class MyRepr(StdHRepr):
         return H.style(".my-integer { color: fuchsia; }")
 
     def repr_int(self, n):
-        return self.H.span['my-integer'](str(n + 1))
+        return self.H.span['my-integer']('The number ', str(n))
 
-myrepr = MyRepr()
-print(myrepr(10)) # <span class="my-integer">11</span>
-print(myrepr.hrepr_with_resources(10).as_page()) # This will include the style
+def myrepr(obj):
+    # Call hrepr_with_resources to attach the resources to the
+    # return value, otherwise .as_page() will not work as
+    # intended.
+    return MyRepr().hrepr_with_resources(obj)
+
+print(myrepr(10)) # <span class="my-integer">The number 10</span>
+print(myrepr(10).as_page()) # This will include the style
 ```
 

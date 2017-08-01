@@ -1,9 +1,9 @@
 
-.hrepr-True, .hrepr-False, .hrepr-NoneType, .hrepr-int {
+.hrepr-True, .hrepr-False, .hrepr-NoneType, .hrepr-int, .hrepr-float {
 	font-weight: bold;
 }
 
-.hrepr-int {
+.hrepr-int, .hrepr-float {
 	color: #88f;
 }
 
@@ -36,6 +36,11 @@
 
 .hrepr-list, .hrepr-tuple, .hrepr-set, .hrepr-frozenset, .hrepr-dict {
 	display: inline-block;
+}
+
+.hrepr-dict {
+	border: 1px solid grey;
+	border-radius: 5px;
 }
 
 .hrepr-list > *,

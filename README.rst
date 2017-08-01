@@ -88,15 +88,14 @@ You can also customize the ``hrepr`` function by subclassing the
 that the latter defines default representations for several Python types
 like ``list`` or ``dict`` whereas the former does not).
 
-Your subclass can override the following functions:
+Your subclass can override the following functions and fields:
 
--  **``global_resources``** should return one or a list of tags to
+-  **``global_resources(H)``** should return one or a list of tags to
    insert in ``<head>``.
--  **``repr_<type>``** should return the representation for objects with
-   classes named ``<type>``. There are no ``H`` and ``hrepr``
-   parameters, but you can access them as ``self.H`` and ``self``
-   respectively.
--  **``__call__``** is the main representation function, and will be
+-  **``__default_handlers__()``** should return a dict that associates types to
+   handlers with the signature ``handler(obj, H, hrepr)``. When given
+   an object of a certain type, hrepr will look for it there first.
+-  **``__call__(obj)``** is the main representation function, and will be
    called recursively for every object to represent.
 
 .. code:: python
@@ -104,11 +103,14 @@ Your subclass can override the following functions:
     from hrepr import StdHRepr
 
     class MyRepr(StdHRepr):
+        def __default_handlers__(self):
+            return {int: self.repr_int}
+
         def global_resources(self, H):
             return H.style(".my-integer { color: fuchsia; }")
 
-        def repr_int(self, n):
-            return self.H.span['my-integer']('The number ', str(n))
+        def repr_int(self, n, H, hrepr):
+            return H.span['my-integer']('The number ', str(n))
 
     def myrepr(obj):
         # Call hrepr_with_resources to attach the resources to the

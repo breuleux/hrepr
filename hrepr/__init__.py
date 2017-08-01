@@ -2,6 +2,14 @@
 from .h import Tag, HTML, css_hrepr
 
 
+class Config:
+    def __init__(self, cfg):
+        self(**cfg)
+
+    def __call__(self, **cfg):
+        self.__dict__.update(cfg)
+
+
 class HRepr:
     """
     Representation engine. This is the barebones engine. You should
@@ -13,7 +21,11 @@ class HRepr:
         self.consulted = set() if accumulate_resources else None
         self.resources = set()
         self.acquire_resources(self.global_resources)
-        self.config = config
+        self.type_handlers = {**self.__default_handlers__()}
+        self.config = Config(config)
+
+    def __default_handlers__(self):
+        return {}
 
     def __call__(self, obj):
         """
@@ -25,9 +37,24 @@ class HRepr:
         Returns:
             The representation of the object.
         """
-        selfmethod = f'repr_{obj.__class__.__name__}'
-        if hasattr(self, selfmethod):
-            res = getattr(self, selfmethod)(obj)
+        root_cls = type(obj)
+        handler = self.type_handlers.get(root_cls, None)
+        if handler is None:
+            mro = root_cls.mro()
+            to_set = []
+            for cls in mro:
+                handler = self.type_handlers.get(cls, None)
+                if handler:
+                    for cls2 in to_set:
+                        self.type_handlers[cls2] = handler
+                    break
+                to_set.append(cls)
+            else:
+                for cls2 in to_set:
+                    self.type_handlers[cls2] = False
+
+        if handler:
+            res = handler(obj, self.H, self)
             if res is not NotImplemented:
                 return res
 
@@ -81,6 +108,27 @@ class HRepr:
             elif isinstance(res, Tag):
                 res = {res}
             self.resources |= res
+
+    def register(type, handler):
+        """
+        Register a pretty-printer for a type. This takes precedence
+        on the type's ``__hrepr__`` method.
+
+        Args:
+            type (type): A data type.
+            handler (function): A function with the same signature as
+                ``__hrepr__`` methods: ``handler(obj, H, hrepr)``.
+        """
+        self.type_handlers[type] = handler
+
+    def register_all(handlers):
+        """
+        Register pretty-printers for many types. This is equivalent to:
+
+            for type, handler in handlers.items():
+                self.register(type, handler)
+        """
+        self.type_handlers.update(handlers)
 
     def stdrepr(self, obj, *, cls=None, tag='span'):
         """
@@ -147,11 +195,52 @@ class HRepr:
             return getattr(self.H, tag)[cls](children)
 
 
+def handler_list(obj, H, hrepr):
+    return hrepr.stdrepr_iterable(obj, before='[', separator=', ', after=']')
+
+def handler_tuple(obj, H, hrepr):
+    return hrepr.stdrepr_iterable(obj, before='(', separator=', ', after=')')
+
+def handler_set(obj, H, hrepr):
+    return hrepr.stdrepr_iterable(obj, before='{', separator=', ', after='}')
+
+def handler_frozenset(obj, H, hrepr):
+    return hrepr.stdrepr_iterable(obj, before='{', separator=', ', after='}')
+
+def handler_dict(obj, H, hrepr):
+    rows = [H.tr(H.td(hrepr(k), H.td(hrepr(v))))
+            for k, v in obj.items()]
+    return H.table['hrepr-dict'](*rows)
+
+def handler_bool(obj, H, hrepr):
+    if obj is True:
+        return H.span['hrepr-True', 'hrepr-bool']("True")
+    else:
+        return H.span['hrepr-False', 'hrepr-bool']("False")
+
+def handler_Tag(obj, H, hrepr):
+    """
+    Returns the default representation for a tag, which is the tag itself.
+    """
+    return obj
+
+
 class StdHRepr(HRepr):
     """
     Standard representation engine. Includes representations for
     `list, tuple, set, frozenset, dict, Tag`.
     """
+
+    def __default_handlers__(self):
+        return {
+            list: handler_list,
+            tuple: handler_tuple,
+            set: handler_set,
+            frozenset: handler_frozenset,
+            dict: handler_dict,
+            bool: handler_bool,
+            Tag: handler_Tag
+        }
 
     def global_resources(self, H):
         """
@@ -165,35 +254,6 @@ class StdHRepr(HRepr):
         ``return my_resources | super().global_resources(H)``
         """
         return {H.style(css_hrepr)}
-
-    def repr_list(self, obj):
-        return self.stdrepr_iterable(obj, before='[', separator=', ', after=']')
-
-    def repr_tuple(self, obj):
-        return self.stdrepr_iterable(obj, before='(', separator=', ', after=')')
-
-    def repr_set(self, obj):
-        return self.stdrepr_iterable(obj, before='{', separator=', ', after='}')
-
-    def repr_frozenset(self, obj):
-        return self.stdrepr_iterable(obj, before='{', separator=', ', after='}')
-
-    def repr_dict(self, obj):
-        rows = [self.H.tr(self.H.td(self(k), self.H.td(self(v))))
-                for k, v in obj.items()]
-        return self.H.table['hrepr-dict'](*rows)
-
-    def repr_bool(self, obj):
-        if obj is True:
-            return self.H.span['hrepr-True', 'hrepr-bool']("True")
-        else:
-            return self.H.span['hrepr-False', 'hrepr-bool']("False")
-
-    def repr_Tag(self, obj):
-        """
-        Returns the default representation for a tag, which is the tag itself.
-        """
-        return obj
 
 
 def hrepr(obj, **config):

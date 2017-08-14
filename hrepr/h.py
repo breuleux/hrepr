@@ -1,4 +1,5 @@
 
+import re
 import os.path
 from html import escape
 
@@ -189,5 +190,8 @@ class HTML:
     <span class="cool beans">How stylish!</span>
     """
     def __getattr__(self, tag_name):
+        tag_name = re.sub('(?<=[a-z])([A-Z])',
+                          lambda m: f'-{m.group(0).lower()}',
+                          tag_name)
         return Tag(tag_name)
 

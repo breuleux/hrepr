@@ -109,7 +109,7 @@ class HRepr:
                 res = {res}
             self.resources |= res
 
-    def register(type, handler):
+    def register(self, type, handler):
         """
         Register a pretty-printer for a type. This takes precedence
         on the type's ``__hrepr__`` method.
@@ -121,7 +121,7 @@ class HRepr:
         """
         self.type_handlers[type] = handler
 
-    def register_all(handlers):
+    def register_all(self, handlers):
         """
         Register pretty-printers for many types. This is equivalent to:
 

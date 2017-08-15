@@ -40,7 +40,10 @@ class HRepr:
         root_cls = type(obj)
         handler = self.type_handlers.get(root_cls, None)
         if handler is None:
-            mro = root_cls.mro()
+            if root_cls is type:
+                mro = [type]
+            else:
+                mro = root_cls.mro()
             to_set = []
             for cls in mro:
                 handler = self.type_handlers.get(cls, None)

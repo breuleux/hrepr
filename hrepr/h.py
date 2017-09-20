@@ -176,7 +176,6 @@ class Tag:
                                H.body(self)))
 
 
-
 class HTML:
     """
     Tag factory:
@@ -194,4 +193,3 @@ class HTML:
                           lambda m: f'-{m.group(0).lower()}',
                           tag_name)
         return Tag(tag_name)
-

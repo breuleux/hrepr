@@ -271,4 +271,3 @@ def hrepr(obj, **config):
     objects are free to use them.
     """
     return StdHRepr(**config).hrepr_with_resources(obj)
-

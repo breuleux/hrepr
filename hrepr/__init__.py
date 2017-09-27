@@ -4,10 +4,12 @@ from .h import Tag, HTML, css_hrepr
 
 class Config:
     def __init__(self, cfg):
-        self(**cfg)
+        self.__dict__.update(cfg)
 
     def __call__(self, **cfg):
-        self.__dict__.update(cfg)
+        d = {**self.__dict__}
+        d.update(cfg)
+        return Config(d)
 
 
 class HRepr:
@@ -18,6 +20,7 @@ class HRepr:
 
     def __init__(self, accumulate_resources=True, **config):
         self.H = HTML()
+        self.accumulate_resources = accumulate_resources
         self.consulted = set() if accumulate_resources else None
         self.resources = set()
         self.acquire_resources(self.global_resources)
@@ -27,7 +30,7 @@ class HRepr:
     def __default_handlers__(self):
         return {}
 
-    def __call__(self, obj):
+    def __call__(self, obj, **cfg):
         """
         Return the HTML representation of an object.
 
@@ -37,6 +40,8 @@ class HRepr:
         Returns:
             The representation of the object.
         """
+        if cfg:
+            return self.copy(cfg)(obj)
         root_cls = type(obj)
         handler = self.type_handlers.get(root_cls, None)
         if handler is None:
@@ -69,13 +74,20 @@ class HRepr:
         else:
             return self.stdrepr(obj)
 
-    def hrepr_with_resources(self, obj):
+    def copy(self, cfg={}):
+        h = HRepr(self.accumulate_resources, self.config(cfg))
+        h.consulted = self.consulted
+        h.resources = self.resources
+        h.type_handlers = self.type_handlers
+        return h
+
+    def hrepr_with_resources(self, obj, **cfg):
         """
         This is equivalent to __call__, but performs the additional step of
         putting the set of resources required to properly display the object
         in the _resources property of the return value.
         """
-        res = self(obj)
+        res = self(obj, **cfg)
         res.resources = self.resources
         return res
 

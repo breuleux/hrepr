@@ -168,64 +168,133 @@ class HRepr:
         return getattr(self.H, tag)[cls](str(obj))
 
     def stdrepr_iterable(self, obj, *,
-                         cls=None, tag='div',
-                         before=None, after=None, separator=None):
+                         cls=None, before=None, after=None):
         """
         Helper function to represent iterables. StdHRepr calls this on
         lists, tuples, sets and frozensets, but NOT on iterables in general.
         This method may be called to produce custom representations.
 
-        When called on a list ``[a, b, ...]`` this is roughly:
-
-        ``<div class="hrepr-list">{self(a)}{self(b)}</div>``
-
-        Where ``{self(a)}`` etc. is the representation of the elements in
-        the iterable.
-
-        Args:
+        Arguments:
             obj (iterable): The iterable to represent.
             cls (optional): The class name for the representation. If None,
                 stdrepr will use ``'hrepr-' + obj.__class__.___name__``
-            tag (optional): The tag for the representation, defaults to
-                'div'. Set to None to directly inline the element's hreprs.
             before (optional): A string or a Tag to prepend to the elements.
             after (optional): A string or a Tag to append to the elements.
-            separator (optional): A string or a Tag that will be inserted
-                between each element to separate them.
         """
         if cls is None:
             cls = f'hrepr-{obj.__class__.__name__}'
-
         children = [self(a) for a in obj]
-        if separator is not None:
-            children = children[:1] + [[separator, c] for c in children[1:]]
-        if before is not None:
-            children = [before, *children]
-        if after is not None:
-            children.append(after)
+        return self.titled_box((before, after), children, 'h', 'h')[cls]
 
-        if tag is None:
-            return Tag(None, {}, children)
+    def stdrepr_object(self, title, elements, *, cls=None,
+                       short=False, quote_string_keys=False):
+        """
+        Helper function to represent objects.
+
+        Arguments:
+            title: A title string displayed above the box containing
+                the elements, or a pair of two strings that will be
+                displayed left and right (e.g. a pair of brackets).
+            elements: A list of (key, value) pairs, which will be
+                displayed in a table in the order given.
+            cls: A class to give to the result.
+            short: Whether to use short or long form. Short form
+                displays the elements as ``k=v``, appended horizontally.
+                The alternative is a table, with associations stacked
+                vertically.
+            quote_string_keys: If True, string keys will be displayed
+                with quotes around them. Default is False.
+        """
+        H = self.H
+
+        def wrap(x):
+            if not quote_string_keys and isinstance(x, str):
+                return x
+            else:
+                return self(x)
+
+        if short:
+            contents = []
+            for k, v in elements:
+                kv = H.div['hrepr-object-kvpair'](wrap(k), '=', self(v))
+                contents.append(kv)
         else:
-            return getattr(self.H, tag)[cls](children)
+            t = H.table()['hrepr-object-table']
+            for k, v in elements:
+                t = t(H.tr(H.td(wrap(k)), H.td(self(v))))
+            contents = [t]
+
+        title_brackets = isinstance(title, tuple) and len(title) == 2
+        horizontal = short or title_brackets
+
+        rval = self.titled_box(title, contents,
+                               'h' if title_brackets else 'v',
+                               'h' if short else 'v')
+
+        if cls:
+            rval = rval[cls]
+
+        return rval
+
+    def titled_box(self, titles, contents, tdir='h', cdir='h'):
+        """
+        Helper function to build a box containing a list of elements,
+        with a title above and/or below, or left and/or right of the
+        box. (e.g. a class name on top, or brackets on both sides.)
+
+        The elements given must already have been transformed into
+        Tag instances.
+
+        Arguments:
+            titles: A pair of strings to display on top and bottom
+                (if tdir=='v') or left and right (if tdir=='h').
+                If either or both titles are None, they will be
+                omitted.
+            contents: A list of Tags.
+            tdir: tdir=='h' (default) means the titles will be on
+                the left and right. tdir=='v' means they will be
+                on top and bottom.
+            cdir: cdir=='h' (default) means the contents will be
+                stacked horizontally. cdir=='v' means they will
+                be stacked vertically.
+        """
+        H = self.H
+
+        def wrapt(x):
+            return H.div['hrepr-title'](x)
+
+        rval = H.div[f'hrepr-titled-{tdir}']
+        contents = H.div[f'hrepr-contents-{cdir}'].fill(contents)
+
+        if isinstance(titles, tuple) and len(titles) == 2:
+            open, close = titles
+        else:
+            open, close = titles, None
+
+        if open:
+            rval = rval(wrapt(open))
+        rval = rval(contents)
+        if close:
+            rval = rval(wrapt(close))
+
+        return rval
 
 
 def handler_list(obj, H, hrepr):
-    return hrepr.stdrepr_iterable(obj, before='[', separator=', ', after=']')
+    return hrepr.stdrepr_iterable(obj, before='[', after=']')
 
 def handler_tuple(obj, H, hrepr):
-    return hrepr.stdrepr_iterable(obj, before='(', separator=', ', after=')')
+    return hrepr.stdrepr_iterable(obj, before='(', after=')')
 
 def handler_set(obj, H, hrepr):
-    return hrepr.stdrepr_iterable(obj, before='{', separator=', ', after='}')
+    return hrepr.stdrepr_iterable(obj, before='{', after='}')
 
 def handler_frozenset(obj, H, hrepr):
-    return hrepr.stdrepr_iterable(obj, before='{', separator=', ', after='}')
+    return hrepr.stdrepr_iterable(obj, before='{', after='}')
 
 def handler_dict(obj, H, hrepr):
-    rows = [H.tr(H.td(hrepr(k), H.td(hrepr(v))))
-            for k, v in obj.items()]
-    return H.table['hrepr-dict'](*rows)
+    return hrepr.stdrepr_object(('{', '}'), list(obj.items()),
+                                cls='hrepr-dict', quote_string_keys=True)
 
 def handler_bool(obj, H, hrepr):
     if obj is True:

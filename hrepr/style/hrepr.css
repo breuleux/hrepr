@@ -1,4 +1,16 @@
 
+:root, :host {
+	--object-color: #00a;
+	--dict-color: #00a;
+	--tuple-color: #080;
+	--list-color: #080;
+	--set-color: #080;
+	--frozenset-color: #88f;
+	--titled-box-radius: 0px;
+}
+
+/* Scalar/string formatting */
+
 .hrepr-True, .hrepr-False, .hrepr-NoneType, .hrepr-int, .hrepr-float {
 	font-weight: bold;
 }
@@ -34,19 +46,111 @@
 	color: grey;
 }
 
-.hrepr-list, .hrepr-tuple, .hrepr-set, .hrepr-frozenset, .hrepr-dict {
+/* Generic object formatting */
+
+.hrepr-title {
+	background: var(--object-color);
+	color: white;
+	vertical-align: middle;
+	display: flex;
+	align-items: center;
+}
+
+.hrepr-titled-v > .hrepr-title {
+	font-weight: bold;
+	padding-left: 5px;
+	padding-right: 5px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+
+.hrepr-titled-h > .hrepr-title {
+	padding-left: 2px;
+	padding-right: 2px;
+}
+
+.hrepr-titled-h > .hrepr-title:first-child {
+	padding-right: 5px;
+}
+
+.hrepr-titled-h > .hrepr-title:last-child {
+	padding-left: 5px;
+}
+
+.hrepr-titled-h, .hrepr-contents-h {
+	display: flex;
+	flex-direction: row;
+}
+
+.hrepr-titled-v, .hrepr-contents-v {
+	display: flex;
+	flex-direction: column;
+}
+
+.hrepr-titled-h, .hrepr-titled-v {
+	display: inline-flex;
+	border: 1px solid var(--object-color);
+	border-radius: var(--titled-box-radius);
+	background: #fff;
+}
+
+.hrepr-contents-h {
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.hrepr-contents-h > * {
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.hrepr-contents-h > :nth-child(odd),
+.hrepr-contents-v > :nth-child(odd),
+.hrepr-object-table > tbody > tr:nth-child(odd) {
+	background: #fff;
+}
+
+.hrepr-contents-h > :nth-child(even),
+.hrepr-contents-v > :nth-child(even),
+.hrepr-object-table > tbody > tr:nth-child(even) {
+	background: #ddd;
+}
+
+.hrepr-object-table {
+	display: inline-block;
+	border-collapse: collapse;
+	width: 100%;
+	border-radius: var(--titled-box-radius);
+}
+
+.hrepr-object-table > tbody > tr > td {
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.hrepr-object-table > tbody > tr > td > * {
 	display: inline-block;
 }
 
-.hrepr-dict {
-	border: 1px solid grey;
-	border-radius: 5px;
+.hrepr-object-kvpair {
+	padding-left: 5px;
+	padding-right: 5px;
+	background: #eee;
 }
 
-.hrepr-list > *,
-.hrepr-tuple > *,
-.hrepr-set > *,
-.hrepr-frozenset > *,
-.hrepr-dict > * {
-	vertical-align: middle;
-}
+/* Colorize boxes for standard data structures */
+
+.hrepr-dict { border: 1px solid var(--dict-color); }
+.hrepr-dict > .hrepr-title { background: var(--dict-color); }
+
+.hrepr-tuple { border: 1px solid var(--tuple-color); }
+.hrepr-tuple > .hrepr-title { background: var(--tuple-color); }
+
+.hrepr-list { border: 1px solid var(--list-color); }
+.hrepr-list > .hrepr-title { background: var(--list-color); }
+
+.hrepr-set { border: 1px solid var(--set-color); }
+.hrepr-set > .hrepr-title { background: var(--set-color); }
+
+.hrepr-frozenset { border: 1px solid var(--frozenset-color); }
+.hrepr-frozenset > .hrepr-title { background: var(--frozenset-color); }

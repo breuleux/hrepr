@@ -66,21 +66,22 @@ class Tag:
         self.children = children or ()
         self.resources = set()
 
+    def fill(self, children=(), attributes={}):
+        return Tag(self.name,
+                   {**self.attributes, **attributes},
+                   self.children + tuple(children))
+
     def __getitem__(self, items):
         if not isinstance(items, tuple):
             items = (items,)
         classes = self.attributes.get('class', frozenset()) | frozenset(items)
-        return Tag(self.name,
-                   {**self.attributes, 'class': classes},
-                   self.children)
+        return self.fill(attributes={'class': classes})
 
     def __call__(self, *children, **attributes):
         if len(children) > 0 and isinstance(children[0], dict):
             attributes = {**children[0], **attributes}
             children = children[1:]
-        return Tag(self.name,
-                   {**self.attributes, **attributes},
-                   self.children + children)
+        return self.fill(children, attributes)
 
     def __eq__(self, other):
         return isinstance(other, Tag) \

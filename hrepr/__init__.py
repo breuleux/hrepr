@@ -1,5 +1,6 @@
 
 from .h import Tag, HTML, css_hrepr
+from copy import copy
 
 
 class Config:
@@ -7,9 +8,15 @@ class Config:
         self.__dict__.update(cfg)
 
     def __call__(self, **cfg):
-        d = {**self.__dict__}
-        d.update(cfg)
-        return Config(d)
+        return self.with_config(cfg)
+
+    def with_config(self, cfg):
+        rval = copy(self)
+        rval.__dict__.update(cfg)
+        return rval
+
+    def __hrepr__(self, H, hrepr):
+        return hrepr.stdrepr_object('Config', self.__dict__.items())
 
 
 class HRepr:
@@ -25,9 +32,13 @@ class HRepr:
         self.resources = set()
         self.acquire_resources(self.global_resources)
         self.type_handlers = {**self.__default_handlers__()}
+        self.type_handlers_short = {**self.__default_handlers_short__()}
         self.config = Config(config)
 
     def __default_handlers__(self):
+        return {}
+
+    def __default_handlers_short__(self):
         return {}
 
     def __call__(self, obj, **cfg):
@@ -36,14 +47,35 @@ class HRepr:
 
         Args:
             obj: The object to represent
+            cfg: Configuration to add to the current
+                configuration for this operation.
 
         Returns:
             The representation of the object.
         """
-        if cfg:
-            return self.copy(cfg)(obj)
+        has_maxd = hasattr(self.config, 'max_depth')
+        if cfg or has_maxd:
+            if has_maxd:
+                cfg.setdefault('depth', getattr(self.config, 'depth', 0) + 1)
+            h = self.with_config(cfg)
+        else:
+            h = self
+
+        if has_maxd and h.config.depth >= h.config.max_depth:
+            return h._hrepr(obj, self.type_handlers_short,
+                            '__hrepr_short__', self.stdrepr_short)
+        else:
+            return h._hrepr(obj, self.type_handlers,
+                            '__hrepr__', self.stdrepr)
+
+    def with_config(self, cfg={}):
+        h = copy(self)
+        h.config = self.config.with_config(cfg)
+        return h
+
+    def _hrepr(self, obj, type_handlers, method_name, std):
         root_cls = type(obj)
-        handler = self.type_handlers.get(root_cls, None)
+        handler = type_handlers.get(root_cls, None)
         if handler is None:
             if root_cls is type:
                 mro = [type]
@@ -51,15 +83,15 @@ class HRepr:
                 mro = root_cls.mro()
             to_set = []
             for cls in mro:
-                handler = self.type_handlers.get(cls, None)
+                handler = type_handlers.get(cls, None)
                 if handler:
                     for cls2 in to_set:
-                        self.type_handlers[cls2] = handler
+                        type_handlers[cls2] = handler
                     break
                 to_set.append(cls)
             else:
                 for cls2 in to_set:
-                    self.type_handlers[cls2] = False
+                    type_handlers[cls2] = False
 
         if handler:
             res = handler(obj, self.H, self)
@@ -69,17 +101,11 @@ class HRepr:
         if self.consulted is not None and hasattr(obj, '__hrepr_resources__'):
             method = obj.__hrepr_resources__
             self.acquire_resources(method)
-        if hasattr(obj, '__hrepr__'):
-            return obj.__hrepr__(self.H, self)
+        if hasattr(obj, method_name):
+            m = getattr(obj, method_name)
+            return m(self.H, self)
         else:
-            return self.stdrepr(obj)
-
-    def copy(self, cfg={}):
-        h = HRepr(self.accumulate_resources, self.config(cfg))
-        h.consulted = self.consulted
-        h.resources = self.resources
-        h.type_handlers = self.type_handlers
-        return h
+            return std(obj)
 
     def hrepr_with_resources(self, obj, **cfg):
         """
@@ -148,8 +174,9 @@ class HRepr:
     def stdrepr(self, obj, *, cls=None, tag='span'):
         """
         Standard representation for objects, used when there is no
-        repr_<classname> method on the HRepr object, and no __hrepr__
-        method on obj. For an object of class 'klass', the result is:
+        handler for its type in type_handlers on the HRepr object,
+        and no __hrepr__ method on obj. For an object of class 'klass',
+        the result is:
 
         ``<span class="hrepr-klass">{escape(str(obj))}</span>``
 
@@ -166,6 +193,28 @@ class HRepr:
         if cls is None:
             cls = f'hrepr-{obj.__class__.__name__}'
         return getattr(self.H, tag)[cls](str(obj))
+
+    def stdrepr_short(self, obj, *, cls=None, tag='span'):
+        """
+        Standard short representation for objects, used for objects at
+        a depth that exceeds ``hrepr_object.config.max_depth``. That
+        representation is just the object's type between ``<>``s, e.g.
+        ``<MyClass>``.
+
+        This behavior can be overriden with a ``__hrepr_short__`` method
+        on the object, or an entry in ``hrepr_object.type_handlers_short``.
+
+        Args:
+            obj: The object to represent.
+            cls (optional): The class name for the representation. If None,
+                stdrepr will use ``'hrepr-' + obj.__class__.___name__``
+            tag (optional): The tag for the representation, defaults to
+                'span'.
+        """
+        cls_name = obj.__class__.__name__
+        if cls is None:
+            cls = f'hrepr-short-{cls_name}'
+        return getattr(self.H, tag)[cls](f'<{cls_name}>')
 
     def stdrepr_iterable(self, obj, *,
                          cls=None, before=None, after=None):
@@ -280,6 +329,13 @@ class HRepr:
         return rval
 
 
+#########################################
+# Handlers for standard data structures #
+#########################################
+
+def handler_scalar(obj, H, hrepr):
+    return hrepr.stdrepr(obj)
+
 def handler_list(obj, H, hrepr):
     return hrepr.stdrepr_iterable(obj, before='[', after=']')
 
@@ -309,6 +365,30 @@ def handler_Tag(obj, H, hrepr):
     return obj
 
 
+########################
+# Short handlers … ⋯ ⋮ #
+########################
+
+def _ellipsis(H, hrepr, open, close, ellc='…'):
+    ell = H.span['hrepr-ellipsis'](ellc)
+    return hrepr.titled_box((open, close), [ell])
+
+def handler_short_list(obj, H, hrepr):
+    return _ellipsis(H, hrepr, '[', ']')['hrepr-list']
+
+def handler_short_tuple(obj, H, hrepr):
+    return _ellipsis(H, hrepr, '(', ')')['hrepr-tuple']
+
+def handler_short_set(obj, H, hrepr):
+    return _ellipsis(H, hrepr, '{', '}')['hrepr-set']
+
+def handler_short_frozenset(obj, H, hrepr):
+    return _ellipsis(H, hrepr, '{', '}')['hrepr-frozenset']
+
+def handler_short_dict(obj, H, hrepr):
+    return _ellipsis(H, hrepr, '{', '}', '⋮')['hrepr-dict']
+
+
 class StdHRepr(HRepr):
     """
     Standard representation engine. Includes representations for
@@ -324,6 +404,18 @@ class StdHRepr(HRepr):
             dict: handler_dict,
             bool: handler_bool,
             Tag: handler_Tag
+        }
+
+    def __default_handlers_short__(self):
+        return {
+            int: handler_scalar,
+            float: handler_scalar,
+            list: handler_short_list,
+            tuple: handler_short_tuple,
+            set: handler_short_set,
+            frozenset: handler_short_frozenset,
+            dict: handler_short_dict,
+            bool: handler_bool
         }
 
     def global_resources(self, H):

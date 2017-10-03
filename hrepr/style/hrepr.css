@@ -154,3 +154,7 @@
 
 .hrepr-frozenset { border: 1px solid var(--frozenset-color); }
 .hrepr-frozenset > .hrepr-title { background: var(--frozenset-color); }
+
+.hrepr-ellipsis {
+	font-weight: bold;
+}

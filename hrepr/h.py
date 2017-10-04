@@ -146,7 +146,7 @@ class Tag:
         """
         nbreset = f'<style>{css_nbreset}</style>'
         resources = ''.join(map(str, self.resources))
-        return f'{nbreset}{resources}<div class="hrepr">{self}</div>'
+        return f'<div>{nbreset}{resources}<div class="hrepr">{self}</div></div>'
 
     def as_page(self):
         """

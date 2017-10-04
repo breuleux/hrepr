@@ -399,23 +399,34 @@ def _ellipsis(H, hrepr, open, close, ellc='…'):
     return hrepr.titled_box((open, close), [ell])
 
 def handler_short_str(s, H, hrepr):
-    if len(s) > 10:
-        s = s[:9] + '…'
+    max_length = 20
+    if len(s) > max_length:
+        s = s[:max_length - 1] + '…'
     return hrepr.stdrepr(s)
 
 def handler_short_list(obj, H, hrepr):
+    if len(obj) == 0:
+        return handler_list(obj, H, hrepr)
     return _ellipsis(H, hrepr, '[', ']')['hrepr-list']
 
 def handler_short_tuple(obj, H, hrepr):
+    if len(obj) == 0:
+        return handler_tuple(obj, H, hrepr)
     return _ellipsis(H, hrepr, '(', ')')['hrepr-tuple']
 
 def handler_short_set(obj, H, hrepr):
+    if len(obj) == 0:
+        return handler_set(obj, H, hrepr)
     return _ellipsis(H, hrepr, '{', '}')['hrepr-set']
 
 def handler_short_frozenset(obj, H, hrepr):
+    if len(obj) == 0:
+        return handler_frozenset(obj, H, hrepr)
     return _ellipsis(H, hrepr, '{', '}')['hrepr-frozenset']
 
 def handler_short_dict(obj, H, hrepr):
+    if len(obj) == 0:
+        return handler_dict(obj, H, hrepr)
     return _ellipsis(H, hrepr, '{', '}', '⋮')['hrepr-dict']
 
 
@@ -446,7 +457,8 @@ class StdHRepr(HRepr):
             set: handler_short_set,
             frozenset: handler_short_frozenset,
             dict: handler_short_dict,
-            bool: handler_bool
+            bool: handler_bool,
+            type(None): handler_scalar
         }
 
     def global_resources(self, H):

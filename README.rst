@@ -135,12 +135,12 @@ like ``list`` or ``dict`` whereas the former does not).
 
 Your subclass can override the following functions and fields:
 
--  **``global_resources(H)``** should return one or a list of tags to
+-  ``global_resources(H)`` should return one or a list of tags to
    insert in ``<head>``.
--  **``__default_handlers__()``** should return a dict that associates types to
+-  ``__default_handlers__()`` should return a dict that associates types to
    handlers with the signature ``handler(obj, H, hrepr)``. When given
    an object of a certain type, hrepr will look for it there first.
--  **``__call__(obj)``** is the main representation function, and will be
+-  ``__call__(obj)`` is the main representation function, and will be
    called recursively for every object to represent.
 
 .. code:: python

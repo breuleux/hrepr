@@ -59,15 +59,18 @@ class HRepr:
         Returns:
             The representation of the object.
         """
-        has_maxd = self.config.max_depth is not None
-        if cfg or has_maxd:
-            if has_maxd:
-                cfg.setdefault('depth', (self.config.depth or 0) + 1)
-            h = self.with_config(cfg)
-        else:
-            h = self
+        depth = self.config.depth or 0
+        max_depth = self.config.max_depth
+        seen_on_path = self.config.seen_on_path or frozenset()
+        cfg.setdefault('depth', depth + 1)
+        cfg['seen_on_path'] = seen_on_path | {id(obj)}
+        h = self.with_config(cfg)
 
-        if has_maxd and h.config.depth >= h.config.max_depth:
+        if id(obj) in seen_on_path:
+            # This object is a child of itself, so we display a neat
+            # little loop to avoid busting the stack.
+            return self.H.span['hrepr-circular']('⥁')
+        elif max_depth is not None and depth >= max_depth:
             return h._hrepr(obj, self.type_handlers_short,
                             '__hrepr_short__', self.stdrepr_short)
         else:

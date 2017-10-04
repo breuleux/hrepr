@@ -158,3 +158,8 @@
 .hrepr-ellipsis {
 	font-weight: bold;
 }
+
+.hrepr-circular {
+	font-weight: bold;
+	color: magenta;
+}

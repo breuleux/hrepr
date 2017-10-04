@@ -245,7 +245,8 @@ class HRepr:
         return self.titled_box((before, after), children, 'h', 'h')[cls]
 
     def stdrepr_object(self, title, elements, *, cls=None,
-                       short=False, quote_string_keys=False):
+                       short=False, quote_string_keys=False,
+                       delimiter=None):
         """
         Helper function to represent objects.
 
@@ -262,8 +263,13 @@ class HRepr:
                 vertically.
             quote_string_keys: If True, string keys will be displayed
                 with quotes around them. Default is False.
+            delimiter: The character to use to separate key and
+                value. By default '↦' if quote_string_keys is True.
         """
         H = self.H
+
+        if delimiter is None and quote_string_keys is True:
+            delimiter = ' ↦ '
 
         def wrap(x):
             if not quote_string_keys and isinstance(x, str):
@@ -274,12 +280,21 @@ class HRepr:
         if short:
             contents = []
             for k, v in elements:
-                kv = H.div['hrepr-object-kvpair'](wrap(k), ' ↦ ', self(v))
+                kv = H.div['hrepr-object-kvpair'](
+                    wrap(k),
+                    delimiter or '',
+                    self(v)
+                )
                 contents.append(kv)
         else:
             t = H.table()['hrepr-object-table']
             for k, v in elements:
-                t = t(H.tr(H.td(wrap(k)), H.td(self(v))))
+                tr = H.tr(H.td(wrap(k)))
+                if delimiter is not None:
+                    tr = tr(H.td['hrepr-delimiter'](delimiter))
+                tr = tr(H.td(self(v)))
+                # t = t(H.tr(H.td(wrap(k)), H.td(self(v))))
+                t = t(tr)
             contents = [t]
 
         title_brackets = isinstance(title, tuple) and len(title) == 2

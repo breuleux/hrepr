@@ -66,20 +66,39 @@ class HRepr:
         h = self.with_config(cfg)
         max_depth = h.config.max_depth
 
+        if h.config.preprocess:
+            obj = h.config.preprocess(obj, hrepr)
+
         if id(obj) in seen_on_path:
             # This object is a child of itself, so we display a neat
             # little loop to avoid busting the stack.
-            return self.H.span['hrepr-circular']('⥁')
+            result = self.H.span['hrepr-circular']('⥁')
         elif max_depth is not None and depth >= max_depth:
-            return h._hrepr(obj, self.type_handlers_short,
-                            '__hrepr_short__', self.stdrepr_short)
+            result = h._hrepr(obj, self.type_handlers_short,
+                              '__hrepr_short__', self.stdrepr_short)
         else:
-            return h._hrepr(obj, self.type_handlers,
-                            '__hrepr__', self.stdrepr)
+            result = h._hrepr(obj, self.type_handlers,
+                              '__hrepr__', self.stdrepr)
+
+        if h.config.postprocess:
+            return h.config.postprocess(obj, result, h.H, h) or result
+        else:
+            return result
 
     def with_config(self, cfg={}):
         h = copy(self)
         h.config = self.config.with_config(cfg)
+        if h.config.type_handlers:
+            h.type_handlers = {**h.type_handlers,
+                               **h.config.type_handlers}
+        if h.config.type_handlers_short:
+            h.type_handlers_short = {**h.type_handlers_short,
+                                     **h.config.type_handlers_short}
+        if h.config.resources:
+            if not isinstance(h.config.resources, (list, tuple)):
+                h.config.resources = [h.config.resources]
+            for res in h.config.resources:
+                h.acquire_resources(res)
         return h
 
     def _hrepr(self, obj, type_handlers, method_name, std):
@@ -103,6 +122,9 @@ class HRepr:
                     type_handlers[cls2] = False
 
         if handler:
+            if self.consulted is not None and \
+                    hasattr(handler, 'resources'):
+                self.acquire_resources(handler.resources)
             res = handler(obj, self.H, self)
             if res is not NotImplemented:
                 return res
@@ -150,7 +172,10 @@ class HRepr:
         """
         if source not in self.consulted:
             self.consulted.add(source)
-            res = source(self.H)
+            if isinstance(source, Tag):
+                res = source
+            else:
+                res = source(self.H)
             if res is None:
                 res = set()
             elif isinstance(res, (list, tuple)):

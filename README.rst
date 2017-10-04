@@ -5,6 +5,13 @@ hrepr
 objects. It can output to Jupyter Notebooks and it can also generate
 standalone pages with the representation of choice objects.
 
+.. image:: https://github.com/breuleux/hrepr/raw/master/images/hrepr1.png
+
+.. image:: https://github.com/breuleux/hrepr/raw/master/images/hrepr2.png
+
+See the ``examples.ipynb`` notebook for more examples, but keep in mind that
+GitHub doesn't display it properly.
+
 Install
 -------
 
@@ -30,13 +37,6 @@ Usage
     print(hrepr(obj).as_page())
 
 In a Jupyter Notebook, return ``hrepr(obj)`` directly.
-
-.. image:: https://github.com/breuleux/hrepr/raw/master/images/hrepr1.png
-
-.. image:: https://github.com/breuleux/hrepr/raw/master/images/hrepr2.png
-
-See the ``examples.ipynb`` notebook for more examples, but keep in mind that
-GitHub doesn't display it properly.
 
 Custom representations
 ----------------------

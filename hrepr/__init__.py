@@ -60,11 +60,11 @@ class HRepr:
             The representation of the object.
         """
         depth = self.config.depth or 0
-        max_depth = self.config.max_depth
         seen_on_path = self.config.seen_on_path or frozenset()
         cfg.setdefault('depth', depth + 1)
         cfg['seen_on_path'] = seen_on_path | {id(obj)}
         h = self.with_config(cfg)
+        max_depth = h.config.max_depth
 
         if id(obj) in seen_on_path:
             # This object is a child of itself, so we display a neat

@@ -15,6 +15,12 @@ class Config:
         rval.__dict__.update(cfg)
         return rval
 
+    def __getattr__(self, attr):
+        # Only triggers for attributes not in __dict__
+        if attr.startswith('_'):
+            return getattr(super(), attr)
+        return None
+
     def __hrepr__(self, H, hrepr):
         return hrepr.stdrepr_object('Config', self.__dict__.items())
 
@@ -53,10 +59,10 @@ class HRepr:
         Returns:
             The representation of the object.
         """
-        has_maxd = hasattr(self.config, 'max_depth')
+        has_maxd = self.config.max_depth is not None
         if cfg or has_maxd:
             if has_maxd:
-                cfg.setdefault('depth', getattr(self.config, 'depth', 0) + 1)
+                cfg.setdefault('depth', (self.config.depth or 0) + 1)
             h = self.with_config(cfg)
         else:
             h = self
@@ -265,7 +271,7 @@ class HRepr:
         if short:
             contents = []
             for k, v in elements:
-                kv = H.div['hrepr-object-kvpair'](wrap(k), '=', self(v))
+                kv = H.div['hrepr-object-kvpair'](wrap(k), ' ↦ ', self(v))
                 contents.append(kv)
         else:
             t = H.table()['hrepr-object-table']
@@ -350,7 +356,8 @@ def handler_frozenset(obj, H, hrepr):
 
 def handler_dict(obj, H, hrepr):
     return hrepr.stdrepr_object(('{', '}'), list(obj.items()),
-                                cls='hrepr-dict', quote_string_keys=True)
+                                cls='hrepr-dict', quote_string_keys=True,
+                                short=hrepr.config.mapping_layout=='h')
 
 def handler_bool(obj, H, hrepr):
     if obj is True:
@@ -372,6 +379,11 @@ def handler_Tag(obj, H, hrepr):
 def _ellipsis(H, hrepr, open, close, ellc='…'):
     ell = H.span['hrepr-ellipsis'](ellc)
     return hrepr.titled_box((open, close), [ell])
+
+def handler_short_str(s, H, hrepr):
+    if len(s) > 10:
+        s = s[:9] + '…'
+    return hrepr.stdrepr(s)
 
 def handler_short_list(obj, H, hrepr):
     return _ellipsis(H, hrepr, '[', ']')['hrepr-list']
@@ -410,6 +422,7 @@ class StdHRepr(HRepr):
         return {
             int: handler_scalar,
             float: handler_scalar,
+            str: handler_short_str,
             list: handler_short_list,
             tuple: handler_short_tuple,
             set: handler_short_set,

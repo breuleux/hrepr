@@ -75,10 +75,11 @@ class HRepr:
             result = self.H.span['hrepr-circular']('⥁')
         elif max_depth is not None and depth >= max_depth:
             result = h._hrepr(obj, self.type_handlers_short,
-                              '__hrepr_short__', self.stdrepr_short)
+                              ['__hrepr_short__'], self.stdrepr_short)
         else:
             result = h._hrepr(obj, self.type_handlers,
-                              '__hrepr__', self.stdrepr)
+                              ['__hrepr__', '__hrepr_short__'],
+                              self.stdrepr)
 
         if h.config.postprocess:
             return h.config.postprocess(obj, result, h.H, h) or result
@@ -101,7 +102,7 @@ class HRepr:
                 h.acquire_resources(res)
         return h
 
-    def _hrepr(self, obj, type_handlers, method_name, std):
+    def _hrepr(self, obj, type_handlers, method_names, std):
         root_cls = type(obj)
         handler = type_handlers.get(root_cls, None)
         if handler is None:
@@ -132,9 +133,10 @@ class HRepr:
         if self.consulted is not None and hasattr(obj, '__hrepr_resources__'):
             method = obj.__hrepr_resources__
             self.acquire_resources(method)
-        if hasattr(obj, method_name):
-            m = getattr(obj, method_name)
-            return m(self.H, self)
+        for method_name in method_names:
+            if hasattr(obj, method_name):
+                m = getattr(obj, method_name)
+                return m(self.H, self)
         else:
             return std(obj)
 

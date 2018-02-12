@@ -38,6 +38,7 @@ class HRepr:
         self.resources = set()
         self.acquire_resources(self.global_resources)
         self.type_handlers = {**self.__default_handlers__()}
+        self.type_handlers_resources = {}
         self.type_handlers_short = {**self.__default_handlers_short__()}
         self.config = Config(config)
 
@@ -105,14 +106,24 @@ class HRepr:
     def _hrepr(self, obj, type_handlers, method_names, std):
         root_cls = type(obj)
         handler = type_handlers.get(root_cls, None)
+
         if handler is None:
             if root_cls is type:
                 mro = [type]
             else:
                 mro = root_cls.mro()
+
             to_set = []
             for cls in mro:
                 handler = type_handlers.get(cls, None)
+                if handler is None:
+                    for method_name in method_names:
+                        handler = getattr(cls, method_name, None)
+                        if handler:
+                            break
+                    if handler:
+                        handler.resources = \
+                            getattr(cls, '__hrepr_resources__', None)
                 if handler:
                     for cls2 in to_set:
                         type_handlers[cls2] = handler
@@ -123,20 +134,12 @@ class HRepr:
                     type_handlers[cls2] = False
 
         if handler:
-            if self.consulted is not None and \
-                    hasattr(handler, 'resources'):
-                self.acquire_resources(handler.resources)
+            res = getattr(handler, 'resources', None)
+            if self.consulted is not None and res is not None:
+                self.acquire_resources(res)
             res = handler(obj, self.H, self)
             if res is not NotImplemented:
                 return res
-
-        if self.consulted is not None and hasattr(obj, '__hrepr_resources__'):
-            method = obj.__hrepr_resources__
-            self.acquire_resources(method)
-        for method_name in method_names:
-            if hasattr(obj, method_name):
-                m = getattr(obj, method_name)
-                return m(self.H, self)
         else:
             return std(obj)
 

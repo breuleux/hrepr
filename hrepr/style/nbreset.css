@@ -5,3 +5,7 @@
 .hrepr td {
 	text-align: left;
 }
+
+.jp-RenderedHTMLCommon .hrepr table {
+	margin-bottom: 0px;
+}

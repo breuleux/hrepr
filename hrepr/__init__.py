@@ -108,8 +108,8 @@ class HRepr:
         handler = type_handlers.get(root_cls, None)
 
         if handler is None:
-            if root_cls is type:
-                mro = [type]
+            if issubclass(root_cls, type):
+                mro = [root_cls]
             else:
                 mro = root_cls.mro()
 

@@ -14,7 +14,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='hrepr',
-    version='0.1.6',
+    version='0.1.7',
 
     description='Extensible HTML representation for Python objects.',
     long_description=long_description,

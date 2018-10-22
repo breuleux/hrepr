@@ -34,6 +34,24 @@
 	color: #888;
 }
 
+.hrepr-bytes {
+	color: #666;
+	font-family: monospace;
+	white-space: pre;
+}
+
+.hrepr-bytes:before {
+	content: "bytes.fromhex(“";
+	font-family: normal;
+	color: #888;
+}
+
+.hrepr-bytes:after {
+	content: "”)";
+	font-family: normal;
+	color: #888;
+}
+
 .hrepr-True {
 	color: green;
 }

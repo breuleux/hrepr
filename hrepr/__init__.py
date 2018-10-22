@@ -413,6 +413,9 @@ def handler_bool(obj, H, hrepr):
     else:
         return H.span['hrepr-False', 'hrepr-bool']("False")
 
+def handler_bytes(obj, H, hrepr):
+    return hrepr.stdrepr(obj.hex(), cls='hrepr-bytes')
+
 def handler_Tag(obj, H, hrepr):
     """
     Returns the default representation for a tag, which is the tag itself.
@@ -474,6 +477,7 @@ class StdHRepr(HRepr):
             frozenset: handler_frozenset,
             dict: handler_dict,
             bool: handler_bool,
+            bytes: handler_bytes,
             Tag: handler_Tag
         }
 
@@ -482,6 +486,7 @@ class StdHRepr(HRepr):
             int: handler_scalar,
             float: handler_scalar,
             str: handler_short_str,
+            bytes: handler_short_str,
             list: handler_short_list,
             tuple: handler_short_tuple,
             set: handler_short_set,

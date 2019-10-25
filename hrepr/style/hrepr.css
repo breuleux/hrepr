@@ -167,3 +167,18 @@
 	font-weight: bold;
 	color: magenta;
 }
+
+.circular_ref {
+	display: inline-block;
+	position: relative;
+}
+
+.circular_ref > :last-child {
+	position: absolute;
+	color: white;
+	background: magenta;
+	padding: 2px;
+	font-size: 9px;
+	left: 0px;
+	top: 0px;
+}

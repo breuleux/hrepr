@@ -61,8 +61,10 @@ class HRepr:
             The representation of the object.
         """
         depth = self.config.depth or 0
+        circular = self.config.circular or {None: None}
         seen_on_path = self.config.seen_on_path or frozenset()
         cfg.setdefault('depth', depth + 1)
+        cfg['circular'] = circular
         cfg['seen_on_path'] = seen_on_path | {id(obj)}
         h = self.with_config(cfg)
         max_depth = h.config.max_depth
@@ -73,14 +75,23 @@ class HRepr:
         if id(obj) in seen_on_path:
             # This object is a child of itself, so we display a neat
             # little loop to avoid busting the stack.
-            result = self.H.span['hrepr-circular']('⥁')
-        elif max_depth is not None and depth >= max_depth:
-            result = h._hrepr(obj, self.type_handlers_short,
-                              ['__hrepr_short__'], self.stdrepr_short)
+            n = circular.setdefault(id(obj), len(circular))
+            result = self.H.span['hrepr-circular'](f'⥁', self.H.sub(n))
+
         else:
-            result = h._hrepr(obj, self.type_handlers,
-                              ['__hrepr__', '__hrepr_short__'],
-                              self.stdrepr)
+            if max_depth is not None and depth >= max_depth:
+                result = h._hrepr(obj, self.type_handlers_short,
+                                  ['__hrepr_short__'], self.stdrepr_short)
+            else:
+                result = h._hrepr(obj, self.type_handlers,
+                                  ['__hrepr__', '__hrepr_short__'],
+                                  self.stdrepr)
+
+            if id(obj) in circular:
+                result = self.H.div['circular_ref'](
+                    result,
+                    self.H.span(circular[id(obj)])
+                )
 
         if h.config.postprocess:
             return h.config.postprocess(obj, result, h.H, h) or result

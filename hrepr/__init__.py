@@ -1,6 +1,10 @@
+"""Extensible HTML representation for Python objects."""
 
 from .h import Tag, HTML, css_hrepr
 from copy import copy
+
+
+__version__ = '0.2.0'
 
 
 class Config:

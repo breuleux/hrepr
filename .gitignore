@@ -98,3 +98,5 @@ ENV/
 
 # emacs backup files
 *~
+
+.vscode

@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "hrepr"
+version = "0.2.2"
+description = "Extensible HTML representation for Python objects."
+authors = ["Olivier Breuleux <breuleux@gmail.com>"]
+license = "MIT"
+readme = "README.rst"
+classifiers = [
+    'Development Status :: 3 - Alpha',
+    'Intended Audience :: Developers',
+    'Topic :: Software Development :: Build Tools',
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+
+[tool.poetry.dev-dependencies]
+black = "^19.3b0"
+
+[tool.black]
+line-length = 80
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

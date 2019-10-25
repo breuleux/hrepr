@@ -1,29 +1,43 @@
-
 import re
 import os.path
 from html import escape
 
 
 # CSS for hrepr
-styledir = f'{os.path.dirname(__file__)}/style'
-css_nbreset = open(f'{styledir}/nbreset.css', encoding='utf-8').read()
-css_hrepr = open(f'{styledir}/hrepr.css', encoding='utf-8').read()
+styledir = f"{os.path.dirname(__file__)}/style"
+css_nbreset = open(f"{styledir}/nbreset.css", encoding="utf-8").read()
+css_hrepr = open(f"{styledir}/hrepr.css", encoding="utf-8").read()
 
 
 # These tags are self-closing and cannot have children.
-_void_tags = {'area', 'base', 'br', 'col', 'command', 'embed',
-              'hr', 'img', 'input', 'keygen', 'link', 'meta',
-              'param', 'source', 'track', 'wbr'}
+_void_tags = {
+    "area",
+    "base",
+    "br",
+    "col",
+    "command",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "keygen",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+}
 
 
 # We do not escape string children for these tags.
-_raw_tags = {'raw', 'script', 'style'}
+_raw_tags = {"raw", "script", "style"}
 
 
 # These tags do not correspond to real HTML tags. They cannot have
 # attributes, and their children are simply concatenated and inlined
 # in the parent.
-_virtual_tags = {None, 'inline', 'raw'}
+_virtual_tags = {None, "inline", "raw"}
 
 
 class Tag:
@@ -67,15 +81,17 @@ class Tag:
         self.resources = set()
 
     def fill(self, children=(), attributes={}):
-        return Tag(self.name,
-                   {**self.attributes, **attributes},
-                   self.children + tuple(children))
+        return Tag(
+            self.name,
+            {**self.attributes, **attributes},
+            self.children + tuple(children),
+        )
 
     def __getitem__(self, items):
         if not isinstance(items, tuple):
             items = (items,)
-        classes = self.attributes.get('class', frozenset()) | frozenset(items)
-        return self.fill(attributes={'class': classes})
+        classes = self.attributes.get("class", frozenset()) | frozenset(items)
+        return self.fill(attributes={"class": classes})
 
     def __call__(self, *children, **attributes):
         if len(children) > 0 and isinstance(children[0], dict):
@@ -84,37 +100,42 @@ class Tag:
         return self.fill(children, attributes)
 
     def __eq__(self, other):
-        return isinstance(other, Tag) \
-            and self.name == other.name \
-            and self.attributes == other.attributes \
+        return (
+            isinstance(other, Tag)
+            and self.name == other.name
+            and self.attributes == other.attributes
             and self.children == other.children
+        )
 
     def __hash__(self):
-        return hash(self.name) \
-            ^ hash(tuple(self.attributes.items())) \
+        return (
+            hash(self.name)
+            ^ hash(tuple(self.attributes.items()))
             ^ hash(self.children)
+        )
 
     def __repr__(self):
         return str(self)
 
     def __str__(self):
-        escape_children = \
-            not self.attributes.get('__raw', self.name in _raw_tags)
+        escape_children = not self.attributes.get(
+            "__raw", self.name in _raw_tags
+        )
 
         def convert_attribute(k, v):
             if v is True:
                 return k
             elif v is False:
-                return ''
+                return ""
             elif isinstance(v, (set, frozenset)):
-                res = ' '.join(escape(cls) for cls in v)
+                res = " ".join(escape(cls) for cls in v)
             else:
                 res = escape(str(v))
             return f'{k}="{res}"'
 
         def convert_child(c):
             if isinstance(c, (list, tuple)):
-                return ''.join(map(convert_child, c))
+                return "".join(map(convert_child, c))
             elif isinstance(c, Tag):
                 return str(c)
             elif escape_children:
@@ -122,30 +143,32 @@ class Tag:
             else:
                 return str(c)
 
-        attr = ' '.join(convert_attribute(k, v)
-                        for k, v in self.attributes.items()
-                        if not k.startswith('__'))
+        attr = " ".join(
+            convert_attribute(k, v)
+            for k, v in self.attributes.items()
+            if not k.startswith("__")
+        )
         if attr:
             # raw tag cannot have attributes, because it's not a real tag
             assert self.name not in _virtual_tags
-            attr = ' ' + attr
+            attr = " " + attr
 
-        children = ''.join(map(convert_child, self.children))
+        children = "".join(map(convert_child, self.children))
         if self.name in _virtual_tags:
             # Virtual tags just inlines their contents directly.
             return children
-        if self.attributes.get('__void', self.name in _void_tags):
+        if self.attributes.get("__void", self.name in _void_tags):
             assert len(self.children) == 0
-            return f'<{self.name}{attr} />'
+            return f"<{self.name}{attr} />"
         else:
-            return f'<{self.name}{attr}>{children}</{self.name}>'
+            return f"<{self.name}{attr}>{children}</{self.name}>"
 
     def _repr_html_(self):
         """
         Jupyter Notebook hook to print this element as HTML.
         """
-        nbreset = f'<style>{css_nbreset}</style>'
-        resources = ''.join(map(str, self.resources))
+        nbreset = f"<style>{css_nbreset}</style>"
+        resources = "".join(map(str, self.resources))
         return f'<div>{nbreset}{resources}<div class="hrepr">{self}</div></div>'
 
     def as_page(self):
@@ -169,12 +192,13 @@ class Tag:
             </html>
         """
         H = HTML()
-        utf8 = H.meta({'http-equiv': 'Content-type'},
-                      content="text/html",
-                      charset="UTF-8")
-        return H.inline(H.raw('<!DOCTYPE html>'),
-                        H.html(H.head(utf8, *self.resources),
-                               H.body(self)))
+        utf8 = H.meta(
+            {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
+        )
+        return H.inline(
+            H.raw("<!DOCTYPE html>"),
+            H.html(H.head(utf8, *self.resources), H.body(self)),
+        )
 
 
 class HTML:
@@ -189,8 +213,9 @@ class HTML:
     >>> H.span["cool", "beans"]("How stylish!")
     <span class="cool beans">How stylish!</span>
     """
+
     def __getattr__(self, tag_name):
-        tag_name = re.sub('(?<=[a-z])([A-Z])',
-                          lambda m: f'-{m.group(0).lower()}',
-                          tag_name)
+        tag_name = re.sub(
+            "(?<=[a-z])([A-Z])", lambda m: f"-{m.group(0).lower()}", tag_name
+        )
         return Tag(tag_name)

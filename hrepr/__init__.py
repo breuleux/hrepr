@@ -1,3 +1,4 @@
+"""Extensible HTML representation for Python objects."""
 
 from .h import Tag, HTML, css_hrepr
 from copy import copy
@@ -17,12 +18,12 @@ class Config:
 
     def __getattr__(self, attr):
         # Only triggers for attributes not in __dict__
-        if attr.startswith('_'):
+        if attr.startswith("_"):
             return getattr(super(), attr)
         return None
 
     def __hrepr__(self, H, hrepr):
-        return hrepr.stdrepr_object('Config', self.__dict__.items())
+        return hrepr.stdrepr_object("Config", self.__dict__.items())
 
 
 class HRepr:
@@ -63,9 +64,9 @@ class HRepr:
         depth = self.config.depth or 0
         circular = self.config.circular or {None: None}
         seen_on_path = self.config.seen_on_path or frozenset()
-        cfg.setdefault('depth', depth + 1)
-        cfg['circular'] = circular
-        cfg['seen_on_path'] = seen_on_path | {id(obj)}
+        cfg.setdefault("depth", depth + 1)
+        cfg["circular"] = circular
+        cfg["seen_on_path"] = seen_on_path | {id(obj)}
         h = self.with_config(cfg)
         max_depth = h.config.max_depth
 
@@ -76,21 +77,27 @@ class HRepr:
             # This object is a child of itself, so we display a neat
             # little loop to avoid busting the stack.
             n = circular.setdefault(id(obj), len(circular))
-            result = self.H.span['hrepr-circular'](f'⥁', self.H.sub(n))
+            result = self.H.span["hrepr-circular"](f"⥁", self.H.sub(n))
 
         else:
             if max_depth is not None and depth >= max_depth:
-                result = h._hrepr(obj, self.type_handlers_short,
-                                  ['__hrepr_short__'], self.stdrepr_short)
+                result = h._hrepr(
+                    obj,
+                    self.type_handlers_short,
+                    ["__hrepr_short__"],
+                    self.stdrepr_short,
+                )
             else:
-                result = h._hrepr(obj, self.type_handlers,
-                                  ['__hrepr__', '__hrepr_short__'],
-                                  self.stdrepr)
+                result = h._hrepr(
+                    obj,
+                    self.type_handlers,
+                    ["__hrepr__", "__hrepr_short__"],
+                    self.stdrepr,
+                )
 
             if id(obj) in circular:
-                result = self.H.div['circular_ref'](
-                    result,
-                    self.H.span(circular[id(obj)])
+                result = self.H.div["circular_ref"](
+                    result, self.H.span(circular[id(obj)])
                 )
 
         if h.config.postprocess:
@@ -102,11 +109,12 @@ class HRepr:
         h = copy(self)
         h.config = self.config.with_config(cfg)
         if h.config.type_handlers:
-            h.type_handlers = {**h.type_handlers,
-                               **h.config.type_handlers}
+            h.type_handlers = {**h.type_handlers, **h.config.type_handlers}
         if h.config.type_handlers_short:
-            h.type_handlers_short = {**h.type_handlers_short,
-                                     **h.config.type_handlers_short}
+            h.type_handlers_short = {
+                **h.type_handlers_short,
+                **h.config.type_handlers_short,
+            }
         if h.config.resources:
             if not isinstance(h.config.resources, (list, tuple)):
                 h.config.resources = [h.config.resources]
@@ -133,8 +141,9 @@ class HRepr:
                         if handler:
                             break
                     if handler:
-                        handler.resources = \
-                            getattr(cls, '__hrepr_resources__', None)
+                        handler.resources = getattr(
+                            cls, "__hrepr_resources__", None
+                        )
                 if handler:
                     for cls2 in to_set:
                         type_handlers[cls2] = handler
@@ -145,7 +154,7 @@ class HRepr:
                     type_handlers[cls2] = False
 
         if handler:
-            res = getattr(handler, 'resources', None)
+            res = getattr(handler, "resources", None)
             if self.consulted is not None and res is not None:
                 self.acquire_resources(res)
             res = handler(obj, self.H, self)
@@ -221,7 +230,7 @@ class HRepr:
         """
         self.type_handlers.update(handlers)
 
-    def stdrepr(self, obj, *, cls=None, tag='span'):
+    def stdrepr(self, obj, *, cls=None, tag="span"):
         """
         Standard representation for objects, used when there is no
         handler for its type in type_handlers on the HRepr object,
@@ -241,10 +250,10 @@ class HRepr:
                 'span'.
         """
         if cls is None:
-            cls = f'hrepr-{obj.__class__.__name__}'
+            cls = f"hrepr-{obj.__class__.__name__}"
         return getattr(self.H, tag)[cls](str(obj))
 
-    def stdrepr_short(self, obj, *, cls=None, tag='span'):
+    def stdrepr_short(self, obj, *, cls=None, tag="span"):
         """
         Standard short representation for objects, used for objects at
         a depth that exceeds ``hrepr_object.config.max_depth``. That
@@ -263,11 +272,10 @@ class HRepr:
         """
         cls_name = obj.__class__.__name__
         if cls is None:
-            cls = f'hrepr-short-{cls_name}'
-        return getattr(self.H, tag)[cls](f'<{cls_name}>')
+            cls = f"hrepr-short-{cls_name}"
+        return getattr(self.H, tag)[cls](f"<{cls_name}>")
 
-    def stdrepr_iterable(self, obj, *,
-                         cls=None, before=None, after=None):
+    def stdrepr_iterable(self, obj, *, cls=None, before=None, after=None):
         """
         Helper function to represent iterables. StdHRepr calls this on
         lists, tuples, sets and frozensets, but NOT on iterables in general.
@@ -281,13 +289,20 @@ class HRepr:
             after (optional): A string or a Tag to append to the elements.
         """
         if cls is None:
-            cls = f'hrepr-{obj.__class__.__name__}'
+            cls = f"hrepr-{obj.__class__.__name__}"
         children = [self(a) for a in obj]
-        return self.titled_box((before, after), children, 'h', 'h')[cls]
+        return self.titled_box((before, after), children, "h", "h")[cls]
 
-    def stdrepr_object(self, title, elements, *, cls=None,
-                       short=False, quote_string_keys=False,
-                       delimiter=None):
+    def stdrepr_object(
+        self,
+        title,
+        elements,
+        *,
+        cls=None,
+        short=False,
+        quote_string_keys=False,
+        delimiter=None,
+    ):
         """
         Helper function to represent objects.
 
@@ -310,7 +325,7 @@ class HRepr:
         H = self.H
 
         if delimiter is None and quote_string_keys is True:
-            delimiter = ' ↦ '
+            delimiter = " ↦ "
 
         def wrap(x):
             if not quote_string_keys and isinstance(x, str):
@@ -321,18 +336,16 @@ class HRepr:
         if short:
             contents = []
             for k, v in elements:
-                kv = H.div['hrepr-object-kvpair'](
-                    wrap(k),
-                    delimiter or '',
-                    self(v)
+                kv = H.div["hrepr-object-kvpair"](
+                    wrap(k), delimiter or "", self(v)
                 )
                 contents.append(kv)
         else:
-            t = H.table()['hrepr-object-table']
+            t = H.table()["hrepr-object-table"]
             for k, v in elements:
                 tr = H.tr(H.td(wrap(k)))
                 if delimiter is not None:
-                    tr = tr(H.td['hrepr-delimiter'](delimiter))
+                    tr = tr(H.td["hrepr-delimiter"](delimiter))
                 tr = tr(H.td(self(v)))
                 # t = t(H.tr(H.td(wrap(k)), H.td(self(v))))
                 t = t(tr)
@@ -341,16 +354,19 @@ class HRepr:
         title_brackets = isinstance(title, tuple) and len(title) == 2
         horizontal = short or title_brackets
 
-        rval = self.titled_box(title, contents,
-                               'h' if title_brackets else 'v',
-                               'h' if short else 'v')
+        rval = self.titled_box(
+            title,
+            contents,
+            "h" if title_brackets else "v",
+            "h" if short else "v",
+        )
 
         if cls:
             rval = rval[cls]
 
         return rval
 
-    def titled_box(self, titles, contents, tdir='h', cdir='h'):
+    def titled_box(self, titles, contents, tdir="h", cdir="h"):
         """
         Helper function to build a box containing a list of elements,
         with a title above and/or below, or left and/or right of the
@@ -375,10 +391,10 @@ class HRepr:
         H = self.H
 
         def wrapt(x):
-            return H.div['hrepr-title'](x)
+            return H.div["hrepr-title"](x)
 
-        rval = H.div[f'hrepr-titled-{tdir}']
-        contents = H.div[f'hrepr-contents-{cdir}'].fill(contents)
+        rval = H.div[f"hrepr-titled-{tdir}"]
+        contents = H.div[f"hrepr-contents-{cdir}"].fill(contents)
 
         if isinstance(titles, tuple) and len(titles) == 2:
             open, close = titles
@@ -398,34 +414,47 @@ class HRepr:
 # Handlers for standard data structures #
 #########################################
 
+
 def handler_scalar(obj, H, hrepr):
     return hrepr.stdrepr(obj)
 
+
 def handler_list(obj, H, hrepr):
-    return hrepr.stdrepr_iterable(obj, before='[', after=']')
+    return hrepr.stdrepr_iterable(obj, before="[", after="]")
+
 
 def handler_tuple(obj, H, hrepr):
-    return hrepr.stdrepr_iterable(obj, before='(', after=')')
+    return hrepr.stdrepr_iterable(obj, before="(", after=")")
+
 
 def handler_set(obj, H, hrepr):
-    return hrepr.stdrepr_iterable(obj, before='{', after='}')
+    return hrepr.stdrepr_iterable(obj, before="{", after="}")
+
 
 def handler_frozenset(obj, H, hrepr):
-    return hrepr.stdrepr_iterable(obj, before='{', after='}')
+    return hrepr.stdrepr_iterable(obj, before="{", after="}")
+
 
 def handler_dict(obj, H, hrepr):
-    return hrepr.stdrepr_object(('{', '}'), list(obj.items()),
-                                cls='hrepr-dict', quote_string_keys=True,
-                                short=hrepr.config.mapping_layout=='h')
+    return hrepr.stdrepr_object(
+        ("{", "}"),
+        list(obj.items()),
+        cls="hrepr-dict",
+        quote_string_keys=True,
+        short=hrepr.config.mapping_layout == "h",
+    )
+
 
 def handler_bool(obj, H, hrepr):
     if obj is True:
-        return H.span['hrepr-True', 'hrepr-bool']("True")
+        return H.span["hrepr-True", "hrepr-bool"]("True")
     else:
-        return H.span['hrepr-False', 'hrepr-bool']("False")
+        return H.span["hrepr-False", "hrepr-bool"]("False")
+
 
 def handler_bytes(obj, H, hrepr):
-    return hrepr.stdrepr(obj.hex(), cls='hrepr-bytes')
+    return hrepr.stdrepr(obj.hex(), cls="hrepr-bytes")
+
 
 def handler_Tag(obj, H, hrepr):
     """
@@ -438,40 +467,47 @@ def handler_Tag(obj, H, hrepr):
 # Short handlers … ⋯ ⋮ #
 ########################
 
-def _ellipsis(H, hrepr, open, close, ellc='…'):
-    ell = H.span['hrepr-ellipsis'](ellc)
+
+def _ellipsis(H, hrepr, open, close, ellc="…"):
+    ell = H.span["hrepr-ellipsis"](ellc)
     return hrepr.titled_box((open, close), [ell])
+
 
 def handler_short_str(s, H, hrepr):
     max_length = 20
     if len(s) > max_length:
-        s = s[:max_length - 1] + '…'
+        s = s[: max_length - 1] + "…"
     return hrepr.stdrepr(s)
+
 
 def handler_short_list(obj, H, hrepr):
     if len(obj) == 0:
         return handler_list(obj, H, hrepr)
-    return _ellipsis(H, hrepr, '[', ']')['hrepr-list']
+    return _ellipsis(H, hrepr, "[", "]")["hrepr-list"]
+
 
 def handler_short_tuple(obj, H, hrepr):
     if len(obj) == 0:
         return handler_tuple(obj, H, hrepr)
-    return _ellipsis(H, hrepr, '(', ')')['hrepr-tuple']
+    return _ellipsis(H, hrepr, "(", ")")["hrepr-tuple"]
+
 
 def handler_short_set(obj, H, hrepr):
     if len(obj) == 0:
         return handler_set(obj, H, hrepr)
-    return _ellipsis(H, hrepr, '{', '}')['hrepr-set']
+    return _ellipsis(H, hrepr, "{", "}")["hrepr-set"]
+
 
 def handler_short_frozenset(obj, H, hrepr):
     if len(obj) == 0:
         return handler_frozenset(obj, H, hrepr)
-    return _ellipsis(H, hrepr, '{', '}')['hrepr-frozenset']
+    return _ellipsis(H, hrepr, "{", "}")["hrepr-frozenset"]
+
 
 def handler_short_dict(obj, H, hrepr):
     if len(obj) == 0:
         return handler_dict(obj, H, hrepr)
-    return _ellipsis(H, hrepr, '{', '}', '⋮')['hrepr-dict']
+    return _ellipsis(H, hrepr, "{", "}", "⋮")["hrepr-dict"]
 
 
 class StdHRepr(HRepr):
@@ -489,7 +525,7 @@ class StdHRepr(HRepr):
             dict: handler_dict,
             bool: handler_bool,
             bytes: handler_bytes,
-            Tag: handler_Tag
+            Tag: handler_Tag,
         }
 
     def __default_handlers_short__(self):
@@ -504,7 +540,7 @@ class StdHRepr(HRepr):
             frozenset: handler_short_frozenset,
             dict: handler_short_dict,
             bool: handler_bool,
-            type(None): handler_scalar
+            type(None): handler_scalar,
         }
 
     def global_resources(self, H):

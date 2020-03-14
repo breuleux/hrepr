@@ -4,6 +4,9 @@ from .h import Tag, HTML, css_hrepr
 from copy import copy
 
 
+H = HTML()
+
+
 class Config:
     def __init__(self, cfg):
         self.__dict__.update(cfg)

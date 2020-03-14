@@ -1,6 +1,7 @@
 import re
 import os.path
 from html import escape
+from types import GeneratorType
 
 
 # CSS for hrepr
@@ -134,7 +135,7 @@ class Tag:
             return f'{k}="{res}"'
 
         def convert_child(c):
-            if isinstance(c, (list, tuple)):
+            if isinstance(c, (list, tuple, GeneratorType)):
                 return "".join(map(convert_child, c))
             elif isinstance(c, Tag):
                 return str(c)

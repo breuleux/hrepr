@@ -16,6 +16,10 @@ python = "^3.6"
 
 [tool.poetry.dev-dependencies]
 black = "^19.3b0"
+isort = "^5.4.2"
+pytest = "^6.0.1"
+pytest-cov = "^2.10.1"
+flake8 = "^3.8.3"
 
 [tool.black]
 line-length = 80

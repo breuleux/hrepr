@@ -1,6 +1,6 @@
 
 :root, :host {
-	--object-color: #00a;
+	--instance-color: #00a;
 	--dict-color: #00a;
 	--tuple-color: #080;
 	--list-color: #080;
@@ -11,25 +11,25 @@
 
 /* Scalar/string formatting */
 
-.hrepr-True, .hrepr-False, .hrepr-NoneType, .hrepr-int, .hrepr-float {
+.hreprv-True, .hreprv-False, .hreprt-NoneType, .hreprt-int, .hreprt-float {
 	font-weight: bold;
 }
 
-.hrepr-int, .hrepr-float {
+.hreprt-int, .hreprt-float {
 	color: #88f;
 }
 
-.hrepr-str {
+.hreprt-str {
 	color: #666;
 	white-space: pre;
 }
 
-.hrepr-str:before {
+.hreprt-str:before {
 	content: "“";
 	color: #888;
 }
 
-.hrepr-str:after {
+.hreprt-str:after {
 	content: "”";
 	color: #888;
 }
@@ -52,29 +52,29 @@
 	color: #888;
 }
 
-.hrepr-True {
+.hreprv-True {
 	color: green;
 }
 
-.hrepr-False {
+.hreprv-False {
 	color: red;
 }
 
-.hrepr-NoneType {
+.hreprt-NoneType {
 	color: grey;
 }
 
 /* Generic object formatting */
 
-.hrepr-title {
-	background: var(--object-color);
+.hrepr-title, .hrepr-short-instance {
+	background: var(--instance-color);
 	color: white;
 	vertical-align: middle;
 	display: flex;
 	align-items: center;
 }
 
-.hrepr-titled-v > .hrepr-title {
+.hrepr-titled-v > .hrepr-title, .hrepr-short-instance {
 	font-weight: bold;
 	padding-left: 5px;
 	padding-right: 5px;
@@ -107,7 +107,7 @@
 
 .hrepr-titled-h, .hrepr-titled-v {
 	display: inline-flex;
-	border: 1px solid var(--object-color);
+	border: 1px solid var(--instance-color);
 	border-radius: var(--titled-box-radius);
 	background: #fff;
 }
@@ -124,37 +124,37 @@
 
 .hrepr-contents-h > :nth-child(odd),
 .hrepr-contents-v > :nth-child(odd),
-.hrepr-object-table > tbody > tr:nth-child(odd) {
+.hrepr-instance-table > tbody > tr:nth-child(odd) {
 	background: #fff;
 }
 
 .hrepr-contents-h > :nth-child(even),
 .hrepr-contents-v > :nth-child(even),
-.hrepr-object-table > tbody > tr:nth-child(even) {
+.hrepr-instance-table > tbody > tr:nth-child(even) {
 	background: #ddd;
 }
 
-.hrepr-object-table {
+.hrepr-instance-table {
 	display: inline-block;
 	border-collapse: collapse;
 	width: 100%;
 	border-radius: var(--titled-box-radius);
 }
 
-.hrepr-object-table > tbody > tr > td {
+.hrepr-instance-table > tbody > tr > td {
 	padding-left: 5px;
 	padding-right: 5px;
 }
 
-.hrepr-object-table > tbody > tr > td.hrepr-delimiter {
+.hrepr-instance-table > tbody > tr > td.hrepr-delimiter {
 	padding: 0px;
 }
 
-/* .hrepr-object-table > tbody > tr > td > * {
+/* .hrepr-instance-table > tbody > tr > td > * {
 	display: inline-block;
 } */
 
-.hrepr-object-kvpair {
+.hrepr-instance-kvpair {
 	padding-left: 5px;
 	padding-right: 5px;
 	background: #eee;
@@ -162,36 +162,38 @@
 
 /* Colorize boxes for standard data structures */
 
-.hrepr-dict { border: 1px solid var(--dict-color); }
-.hrepr-dict > .hrepr-title { background: var(--dict-color); }
+.hreprt-dict { border: 1px solid var(--dict-color); }
+.hreprt-dict > .hrepr-title { background: var(--dict-color); }
 
-.hrepr-tuple { border: 1px solid var(--tuple-color); }
-.hrepr-tuple > .hrepr-title { background: var(--tuple-color); }
+.hreprt-tuple { border: 1px solid var(--tuple-color); }
+.hreprt-tuple > .hrepr-title { background: var(--tuple-color); }
 
-.hrepr-list { border: 1px solid var(--list-color); }
-.hrepr-list > .hrepr-title { background: var(--list-color); }
+.hreprt-list { border: 1px solid var(--list-color); }
+.hreprt-list > .hrepr-title { background: var(--list-color); }
 
-.hrepr-set { border: 1px solid var(--set-color); }
-.hrepr-set > .hrepr-title { background: var(--set-color); }
+.hreprt-set { border: 1px solid var(--set-color); }
+.hreprt-set > .hrepr-title { background: var(--set-color); }
 
-.hrepr-frozenset { border: 1px solid var(--frozenset-color); }
-.hrepr-frozenset > .hrepr-title { background: var(--frozenset-color); }
+.hreprt-frozenset { border: 1px solid var(--frozenset-color); }
+.hreprt-frozenset > .hrepr-title { background: var(--frozenset-color); }
+
+.hreprs-list { background: var(--list-color); color: white; padding: 2px; }
 
 .hrepr-ellipsis {
 	font-weight: bold;
 }
 
-.hrepr-circular {
+.hrepr-ref {
 	font-weight: bold;
 	color: magenta;
 }
 
-.circular_ref {
+.hrepr-refbox {
 	display: inline-block;
 	position: relative;
 }
 
-.circular_ref > :last-child {
+/* .hrepr-refbox > :first-child {
 	position: absolute;
 	color: white;
 	background: magenta;
@@ -199,4 +201,4 @@
 	font-size: 9px;
 	left: 0px;
 	top: 0px;
-}
+} */

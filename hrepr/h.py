@@ -220,3 +220,6 @@ class HTML:
             "(?<=[a-z])([A-Z])", lambda m: f"-{m.group(0).lower()}", tag_name
         )
         return Tag(tag_name)
+
+
+H = HTML()

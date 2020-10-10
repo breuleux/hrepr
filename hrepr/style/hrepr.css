@@ -34,22 +34,22 @@
 	color: #888;
 }
 
-.hrepr-bytes {
+.hreprt-bytes {
 	color: #666;
 	font-family: monospace;
 	white-space: pre;
 }
 
-.hrepr-bytes:before {
-	content: "bytes.fromhex(“";
-	font-family: normal;
-	color: #888;
+.hreprt-bytes:before {
+	content: "b“";
+	/* font-family: normal;
+	color: #888; */
 }
 
-.hrepr-bytes:after {
-	content: "”)";
-	font-family: normal;
-	color: #888;
+.hreprt-bytes:after {
+	content: "”";
+	/* font-family: normal;
+	color: #888; */
 }
 
 .hreprv-True {

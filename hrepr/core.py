@@ -3,40 +3,14 @@ import textwrap
 from collections import Counter
 from dataclasses import is_dataclass, fields as dataclass_fields
 
-from ovld import ovld, OvldCall, OvldMC
-from .h import css_hrepr, HTML, Tag
+from ovld import meta, ovld, OvldCall, OvldMC
+from .h import css_hrepr, H, HTML, Tag
 from . import std
 
 
 SHORT = object()
-
-
-# class DataclassMC(type):
-#     def __subclasscheck__(cls, sub):
-#         return (
-#             is_dataclass(sub) and not hasattr(sub, cls.excpt)
-#         )
-
-
-# class DataclassNoHrepr(metaclass=DataclassMC):
-#     pass
-
-
-# class DataclassNoHreprShort(metaclass=DataclassMC):
-#     pass
-
-
-class MetaMC(type):
-    def __subclasscheck__(cls, sub):
-        return cls.chk(sub)
-
-
-def meta(condition):
-    class M(metaclass=MetaMC):
-        @classmethod
-        def chk(cls, sub):
-            return condition(sub)
-    return M
+default_string_cutoff = 20
+default_bytes_cutoff = 20
 
 
 def dataclass_without(prop):
@@ -51,13 +25,10 @@ class Config:
         self._parent = parent
         self.__dict__.update(cfg)
 
-    def __call__(self, **cfg):
-        return self.with_config(cfg)
+    # def __call__(self, **cfg):
+    #     return self.with_config(cfg)
 
     def with_config(self, cfg):
-        # rval = copy(self)
-        # rval.__dict__.update(cfg)
-        # return rval
         if not cfg:
             return self
         elif self.__dict__.keys() == cfg.keys():
@@ -125,7 +96,7 @@ class HreprState:
 
 class Hrepr(metaclass=OvldMC):
 
-    def __init__(self, H, config=None, master=None):
+    def __init__(self, H=H, config=None, master=None):
         self.H = H
         if config is None:
             config = Config()
@@ -321,29 +292,58 @@ class StdHrepr(Hrepr):
     # Strings
 
     def hrepr(self, x: str):
-        if len(x) <= 15:
+        cutoff = self.config.string_cutoff or default_string_cutoff
+        if len(x) <= cutoff:
             return SHORT
         else:
             return self.H.span[f"hreprt-str"](x)
 
     def hrepr_short(self, x: str):
+        cutoff = self.config.string_cutoff or default_string_cutoff
         return self.H.span[f"hreprt-str"](
-            textwrap.shorten(x, 15, placeholder="...")
+            textwrap.shorten(x, cutoff, placeholder="...")
         )
+
+    # Bytes
+
+    def hrepr(self, x: bytes):
+        cutoff = self.config.bytes_cutoff or default_bytes_cutoff
+        if len(x) <= cutoff:
+            return SHORT
+        else:
+            return self.H.span[f"hreprt-bytes"](x.hex())
+
+    def hrepr_short(self, x: bytes):
+        cutoff = self.config.bytes_cutoff or default_bytes_cutoff
+        hx = x.hex()
+        if len(hx) > cutoff:
+            hx = hx[:cutoff - 3] + "..."
+        return self.H.span[f"hreprt-bytes"](hx)
 
     # Numbers
 
     def hrepr_short(self, x: (int, float)):
-        return self.H.span[f"hreprt-int"](str(x))
+        cls = type(x).__name__
+        return self.H.span[f"hreprt-{cls}"](str(x))
         # return std.standard(self, x)
+
+    # Booleans
+
+    def hrepr_short(self, x: bool):
+        return self.H.span[f"hreprv-{x}"](str(x))
+
+    # Tags
+
+    def hrepr(self, x: Tag):
+        return x
 
 
 def inject_reference_numbers(hcall, node, refmap):
     if isinstance(node, Tag):
-        node.children = [
+        node.children = tuple(
             inject_reference_numbers(hcall, child, refmap)
             for child in node.children
-        ]
+        )
         refnum = refmap.get(id(node), None)
         if refnum is not None:
             ref = hcall.H.span["hrepr-ref"]("#", refnum)
@@ -352,9 +352,6 @@ def inject_reference_numbers(hcall, node, refmap):
             return node
     else:
         return node
-
-
-H = HTML()
 
 
 def hrepr(obj, **config):

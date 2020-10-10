@@ -25,9 +25,6 @@ class Config:
         self._parent = parent
         self.__dict__.update(cfg)
 
-    # def __call__(self, **cfg):
-    #     return self.with_config(cfg)
-
     def with_config(self, cfg):
         if not cfg:
             return self
@@ -70,9 +67,8 @@ class Config:
 
 
 class HreprState:
-    def __init__(self, resources=set()):
+    def __init__(self):
         self.types_seen = set()
-        self.resources = set(resources)
         self.stack = Counter()
         self.registry = {}
         self.depth = -1
@@ -105,7 +101,7 @@ class Hrepr(metaclass=OvldMC):
         self.state = (
             master.state
             if master
-            else HreprState(self.global_resources())
+            else HreprState()
         )
 
     def with_config(self, config):
@@ -116,7 +112,6 @@ class Hrepr(metaclass=OvldMC):
             return type(self)(H=self.H, config=cfg, master=self.master)
 
     def ref(self, obj, loop=False):
-        # breakpoint()
         num = self.state.get_ref(id(obj))
         sym = "⟳" if loop else "#"
         ref = self.H.span["hrepr-ref"](sym, num)
@@ -124,10 +119,6 @@ class Hrepr(metaclass=OvldMC):
             return ref
         else:
             return self.H.div["hrepr-refbox"](ref("="), self.hrepr_short(obj))
-            # short = self.hrepr_short(obj)
-            # if short is NotImplemented:
-            #     short = self.default_hrepr_short(obj)
-            # return self.H.div["hrepr-refbox"](ref("="), short)
 
     def global_resources(self):
         return set()
@@ -194,17 +185,6 @@ class Hrepr(metaclass=OvldMC):
         if self.state.registered(ido) and not runner.config.norefs:
             return runner.ref(obj)
 
-        # Collect resources for this object
-        cls = type(obj)
-        if cls not in self.state.types_seen:
-            self.state.types_seen.add(cls)
-            resources = self.hrepr_resources[cls](cls)
-            if resources:
-                if not isinstance(resources, (tuple, list, set, frozenset)):
-                    self.state.resources.add(resources)
-                else:
-                    self.state.resources.update(resources)
-
         # Push object on the stack to detect circular references
         self.state.stack[ido] += 1
         self.state.depth += 1
@@ -218,6 +198,12 @@ class Hrepr(metaclass=OvldMC):
         # Pop object from the stack
         self.state.depth -= 1
         self.state.stack[ido] -= 1
+
+        # Collect resources for this object
+        cls = type(obj)
+        resources = self.hrepr_resources[cls](cls)
+        rval = rval.fill(resources=resources)
+
         return rval
 
 
@@ -358,5 +344,4 @@ def hrepr(obj, **config):
     hcall = StdHrepr(H=H, config=Config(config))
     rval = hcall(obj)
     rval = inject_reference_numbers(hcall, rval, hcall.state.make_refmap())
-    rval.resources = hcall.state.resources
     return rval

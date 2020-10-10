@@ -1,5 +1,6 @@
 import re
 import os.path
+from ovld import ovld
 from html import escape
 from types import GeneratorType
 
@@ -75,18 +76,32 @@ class Tag:
             children.
     """
 
-    def __init__(self, name, attributes=None, children=None):
+    def __init__(self, name, attributes=None, children=None, resources=None):
         self.name = name
         self.attributes = attributes or {}
         self.children = children or ()
-        self.resources = set()
+        self.resources = frozenset() if resources is None else frozenset(resources)
 
-    def fill(self, children=(), attributes={}):
+    def fill(self, children=None, attributes=None, resources=None):
+        if not children and not attributes and not resources:
+            return self
+        children = (*self.children, *children) if children else self.children
+        attributes = {**self.attributes, **attributes} if attributes else self.attributes
+        resources = {*self.resources, *resources} if resources else self.resources
         return Tag(
-            self.name,
-            {**self.attributes, **attributes},
-            self.children + tuple(children),
+            name=self.name,
+            attributes=attributes,
+            children=children,
+            resources=resources,
         )
+
+    def collect_resources(self, coll=None):
+        coll = set() if coll is None else coll
+        coll.update(self.resources)
+        for child in iterate_children(self.children):
+            if isinstance(child, Tag):
+                child.collect_resources(coll=coll)
+        return coll
 
     def __getitem__(self, items):
         if not isinstance(items, tuple):
@@ -106,14 +121,16 @@ class Tag:
             and self.name == other.name
             and self.attributes == other.attributes
             and self.children == other.children
+            and self.resources == other.resources
         )
 
     def __hash__(self):
-        return (
-            hash(self.name)
-            ^ hash(tuple(self.attributes.items()))
-            ^ hash(self.children)
-        )
+        return hash((
+            self.name,
+            tuple(self.attributes.items()),
+            self.children,
+            self.resources,
+        ))
 
     def __repr__(self):
         return str(self)
@@ -135,9 +152,7 @@ class Tag:
             return f'{k}="{res}"'
 
         def convert_child(c):
-            if isinstance(c, (list, tuple, GeneratorType)):
-                return "".join(map(convert_child, c))
-            elif isinstance(c, Tag):
+            if isinstance(c, Tag):
                 return str(c)
             elif escape_children:
                 return escape(str(c))
@@ -154,7 +169,7 @@ class Tag:
             assert self.name not in _virtual_tags
             attr = " " + attr
 
-        children = "".join(map(convert_child, self.children))
+        children = "".join(map(convert_child, iterate_children(self.children)))
         if self.name in _virtual_tags:
             # Virtual tags just inlines their contents directly.
             return children
@@ -198,8 +213,19 @@ class Tag:
         )
         return H.inline(
             H.raw("<!DOCTYPE html>"),
-            H.html(H.head(utf8, *self.resources), H.body(self)),
+            H.html(H.head(utf8, *self.collect_resources()), H.body(self)),
         )
+
+
+@ovld
+def iterate_children(self, children: (list, tuple, GeneratorType)):
+    for child in children:
+        yield from self(child)
+
+
+@ovld
+def iterate_children(self, child: object):
+    yield child
 
 
 class HTML:

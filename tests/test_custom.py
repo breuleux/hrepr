@@ -1,7 +1,7 @@
 
-from hrepr import hrepr, StdHrepr, H
+from hrepr import StdHrepr, H
 
-from .common import one_test_per_assert
+from .common import one_test_per_assert, hrepr
 
 
 class Banana:
@@ -34,6 +34,12 @@ class CustomHrepr(StdHrepr):
         return self.H.span["myint"](str(-x))
 
 
+class Plantain(Banana):
+    @classmethod
+    def __hrepr_resources__(cls, H):
+        return H.style(".banana { color: yellow; }")
+
+
 chrepr = CustomHrepr()
 
 
@@ -45,6 +51,7 @@ def test_override_int():
 def test_dunder():
     assert hrepr(Banana("starchy")) == H.span["banana"](H.span["hreprt-str"]("starchy"))
     assert hrepr(Banana("starchy"), max_depth=0) == H.span["banana"]("B A N A N A")
+    assert hrepr(Plantain("starchy")) == H.span["banana"](H.span["hreprt-str"]("starchy")).fill(resources=H.style(".banana { color: yellow; }"))
     assert chrepr(Banana(10)) == H.span["banana"](H.span["myint"]("-10"))
 
 

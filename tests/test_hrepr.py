@@ -1,8 +1,8 @@
 
 from dataclasses import dataclass
-from hrepr import H, hrepr
+from hrepr import H
 
-from .common import one_test_per_assert
+from .common import one_test_per_assert, hrepr
 
 
 @dataclass
@@ -23,7 +23,7 @@ def hshort(x, **kw):
 def test_singletons():
     assert hrepr(True) == H.span["hreprv-True"]("True")
     assert hrepr(False) == H.span["hreprv-False"]("False")
-    assert hrepr(None) == H.span["hreprt-NoneType"]("None")
+    assert hrepr(None) == H.span["hreprv-None"]("None")
 
 
 @one_test_per_assert

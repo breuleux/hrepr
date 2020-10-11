@@ -8,7 +8,6 @@ from .h import css_hrepr, H, HTML, Tag
 from . import std
 
 
-SHORT = object()
 default_string_cutoff = 20
 default_bytes_cutoff = 20
 
@@ -28,20 +27,16 @@ class Config:
     def with_config(self, cfg):
         if not cfg:
             return self
-        elif self.__dict__.keys() == cfg.keys():
-            return Config(cfg, self._parent)
         else:
             return Config(cfg, self)
 
     def __getattr__(self, attr):
         # Only triggers for attributes not in __dict__
-        if attr.startswith("_"):
-            return getattr(super(), attr)
-        elif self._parent:
+        if self._parent:
             return getattr(self._parent, attr)
         return None
 
-    def __hrepr__(self, H, hrepr):
+    def __hrepr__(self, H, hrepr):  # pragma: no cover
         return hrepr.stdrepr_object("Config", self.__dict__.items())
 
 
@@ -81,7 +76,7 @@ class HreprState:
         return objid in self.registry
 
     def register(self, objid, value):
-        self.registry[objid] = value
+        self.registry.setdefault(objid, value)
 
     def make_refmap(self):
         rval = {}
@@ -120,19 +115,8 @@ class Hrepr(metaclass=OvldMC):
         else:
             return self.H.div["hrepr-refbox"](ref("="), self.hrepr_short(obj))
 
-    def global_resources(self):
+    def global_resources(self):  # pragma: no cover
         return set()
-
-    # def default_hrepr_resources(self, cls):
-    #     return None
-
-    def default_hrepr(self, obj):
-        clsn = type(obj).__name__
-        return self.H.span[f"hreprt-{clsn}"](str(obj))
-
-    def default_hrepr_short(self, obj):
-        clsn = type(obj).__name__
-        return self.H.span[f"hreprs-{clsn}"]("<", clsn, ">")
 
     @ovld
     def hrepr_resources(self, cls: object):
@@ -143,16 +127,11 @@ class Hrepr(metaclass=OvldMC):
     def hrepr(ovldcall, obj):
         self = ovldcall.obj
         rval = ovldcall.resolve(obj)(obj)
-        if rval is SHORT:
+        if rval is NotImplemented:
             return self.hrepr_short(obj)
-        elif rval is NotImplemented:
-            rval = self.hrepr_short.resolve(obj)(obj)
-            if rval is NotImplemented:
-                rval = self.default_hrepr(obj)
-            else:
-                return rval
-        self.state.register(id(obj), rval)
-        return rval
+        else:
+            self.state.register(id(obj), rval)
+            return rval
 
     def hrepr(self, obj: object):
         if hasattr(obj, "__hrepr__"):
@@ -160,20 +139,15 @@ class Hrepr(metaclass=OvldMC):
         else:
             return NotImplemented
 
-    @ovld.dispatch
-    def hrepr_short(ovldcall, obj):
-        self = ovldcall.obj
-        rval = ovldcall.resolve(obj)(obj)
-        if rval is NotImplemented:
-            return self.default_hrepr_short(obj)
-        else:
-            return rval
-
+    @ovld
     def hrepr_short(self, obj: object):
         if hasattr(obj, "__hrepr_short__"):
             return obj.__hrepr_short__(self, self.H)
         else:
-            return NotImplemented
+            clsn = type(obj).__name__
+            rval = self.H.span[f"hreprs-{clsn}"]("<", clsn, ">")
+            self.state.register(id(obj), rval)
+            return rval
 
     def __call__(self, obj, **config):
         self.state.skip_default = False
@@ -280,7 +254,7 @@ class StdHrepr(Hrepr):
     def hrepr(self, x: str):
         cutoff = self.config.string_cutoff or default_string_cutoff
         if len(x) <= cutoff:
-            return SHORT
+            return NotImplemented
         else:
             return self.H.span[f"hreprt-str"](x)
 
@@ -295,7 +269,7 @@ class StdHrepr(Hrepr):
     def hrepr(self, x: bytes):
         cutoff = self.config.bytes_cutoff or default_bytes_cutoff
         if len(x) <= cutoff:
-            return SHORT
+            return NotImplemented
         else:
             return self.H.span[f"hreprt-bytes"](x.hex())
 
@@ -316,6 +290,11 @@ class StdHrepr(Hrepr):
     # Booleans
 
     def hrepr_short(self, x: bool):
+        return self.H.span[f"hreprv-{x}"](str(x))
+
+    # None
+
+    def hrepr_short(self, x: type(None)):
         return self.H.span[f"hreprv-{x}"](str(x))
 
     # Tags
@@ -344,4 +323,5 @@ def hrepr(obj, **config):
     hcall = StdHrepr(H=H, config=Config(config))
     rval = hcall(obj)
     rval = inject_reference_numbers(hcall, rval, hcall.state.make_refmap())
+    rval = rval.fill(resources=hcall.global_resources())
     return rval

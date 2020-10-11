@@ -87,6 +87,8 @@ class Tag:
             return self
         children = (*self.children, *children) if children else self.children
         attributes = {**self.attributes, **attributes} if attributes else self.attributes
+        if isinstance(resources, Tag):
+            resources = {resources}
         resources = {*self.resources, *resources} if resources else self.resources
         return Tag(
             name=self.name,

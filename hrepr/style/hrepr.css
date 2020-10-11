@@ -11,7 +11,7 @@
 
 /* Scalar/string formatting */
 
-.hreprv-True, .hreprv-False, .hreprt-NoneType, .hreprt-int, .hreprt-float {
+.hreprv-True, .hreprv-False, .hreprv-None, .hreprt-int, .hreprt-float {
 	font-weight: bold;
 }
 
@@ -60,7 +60,7 @@
 	color: red;
 }
 
-.hreprt-NoneType {
+.hreprv-None {
 	color: grey;
 }
 

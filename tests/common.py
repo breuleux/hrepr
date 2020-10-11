@@ -5,6 +5,8 @@ from textwrap import dedent
 
 from _pytest.assertion.rewrite import AssertionRewriter
 
+from hrepr.core import StdHrepr, inject_reference_numbers, H, Config
+
 
 class AssertTransformer(NodeTransformer):
     def visit_FunctionDef(self, node):
@@ -44,3 +46,10 @@ def one_test_per_assert(fn):
     glb = fn.__globals__
     exec(new_fn, glb, glb)
     return None
+
+
+def hrepr(obj, **config):
+    hcall = StdHrepr(H=H, config=Config(config))
+    rval = hcall(obj)
+    rval = inject_reference_numbers(hcall, rval, hcall.state.make_refmap())
+    return rval

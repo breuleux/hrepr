@@ -1,4 +1,3 @@
-
 from hrepr import H
 
 from .common import one_test_per_assert
@@ -10,106 +9,68 @@ def matches(h, s):
 
 @one_test_per_assert
 def test_div():
-    assert matches(
-        H.div(),
-        "<div></div>"
-    )
-    assert matches(
-        H.div("Some content"),
-        '<div>Some content</div>'
-    )
+    assert matches(H.div(), "<div></div>")
+    assert matches(H.div("Some content"), "<div>Some content</div>")
     assert matches(
         H.div("  \n\n    Some  content \n      "),
-        '<div>  \n\n    Some  content \n      </div>'
+        "<div>  \n\n    Some  content \n      </div>",
     )
-    assert matches(
-        H.div["classy"](),
-        '<div class="classy"></div>'
-    )
-    assert matches(
-        H.div["classy"](),
-        '<div class="classy"></div>'
-    )
+    assert matches(H.div["classy"](), '<div class="classy"></div>')
+    assert matches(H.div["classy"](), '<div class="classy"></div>')
     assert matches(
         H.div["classy"](id="eyedee", thing="thang"),
-        '<div class="classy" id="eyedee" thing="thang"></div>'
+        '<div class="classy" id="eyedee" thing="thang"></div>',
     )
     assert matches(
-        H.div["qu\"ote"](id="qu\"ite"),
-        '<div class="qu&quot;ote" id="qu&quot;ite"></div>'
+        H.div['qu"ote'](id='qu"ite'),
+        '<div class="qu&quot;ote" id="qu&quot;ite"></div>',
     )
 
 
 @one_test_per_assert
 def test_nesting():
     assert matches(
-        H.div(H.div(H.b("inner"))),
-        "<div><div><b>inner</b></div></div>"
+        H.div(H.div(H.b("inner"))), "<div><div><b>inner</b></div></div>"
     )
     assert matches(
-        H.div(H.b("hello"), H.i("there")),
-        "<div><b>hello</b><i>there</i></div>"
+        H.div(H.b("hello"), H.i("there")), "<div><b>hello</b><i>there</i></div>"
     )
     assert matches(
         H.div([[[H.b("hello"), [H.i("there")]]]]),
-        "<div><b>hello</b><i>there</i></div>"
+        "<div><b>hello</b><i>there</i></div>",
     )
 
 
 def test_quote():
-    assert matches(
-        H.div("<quoted>"),
-        '<div>&lt;quoted&gt;</div>'
-    )
+    assert matches(H.div("<quoted>"), "<div>&lt;quoted&gt;</div>")
 
 
 @one_test_per_assert
 def test_raw():
+    assert matches(H.raw("thing"), "thing")
+    assert matches(H.raw("<b>hello</b>"), "<b>hello</b>")
     assert matches(
-        H.raw("thing"),
-        "thing"
+        H.raw(H.b("hello"), H.i("there")), "<b>hello</b><i>there</i>"
     )
-    assert matches(
-        H.raw("<b>hello</b>"),
-        "<b>hello</b>"
-    )
-    assert matches(
-        H.raw(H.b("hello"), H.i("there")),
-        "<b>hello</b><i>there</i>"
-    )
-    assert matches(
-        H.raw(H.b("<inner>")),
-        "<b>&lt;inner&gt;</b>"
-    )
+    assert matches(H.raw(H.b("<inner>")), "<b>&lt;inner&gt;</b>")
 
 
 @one_test_per_assert
 def test_inline():
+    assert matches(H.inline("thing"), "thing")
+    assert matches(H.inline("<b>hello</b>"), "&lt;b&gt;hello&lt;/b&gt;")
     assert matches(
-        H.inline("thing"),
-        "thing"
-    )
-    assert matches(
-        H.inline("<b>hello</b>"),
-        "&lt;b&gt;hello&lt;/b&gt;"
-    )
-    assert matches(
-        H.inline(H.b("hello"), H.i("there")),
-        "<b>hello</b><i>there</i>"
+        H.inline(H.b("hello"), H.i("there")), "<b>hello</b><i>there</i>"
     )
 
 
 def test_script():
-    assert matches(
-        H.script("1 < 2; 4 > 3;"),
-        "<script>1 < 2; 4 > 3;</script>"
-    )
+    assert matches(H.script("1 < 2; 4 > 3;"), "<script>1 < 2; 4 > 3;</script>")
 
 
 def test_style():
     assert matches(
-        H.style("a < b { color: red; }"),
-        "<style>a < b { color: red; }</style>"
+        H.style("a < b { color: red; }"), "<style>a < b { color: red; }</style>"
     )
 
 
@@ -145,13 +106,17 @@ def test_incremental():
     assert matches(d, "<div>crumpet<b>tea</b></div>")
 
     d = d(id="paramount")
-    assert matches(d, "<div id=\"paramount\">crumpet<b>tea</b></div>")
+    assert matches(d, '<div id="paramount">crumpet<b>tea</b></div>')
 
     d = d({"sheep": "bah"}, quack=True)
-    assert matches(d, "<div id=\"paramount\" sheep=\"bah\" quack>crumpet<b>tea</b></div>")
+    assert matches(
+        d, '<div id="paramount" sheep="bah" quack>crumpet<b>tea</b></div>'
+    )
 
     d = d(quack=False)
-    assert matches(d, "<div id=\"paramount\" sheep=\"bah\" >crumpet<b>tea</b></div>")
+    assert matches(
+        d, '<div id="paramount" sheep="bah" >crumpet<b>tea</b></div>'
+    )
 
 
 @one_test_per_assert
@@ -169,8 +134,7 @@ def test_as_page():
         {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
     )
     page = H.inline(
-        H.raw("<!DOCTYPE html>"),
-        H.html(H.head(utf8), H.body(tag)),
+        H.raw("<!DOCTYPE html>"), H.html(H.head(utf8), H.body(tag)),
     )
     assert tag.as_page() == page
 
@@ -185,7 +149,6 @@ def test_as_page_with_resources():
         {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
     )
     page = H.inline(
-        H.raw("<!DOCTYPE html>"),
-        H.html(H.head(utf8, *resources), H.body(tag)),
+        H.raw("<!DOCTYPE html>"), H.html(H.head(utf8, *resources), H.body(tag)),
     )
     assert tag.as_page() == page

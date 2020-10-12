@@ -1,12 +1,12 @@
-
 import textwrap
 from collections import Counter
-from dataclasses import is_dataclass, fields as dataclass_fields
+from dataclasses import fields as dataclass_fields
+from dataclasses import is_dataclass
 
-from ovld import meta, ovld, OvldCall, OvldMC
-from .h import css_hrepr, H, HTML, Tag
+from ovld import OvldCall, OvldMC, meta, ovld
+
 from . import std
-
+from .h import HTML, H, Tag, css_hrepr
 
 default_string_cutoff = 20
 default_bytes_cutoff = 20
@@ -16,6 +16,7 @@ def dataclass_without(prop):
     @meta
     def fn(cls):
         return is_dataclass(cls) and not hasattr(cls, prop)
+
     return fn
 
 
@@ -86,7 +87,6 @@ class HreprState:
 
 
 class Hrepr(metaclass=OvldMC):
-
     @classmethod
     def make_interface(cls, **kw):
         return Interface(cls, **kw)
@@ -97,11 +97,7 @@ class Hrepr(metaclass=OvldMC):
             config = Config()
         self.config = config
         self.master = master or self
-        self.state = (
-            master.state
-            if master
-            else HreprState()
-        )
+        self.state = master.state if master else HreprState()
 
     def with_config(self, config):
         if not config:
@@ -167,8 +163,10 @@ class Hrepr(metaclass=OvldMC):
         self.state.stack[ido] += 1
         self.state.depth += 1
 
-        if (runner.config.max_depth is not None
-            and self.state.depth >= runner.config.max_depth):
+        if (
+            runner.config.max_depth is not None
+            and self.state.depth >= runner.config.max_depth
+        ):
             rval = runner.hrepr_short(obj)
         else:
             rval = runner.hrepr(obj)
@@ -186,7 +184,6 @@ class Hrepr(metaclass=OvldMC):
 
 
 class StdHrepr(Hrepr):
-
     def global_resources(self):
         return {self.H.style(css_hrepr)}
 
@@ -251,7 +248,9 @@ class StdHrepr(Hrepr):
 
     def hrepr_short(self, xs: dataclass_without("__hrepr_short__")):
         cls = type(xs).__name__
-        return self.H.span[f"hreprs-{cls}", "hrepr-short-instance"](f"{cls} ...")
+        return self.H.span[f"hreprs-{cls}", "hrepr-short-instance"](
+            f"{cls} ..."
+        )
 
     # Strings
 
@@ -281,7 +280,7 @@ class StdHrepr(Hrepr):
         cutoff = self.config.bytes_cutoff or default_bytes_cutoff
         hx = x.hex()
         if len(hx) > cutoff:
-            hx = hx[:cutoff - 3] + "..."
+            hx = hx[: cutoff - 3] + "..."
         return self.H.span[f"hreprt-bytes"](hx)
 
     # Numbers
@@ -333,7 +332,9 @@ class Interface:
         hcall = self._hcls(H=H, config=Config(config))
         rval = hcall(obj)
         if self.inject_references:
-            rval = inject_reference_numbers(hcall, rval, hcall.state.make_refmap())
+            rval = inject_reference_numbers(
+                hcall, rval, hcall.state.make_refmap()
+            )
         if self.fill_resources:
             rval = rval.fill(resources=hcall.global_resources())
         return rval

@@ -1,5 +1,4 @@
-
-from hrepr import StdHrepr, H
+from hrepr import H, StdHrepr
 
 from .common import one_test_per_assert
 
@@ -51,9 +50,15 @@ def test_override_int():
 
 @one_test_per_assert
 def test_dunder():
-    assert hrepr(Banana("starchy")) == H.span["banana"](H.span["hreprt-str"]("starchy"))
-    assert hrepr(Banana("starchy"), max_depth=0) == H.span["banana"]("B A N A N A")
-    assert hrepr(Plantain("starchy")) == H.span["banana"](H.span["hreprt-str"]("starchy")).fill(resources=H.style(".banana { color: yellow; }"))
+    assert hrepr(Banana("starchy")) == H.span["banana"](
+        H.span["hreprt-str"]("starchy")
+    )
+    assert hrepr(Banana("starchy"), max_depth=0) == H.span["banana"](
+        "B A N A N A"
+    )
+    assert hrepr(Plantain("starchy")) == H.span["banana"](
+        H.span["hreprt-str"]("starchy")
+    ).fill(resources=H.style(".banana { color: yellow; }"))
     assert chrepr(Banana(10)) == H.span["banana"](H.span["myint"]("-10"))
 
 

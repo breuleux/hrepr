@@ -1,5 +1,3 @@
-
-
 def standard(hrepr, obj, *, cls=None, tag="span"):
     """
     Standard representation for objects, used when there is no

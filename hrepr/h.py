@@ -1,9 +1,9 @@
-import re
 import os.path
-from ovld import ovld
+import re
 from html import escape
 from types import GeneratorType
 
+from ovld import ovld
 
 # CSS for hrepr
 styledir = f"{os.path.dirname(__file__)}/style"
@@ -80,16 +80,22 @@ class Tag:
         self.name = name
         self.attributes = attributes or {}
         self.children = children or ()
-        self.resources = frozenset() if resources is None else frozenset(resources)
+        self.resources = (
+            frozenset() if resources is None else frozenset(resources)
+        )
 
     def fill(self, children=None, attributes=None, resources=None):
         if not children and not attributes and not resources:
             return self
         children = (*self.children, *children) if children else self.children
-        attributes = {**self.attributes, **attributes} if attributes else self.attributes
+        attributes = (
+            {**self.attributes, **attributes} if attributes else self.attributes
+        )
         if isinstance(resources, Tag):
             resources = {resources}
-        resources = {*self.resources, *resources} if resources else self.resources
+        resources = (
+            {*self.resources, *resources} if resources else self.resources
+        )
         return Tag(
             name=self.name,
             attributes=attributes,
@@ -127,12 +133,14 @@ class Tag:
         )
 
     def __hash__(self):
-        return hash((
-            self.name,
-            tuple(self.attributes.items()),
-            self.children,
-            self.resources,
-        ))
+        return hash(
+            (
+                self.name,
+                tuple(self.attributes.items()),
+                self.children,
+                self.resources,
+            )
+        )
 
     def __repr__(self):
         return str(self)

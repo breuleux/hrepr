@@ -87,6 +87,10 @@ class HreprState:
 
 class Hrepr(metaclass=OvldMC):
 
+    @classmethod
+    def make_interface(cls, **kw):
+        return Interface(cls, **kw)
+
     def __init__(self, H=H, config=None, master=None):
         self.H = H
         if config is None:
@@ -319,9 +323,20 @@ def inject_reference_numbers(hcall, node, refmap):
         return node
 
 
-def hrepr(obj, **config):
-    hcall = StdHrepr(H=H, config=Config(config))
-    rval = hcall(obj)
-    rval = inject_reference_numbers(hcall, rval, hcall.state.make_refmap())
-    rval = rval.fill(resources=hcall.global_resources())
-    return rval
+class Interface:
+    def __init__(self, cls, inject_references=True, fill_resources=True):
+        self._hcls = cls
+        self.inject_references = inject_references
+        self.fill_resources = fill_resources
+
+    def hrepr(self, obj, **config):
+        hcall = self._hcls(H=H, config=Config(config))
+        rval = hcall(obj)
+        if self.inject_references:
+            rval = inject_reference_numbers(hcall, rval, hcall.state.make_refmap())
+        if self.fill_resources:
+            rval = rval.fill(resources=hcall.global_resources())
+        return rval
+
+
+hrepr = StdHrepr.make_interface().hrepr

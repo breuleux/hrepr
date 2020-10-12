@@ -1,7 +1,9 @@
 
 from hrepr import StdHrepr, H
 
-from .common import one_test_per_assert, hrepr
+from .common import one_test_per_assert
+
+hrepr = StdHrepr.make_interface(fill_resources=False).hrepr
 
 
 class Banana:
@@ -40,7 +42,7 @@ class Plantain(Banana):
         return H.style(".banana { color: yellow; }")
 
 
-chrepr = CustomHrepr()
+chrepr = CustomHrepr.make_interface(fill_resources=False).hrepr
 
 
 def test_override_int():

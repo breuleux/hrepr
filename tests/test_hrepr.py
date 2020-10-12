@@ -1,8 +1,11 @@
 
 from dataclasses import dataclass
-from hrepr import H
+from hrepr import H, StdHrepr
 
-from .common import one_test_per_assert, hrepr
+from .common import one_test_per_assert
+
+
+hrepr = StdHrepr.make_interface(fill_resources=False).hrepr
 
 
 @dataclass

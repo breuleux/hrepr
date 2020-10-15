@@ -26,10 +26,7 @@ class Config:
         self.__dict__.update(cfg)
 
     def with_config(self, cfg):
-        if not cfg:
-            return self
-        else:
-            return Config(cfg, self)
+        return Config(cfg, self)
 
     def __getattr__(self, attr):
         # Only triggers for attributes not in __dict__
@@ -93,9 +90,7 @@ class Hrepr(metaclass=OvldMC):
 
     def __init__(self, H=H, config=None, master=None):
         self.H = H
-        if config is None:
-            config = Config()
-        self.config = config
+        self.config = config or Config()
         self.master = master or self
         self.state = master.state if master else HreprState()
 

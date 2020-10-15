@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
 from hrepr import H, StdHrepr
+from hrepr import hrepr as real_hrepr
+from hrepr.h import css_hrepr
 
 from .common import one_test_per_assert
 
@@ -120,6 +122,21 @@ def test_dict():
         H.div["hrepr-title"]("}"),
     )
 
+    assert hrepr(pt, mapping_layout="h") == H.div[
+        f"hreprt-dict", "hrepr-titled-h"
+    ](
+        H.div["hrepr-title"]("{"),
+        H.div["hrepr-contents-h"](
+            H.div["hrepr-instance-kvpair"](
+                H.span["hreprt-str"]("x"), " ↦ ", H.span["hreprt-int"]("1"),
+            ),
+            H.div["hrepr-instance-kvpair"](
+                H.span["hreprt-str"]("y"), " ↦ ", H.span["hreprt-int"]("2"),
+            ),
+        ),
+        H.div["hrepr-title"]("}"),
+    )
+
 
 def test_dataclass():
     pt = Point(1, 2)
@@ -151,6 +168,50 @@ def test_tag():
     assert hrepr(tg) is tg
 
 
+def test_multiref():
+    li = [1, 2]
+    lili = [li, li]
+
+    assert hrepr(lili) == H.div["hreprt-list", "hrepr-titled-h"](
+        H.div["hrepr-title"]("["),
+        H.div["hrepr-contents-h"](
+            H.div["hrepr-refbox"](
+                H.span["hrepr-ref"]("#", 1, "="),
+                H.div["hreprt-list", "hrepr-titled-h"](
+                    H.div["hrepr-title"]("["),
+                    H.div["hrepr-contents-h"](
+                        H.span["hreprt-int"]("1"), H.span["hreprt-int"]("2"),
+                    ),
+                    H.div["hrepr-title"]("]"),
+                ),
+            ),
+            H.div["hrepr-refbox"](
+                H.span["hrepr-ref"]("#", 1, "="),
+                H.span["hreprs-list"]("[...]"),
+            ),
+        ),
+        H.div["hrepr-title"]("]"),
+    )
+
+    assert hrepr(lili, shortref=True) == H.div["hreprt-list", "hrepr-titled-h"](
+        H.div["hrepr-title"]("["),
+        H.div["hrepr-contents-h"](
+            H.div["hrepr-refbox"](
+                H.span["hrepr-ref"]("#", 1, "="),
+                H.div["hreprt-list", "hrepr-titled-h"](
+                    H.div["hrepr-title"]("["),
+                    H.div["hrepr-contents-h"](
+                        H.span["hreprt-int"]("1"), H.span["hreprt-int"]("2"),
+                    ),
+                    H.div["hrepr-title"]("]"),
+                ),
+            ),
+            H.span["hrepr-ref"]("#", 1),
+        ),
+        H.div["hrepr-title"]("]"),
+    )
+
+
 def test_recursive():
     li = [1]
     li.append(li)
@@ -170,8 +231,27 @@ def test_recursive():
         ),
     )
 
+    assert hrepr(li, shortref=True) == H.div["hrepr-refbox"](
+        H.span["hrepr-ref"]("#", 1, "="),
+        H.div["hreprt-list", "hrepr-titled-h"](
+            H.div["hrepr-title"]("["),
+            H.div["hrepr-contents-h"](
+                H.span["hreprt-int"]("1"), H.span["hrepr-ref"]("⟳", 1),
+            ),
+            H.div["hrepr-title"]("]"),
+        ),
+    )
+
 
 def test_unsupported():
-    aa = hshort(Opaque())
-    bb = H.span["hreprs-Opaque"]("<Opaque>")
     assert hshort(Opaque()) == H.span["hreprs-Opaque"]("<", "Opaque", ">")
+
+
+def test_as_page():
+    utf8 = H.meta(
+        {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
+    )
+    assert real_hrepr(1).as_page() == H.inline(
+        H.raw("<!DOCTYPE html>"),
+        H.html(H.head(utf8, H.style(css_hrepr)), H.body(real_hrepr(1)),),
+    )

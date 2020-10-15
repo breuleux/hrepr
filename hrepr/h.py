@@ -189,13 +189,16 @@ class Tag:
         else:
             return f"<{self.name}{attr}>{children}</{self.name}>"
 
-    def _repr_html_(self):
+    def _repr_html_(self):  # pragma: no cover
         """
         Jupyter Notebook hook to print this element as HTML.
         """
-        nbreset = f"<style>{css_nbreset}</style>"
-        resources = "".join(map(str, self.resources))
-        return f'<div>{nbreset}{resources}<div class="hrepr">{self}</div></div>'
+        elem = H.div(
+            H.style(css_nbreset),
+            *self.collect_resources(),
+            H.div["hrepr"](self),
+        )
+        return str(elem)
 
     def as_page(self):
         """

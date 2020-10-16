@@ -164,24 +164,24 @@
 
 .hreprt-dict { border: 1px solid var(--dict-color); }
 .hreprt-dict > .hrepr-title { background: var(--dict-color); }
+.hreprs-dict { background: var(--dict-color); color: white; padding: 2px; }
 
 .hreprt-tuple { border: 1px solid var(--tuple-color); }
 .hreprt-tuple > .hrepr-title { background: var(--tuple-color); }
+.hreprs-tuple { background: var(--tuple-color); color: white; padding: 2px; }
 
 .hreprt-list { border: 1px solid var(--list-color); }
 .hreprt-list > .hrepr-title { background: var(--list-color); }
+.hreprs-list { background: var(--list-color); color: white; padding: 2px; }
 
 .hreprt-set { border: 1px solid var(--set-color); }
 .hreprt-set > .hrepr-title { background: var(--set-color); }
+.hreprs-set { background: var(--set-color); color: white; padding: 2px; }
 
 .hreprt-frozenset { border: 1px solid var(--frozenset-color); }
 .hreprt-frozenset > .hrepr-title { background: var(--frozenset-color); }
+.hreprs-frozenset { background: var(--frozenset-color); color: white; padding: 2px; }
 
-.hreprs-list { background: var(--list-color); color: white; padding: 2px; }
-
-.hrepr-ellipsis {
-	font-weight: bold;
-}
 
 .hrepr-ref {
 	font-weight: bold;

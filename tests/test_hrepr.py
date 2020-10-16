@@ -6,7 +6,7 @@ from hrepr.h import css_hrepr
 
 from .common import one_test_per_assert
 
-hrepr = StdHrepr.make_interface(fill_resources=False).hrepr
+hrepr = StdHrepr.make_interface(fill_resources=False)
 
 
 @dataclass
@@ -254,4 +254,10 @@ def test_as_page():
     assert real_hrepr(1).as_page() == H.inline(
         H.raw("<!DOCTYPE html>"),
         H.html(H.head(utf8, H.style(css_hrepr)), H.body(real_hrepr(1)),),
+    )
+
+
+def test_hrepr_multiarg():
+    assert hrepr(1, 2) == H.inline(
+        H.span["hreprt-int"]("1"), H.span["hreprt-int"]("2"),
     )

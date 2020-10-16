@@ -254,11 +254,14 @@ class HTML:
     <span class="cool beans">How stylish!</span>
     """
 
+    def __init__(self, tag_class=Tag):
+        self.tag_class = tag_class
+
     def __getattr__(self, tag_name):
         tag_name = re.sub(
             "(?<=[a-z])([A-Z])", lambda m: f"-{m.group(0).lower()}", tag_name
         )
-        return Tag(tag_name)
+        return self.tag_class(tag_name)
 
 
-H = HTML()
+H = HTML(tag_class=Tag)

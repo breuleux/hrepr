@@ -130,14 +130,14 @@ class Hrepr(metaclass=OvldMC):
 
     def hrepr(self, obj: object):
         if hasattr(obj, "__hrepr__"):
-            return obj.__hrepr__(self, self.H)
+            return obj.__hrepr__(self.H, self)
         else:
             return NotImplemented
 
     @ovld
     def hrepr_short(self, obj: object):
         if hasattr(obj, "__hrepr_short__"):
-            return obj.__hrepr_short__(self, self.H)
+            return obj.__hrepr_short__(self.H, self)
         else:
             clsn = type(obj).__name__
             rval = self.H.span[f"hreprs-{clsn}"]("<", clsn, ">")
@@ -166,6 +166,14 @@ class Hrepr(metaclass=OvldMC):
         else:
             rval = runner.hrepr(obj)
 
+        # Check that it's the right type
+        htype = self.H.tag_class
+        if not isinstance(rval, htype):
+            raise TypeError(
+                f"Return value of hrepr({type(obj)}) must be an "
+                f"instance of {htype}, not {type(rval)}."
+            )
+
         # Pop object from the stack
         self.state.depth -= 1
         self.state.stack[ido] -= 1
@@ -179,13 +187,17 @@ class Hrepr(metaclass=OvldMC):
 
 
 class StdHrepr(Hrepr):
+    def __init__(self, H=H, config=None, master=None, std=std):
+        super().__init__(H=H, config=config, master=master)
+        self.std = std
+
     def global_resources(self):
         return {self.H.style(css_hrepr)}
 
     # Lists
 
     def hrepr(self, xs: list):
-        return std.iterable(self, xs, before="[", after="]")
+        return self.std.iterable(self, xs, before="[", after="]")
 
     def hrepr_short(self, xs: list):
         return self.H.span["hreprs-list"]("[...]")
@@ -193,7 +205,7 @@ class StdHrepr(Hrepr):
     # Tuples
 
     def hrepr(self, xs: tuple):
-        return std.iterable(self, xs, before="(", after=")")
+        return self.std.iterable(self, xs, before="(", after=")")
 
     def hrepr_short(self, xs: tuple):
         return self.H.span["hreprs-tuple"]("(...)")
@@ -201,7 +213,7 @@ class StdHrepr(Hrepr):
     # Sets
 
     def hrepr(self, xs: (set, frozenset)):
-        return std.iterable(self, xs, before="{", after="}")
+        return self.std.iterable(self, xs, before="{", after="}")
 
     def hrepr_short(self, xs: (set, frozenset)):
         cls = type(xs).__name__
@@ -211,7 +223,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, obj: dict):
         cls = type(obj).__name__
-        return std.instance(
+        return self.std.instance(
             self,
             ("{", "}"),
             list(obj.items()),
@@ -232,7 +244,7 @@ class StdHrepr(Hrepr):
             field.name: getattr(obj, field.name)
             for field in dataclass_fields(obj)
         }
-        return std.instance(
+        return self.std.instance(
             self,
             cls,
             props,
@@ -283,7 +295,6 @@ class StdHrepr(Hrepr):
     def hrepr_short(self, x: (int, float)):
         cls = type(x).__name__
         return self.H.span[f"hreprt-{cls}"](str(x))
-        # return std.standard(self, x)
 
     # Booleans
 
@@ -318,14 +329,22 @@ def inject_reference_numbers(hcall, node, refmap):
 
 
 class Interface:
-    def __init__(self, cls, inject_references=True, fill_resources=True):
-        self._hcls = cls
+    def __init__(self, hclass, inject_references=True, fill_resources=True):
+        self._hcls = hclass
         self.inject_references = inject_references
         self.fill_resources = fill_resources
 
-    def hrepr(self, obj, **config):
-        hcall = self._hcls(H=H, config=Config(config))
-        rval = hcall(obj)
+    def __call__(self, *objs, hclass=None, mixins=None, **config):
+        hcls = hclass or self._hcls
+        if mixins:
+            if isinstance(mixins, type):
+                mixins = [mixins]
+            hcls = hcls.create_subclass(*mixins)
+        hcall = hcls(H=H, config=Config(config))
+        if len(objs) == 1:
+            rval = hcall(objs[0])
+        else:
+            rval = H.inline(*map(hcall, objs))
         if self.inject_references:
             rval = inject_reference_numbers(
                 hcall, rval, hcall.state.make_refmap()
@@ -335,4 +354,4 @@ class Interface:
         return rval
 
 
-hrepr = StdHrepr.make_interface().hrepr
+hrepr = StdHrepr.make_interface()

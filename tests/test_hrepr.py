@@ -261,3 +261,15 @@ def test_hrepr_multiarg():
     assert hrepr(1, 2) == H.inline(
         H.span["hreprt-int"]("1"), H.span["hreprt-int"]("2"),
     )
+
+
+def test_preprocess():
+    assert hrepr(1, preprocess=lambda x, hrepr: x + 1) == H.span["hreprt-int"](
+        "2"
+    )
+
+
+def test_postprocess():
+    assert hrepr(1, postprocess=lambda x, obj, hrepr: x["newclass"]) == H.span[
+        "hreprt-int", "newclass"
+    ]("1")

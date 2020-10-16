@@ -88,11 +88,21 @@ class Hrepr(metaclass=OvldMC):
     def make_interface(cls, **kw):
         return Interface(cls, **kw)
 
-    def __init__(self, H=H, config=None, master=None):
+    def __init__(
+        self,
+        *,
+        H=H,
+        config=None,
+        master=None,
+        preprocess=None,
+        postprocess=None,
+    ):
         self.H = H
         self.config = config or Config()
         self.master = master or self
         self.state = master.state if master else HreprState()
+        self.preprocess = preprocess
+        self.postprocess = postprocess
 
     def with_config(self, config):
         if not config:
@@ -145,6 +155,9 @@ class Hrepr(metaclass=OvldMC):
             return rval
 
     def __call__(self, obj, **config):
+        if self.preprocess is not None:
+            obj = self.preprocess(obj, self)
+
         self.state.skip_default = False
         runner = self.with_config(config)
         ido = id(obj)
@@ -165,6 +178,9 @@ class Hrepr(metaclass=OvldMC):
             rval = runner.hrepr_short(obj)
         else:
             rval = runner.hrepr(obj)
+
+        if self.postprocess is not None:
+            rval = self.postprocess(rval, obj, self)
 
         # Check that it's the right type
         htype = self.H.tag_class
@@ -187,8 +203,8 @@ class Hrepr(metaclass=OvldMC):
 
 
 class StdHrepr(Hrepr):
-    def __init__(self, H=H, config=None, master=None, std=std):
-        super().__init__(H=H, config=config, master=master)
+    def __init__(self, *, std=std, **kw):
+        super().__init__(**kw)
         self.std = std
 
     def global_resources(self):
@@ -334,13 +350,26 @@ class Interface:
         self.inject_references = inject_references
         self.fill_resources = fill_resources
 
-    def __call__(self, *objs, hclass=None, mixins=None, **config):
+    def __call__(
+        self,
+        *objs,
+        hclass=None,
+        mixins=None,
+        preprocess=None,
+        postprocess=None,
+        **config,
+    ):
         hcls = hclass or self._hcls
         if mixins:
             if isinstance(mixins, type):
                 mixins = [mixins]
             hcls = hcls.create_subclass(*mixins)
-        hcall = hcls(H=H, config=Config(config))
+        hcall = hcls(
+            H=H,
+            config=Config(config),
+            preprocess=preprocess,
+            postprocess=postprocess,
+        )
         if len(objs) == 1:
             rval = hcall(objs[0])
         else:

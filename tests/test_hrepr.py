@@ -81,7 +81,8 @@ def test_structures():
         ](
             H.div["hrepr-title"](o),
             H.div["hrepr-contents-h"](
-                H.span["hreprt-int"]("1"), H.span["hreprt-int"]("2"),
+                H.div(H.span["hreprt-int"]("1")),
+                H.div(H.span["hreprt-int"]("2")),
             ),
             H.div["hrepr-title"](c),
         )
@@ -175,19 +176,24 @@ def test_multiref():
     assert hrepr(lili) == H.div["hreprt-list", "hrepr-titled-h"](
         H.div["hrepr-title"]("["),
         H.div["hrepr-contents-h"](
-            H.div["hrepr-refbox"](
-                H.span["hrepr-ref"]("#", 1, "="),
-                H.div["hreprt-list", "hrepr-titled-h"](
-                    H.div["hrepr-title"]("["),
-                    H.div["hrepr-contents-h"](
-                        H.span["hreprt-int"]("1"), H.span["hreprt-int"]("2"),
+            H.div(
+                H.div["hrepr-refbox"](
+                    H.span["hrepr-ref"]("#", 1, "="),
+                    H.div["hreprt-list", "hrepr-titled-h"](
+                        H.div["hrepr-title"]("["),
+                        H.div["hrepr-contents-h"](
+                            H.div(H.span["hreprt-int"]("1")),
+                            H.div(H.span["hreprt-int"]("2")),
+                        ),
+                        H.div["hrepr-title"]("]"),
                     ),
-                    H.div["hrepr-title"]("]"),
-                ),
+                )
             ),
-            H.div["hrepr-refbox"](
-                H.span["hrepr-ref"]("#", 1, "="),
-                H.span["hreprs-list"]("[...]"),
+            H.div(
+                H.div["hrepr-refbox"](
+                    H.span["hrepr-ref"]("#", 1, "="),
+                    H.span["hreprs-list"]("[...]"),
+                )
             ),
         ),
         H.div["hrepr-title"]("]"),
@@ -196,17 +202,20 @@ def test_multiref():
     assert hrepr(lili, shortref=True) == H.div["hreprt-list", "hrepr-titled-h"](
         H.div["hrepr-title"]("["),
         H.div["hrepr-contents-h"](
-            H.div["hrepr-refbox"](
-                H.span["hrepr-ref"]("#", 1, "="),
-                H.div["hreprt-list", "hrepr-titled-h"](
-                    H.div["hrepr-title"]("["),
-                    H.div["hrepr-contents-h"](
-                        H.span["hreprt-int"]("1"), H.span["hreprt-int"]("2"),
+            H.div(
+                H.div["hrepr-refbox"](
+                    H.span["hrepr-ref"]("#", 1, "="),
+                    H.div["hreprt-list", "hrepr-titled-h"](
+                        H.div["hrepr-title"]("["),
+                        H.div["hrepr-contents-h"](
+                            H.div(H.span["hreprt-int"]("1")),
+                            H.div(H.span["hreprt-int"]("2")),
+                        ),
+                        H.div["hrepr-title"]("]"),
                     ),
-                    H.div["hrepr-title"]("]"),
-                ),
+                )
             ),
-            H.span["hrepr-ref"]("#", 1),
+            H.div(H.span["hrepr-ref"]("#", 1)),
         ),
         H.div["hrepr-title"]("]"),
     )
@@ -221,10 +230,12 @@ def test_recursive():
         H.div["hreprt-list", "hrepr-titled-h"](
             H.div["hrepr-title"]("["),
             H.div["hrepr-contents-h"](
-                H.span["hreprt-int"]("1"),
-                H.div["hrepr-refbox"](
-                    H.span["hrepr-ref"]("⟳", 1, "="),
-                    H.span["hreprs-list"]("[...]"),
+                H.div(H.span["hreprt-int"]("1")),
+                H.div(
+                    H.div["hrepr-refbox"](
+                        H.span["hrepr-ref"]("⟳", 1, "="),
+                        H.span["hreprs-list"]("[...]"),
+                    )
                 ),
             ),
             H.div["hrepr-title"]("]"),
@@ -236,7 +247,8 @@ def test_recursive():
         H.div["hreprt-list", "hrepr-titled-h"](
             H.div["hrepr-title"]("["),
             H.div["hrepr-contents-h"](
-                H.span["hreprt-int"]("1"), H.span["hrepr-ref"]("⟳", 1),
+                H.div(H.span["hreprt-int"]("1")),
+                H.div(H.span["hrepr-ref"]("⟳", 1)),
             ),
             H.div["hrepr-title"]("]"),
         ),

@@ -13,7 +13,7 @@ def iterable(hrepr, obj, *, cls=None, before=None, after=None):
     """
     if cls is None:
         cls = f"hreprt-{obj.__class__.__name__}"
-    children = [hrepr(a) for a in obj]
+    children = [hrepr.H.div(hrepr(a)) for a in obj]
     return titled_box(hrepr, (before, after), children, "h", "h")[cls]
 
 

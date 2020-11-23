@@ -1,4 +1,4 @@
-from hrepr import H
+from hrepr import H, Tag
 
 from .common import one_test_per_assert
 
@@ -152,3 +152,15 @@ def test_as_page_with_resources():
         H.raw("<!DOCTYPE html>"), H.html(H.head(utf8, *resources), H.body(tag)),
     )
     assert tag.as_page() == page
+
+
+def test_subclasses():
+    tspan = type(H.span())
+    tdiv1 = type(H.div["straw"])
+    tdiv2 = type(H.div["straw"]("berry"))
+
+    assert tspan is not Tag
+    assert tdiv1 is not Tag
+    assert tdiv1 is tdiv2
+    assert issubclass(tspan, Tag)
+    assert issubclass(tdiv1, Tag)

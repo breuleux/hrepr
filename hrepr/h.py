@@ -76,6 +76,16 @@ class Tag:
             children.
     """
 
+    specialized_tags = {}
+
+    @classmethod
+    def specialize(cls, name):
+        """Return a new subclass specialized for the given tag name."""
+        assert cls is Tag
+        if name not in cls.specialized_tags:
+            cls.specialized_tags[name] = type(f"Tag::{name}", (Tag,), {})
+        return cls.specialized_tags[name]
+
     def __init__(self, name, attributes=None, children=None, resources=None):
         self.name = name
         self.attributes = attributes or {}
@@ -96,7 +106,7 @@ class Tag:
         resources = (
             {*self.resources, *resources} if resources else self.resources
         )
-        return Tag(
+        return type(self)(
             name=self.name,
             attributes=attributes,
             children=children,
@@ -261,7 +271,10 @@ class HTML:
         tag_name = re.sub(
             "(?<=[a-z])([A-Z])", lambda m: f"-{m.group(0).lower()}", tag_name
         )
-        return self.tag_class(tag_name)
+        tag_class = self.tag_class
+        if hasattr(tag_class, "specialize"):
+            tag_class = tag_class.specialize(tag_name)
+        return tag_class(tag_name)
 
 
 H = HTML(tag_class=Tag)

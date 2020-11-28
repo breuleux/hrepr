@@ -39,9 +39,6 @@ class Config:
             return getattr(self._parent, attr)
         return None
 
-    def __hrepr__(self, H, hrepr):  # pragma: no cover
-        return hrepr.stdrepr_object("Config", self.__dict__.items())
-
 
 # class ResourceAccumulator:
 #     def __init__(self, acq):
@@ -91,6 +88,7 @@ class HreprState:
 class Hrepr(metaclass=OvldMC):
     @classmethod
     def make_interface(cls, **kw):
+        kw = {"backend": standard_html, **kw}
         return Interface(cls, **kw)
 
     def __init__(
@@ -119,7 +117,7 @@ class Hrepr(metaclass=OvldMC):
     def ref(self, obj, loop=False):
         num = self.state.get_ref(id(obj))
         ref = self.H.ref(loop=loop, num=num)
-        if not self.config.shortref:
+        if not self.config.shortrefs:
             ref = ref(self.hrepr_short(obj))
         return ref
 
@@ -355,8 +353,11 @@ def inject_reference_numbers(hcall, node, refmap):
 
 
 class Interface:
-    def __init__(self, hclass, inject_references=True, fill_resources=True):
+    def __init__(
+        self, hclass, backend, inject_references=True, fill_resources=True
+    ):
         self._hcls = hclass
+        self.backend = backend
         self.inject_references = inject_references
         self.fill_resources = fill_resources
 
@@ -367,7 +368,6 @@ class Interface:
         mixins=None,
         preprocess=None,
         postprocess=None,
-        backend=standard_html,
         **config,
     ):
         hcls = hclass or self._hcls
@@ -391,8 +391,5 @@ class Interface:
             )
         if self.fill_resources:
             rval = rval.fill(resources=hcall.global_resources())
-        rval = backend(rval)
+        rval = self.backend(rval)
         return rval
-
-
-hrepr = StdHrepr.make_interface()

@@ -5,6 +5,8 @@ from types import GeneratorType
 
 from ovld import ovld
 
+from .textgen import Breakable, Context, Sequence, Text, join
+
 # CSS for hrepr
 styledir = f"{os.path.dirname(__file__)}/style"
 css_nbreset = open(f"{styledir}/nbreset.css", encoding="utf-8").read()
@@ -124,6 +126,66 @@ class Tag:
     def get_attribute(self, attr, dflt):
         return self.attributes.get(attr, dflt)
 
+    def text_parts(self):
+        escape_children = not self.attributes.get(
+            "__raw", self.name in _raw_tags
+        )
+
+        def convert_attribute(k, v):
+            if v is True:
+                return k
+            elif v is False:
+                return ""
+            elif isinstance(v, (set, frozenset)):
+                res = " ".join(escape(cls) for cls in v)
+            else:
+                res = escape(str(v))
+            return f'{k}="{res}"'
+
+        def convert_child(c):
+            if isinstance(c, Tag):
+                return c.text_parts()
+            elif escape_children:
+                return escape(str(c))
+            else:
+                return str(c)
+
+        attr = " ".join(
+            convert_attribute(k, v)
+            for k, v in self.attributes.items()
+            if not k.startswith("__")
+        )
+        if attr:
+            # raw tag cannot have attributes, because it's not a real tag
+            assert self.name not in _virtual_tags
+            attr = " " + attr
+
+        children = list(map(convert_child, iterate_children(self.children)))
+        if self.name in _virtual_tags:
+            # Virtual tags just inlines their contents directly.
+            return Breakable(start=None, body=children, end=None)
+        if self.attributes.get("__void", self.name in _void_tags):
+            assert len(self.children) == 0
+            return Text(f"<{self.name}{attr} />")
+        else:
+            return Breakable(
+                start=f"<{self.name}{attr}>",
+                body=children,
+                end=f"</{self.name}>",
+            )
+
+    def pretty(self, **config):
+        rval, _ = self.text_parts().format(
+            Context(
+                tabsize=4,
+                max_col=80,
+                offset=0,
+                line_offset=0,
+                overflow="allow",
+            ).replace(**config)
+        )
+        return rval
+
     def __getitem__(self, items):
         if not isinstance(items, tuple):
             items = (items,)
@@ -159,48 +221,7 @@ class Tag:
         return str(self)
 
     def __str__(self):
-        escape_children = not self.attributes.get(
-            "__raw", self.name in _raw_tags
-        )
-
-        def convert_attribute(k, v):
-            if v is True:
-                return k
-            elif v is False:
-                return ""
-            elif isinstance(v, (set, frozenset)):
-                res = " ".join(escape(cls) for cls in v)
-            else:
-                res = escape(str(v))
-            return f'{k}="{res}"'
-
-        def convert_child(c):
-            if isinstance(c, Tag):
-                return str(c)
-            elif escape_children:
-                return escape(str(c))
-            else:
-                return str(c)
-
-        attr = " ".join(
-            convert_attribute(k, v)
-            for k, v in self.attributes.items()
-            if not k.startswith("__")
-        )
-        if attr:
-            # raw tag cannot have attributes, because it's not a real tag
-            assert self.name not in _virtual_tags
-            attr = " " + attr
-
-        children = "".join(map(convert_child, iterate_children(self.children)))
-        if self.name in _virtual_tags:
-            # Virtual tags just inlines their contents directly.
-            return children
-        if self.attributes.get("__void", self.name in _void_tags):
-            assert len(self.children) == 0
-            return f"<{self.name}{attr} />"
-        else:
-            return f"<{self.name}{attr}>{children}</{self.name}>"
+        return self.pretty(max_col=None)
 
     def _repr_html_(self):  # pragma: no cover
         """

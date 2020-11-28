@@ -207,7 +207,7 @@ def test_multiref():
         H.div["hrepr-close"]("]"),
     )
 
-    assert hrepr(lili, shortref=True) == H.div[
+    assert hrepr(lili, shortrefs=True) == H.div[
         "hreprt-list", "hrepr-bracketed"
     ](
         H.div["hrepr-open"]("["),
@@ -256,7 +256,7 @@ def test_recursive():
         ),
     )
 
-    assert hrepr(li, shortref=True) == H.div["hrepr-refbox"](
+    assert hrepr(li, shortrefs=True) == H.div["hrepr-refbox"](
         H.span["hrepr-ref"]("#", 1, "="),
         H.div["hreprt-list", "hrepr-bracketed"](
             H.div["hrepr-open"]("["),

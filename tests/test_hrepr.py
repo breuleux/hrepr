@@ -77,14 +77,14 @@ def test_structures():
     ):
         clsname = typ.__name__
         assert hrepr(typ((1, 2))) == H.div[
-            f"hreprt-{clsname}", "hrepr-titled-h"
+            f"hreprt-{clsname}", "hrepr-bracketed"
         ](
-            H.div["hrepr-title"](o),
-            H.div["hrepr-contents-h"](
+            H.div["hrepr-open"](o),
+            H.div["hrepr-body", "hreprl-h"](
                 H.div(H.span["hreprt-int"]("1")),
                 H.div(H.span["hreprt-int"]("2")),
             ),
-            H.div["hrepr-title"](c),
+            H.div["hrepr-close"](c),
         )
 
 
@@ -97,127 +97,137 @@ def test_short_structures():
         ({"x": 1, "y": 2}, "{", "}"),
     ):
         clsname = type(val).__name__
-        assert hrepr(val, max_depth=0) == H.span[f"hreprs-{clsname}"](
-            f"{o}...{c}"
+        assert hrepr(val, max_depth=0) == H.div[
+            f"hreprt-{clsname}", "hrepr-bracketed"
+        ](
+            H.div["hrepr-open"](o),
+            H.div["hrepr-body", "hreprl-s"](H.div("...")),
+            H.div["hrepr-close"](c),
         )
 
 
 def test_dict():
     pt = {"x": 1, "y": 2}
-    assert hrepr(pt) == H.div[f"hreprt-dict", "hrepr-titled-h"](
-        H.div["hrepr-title"]("{"),
-        H.div["hrepr-contents-v"](
-            H.table["hrepr-instance-table"](
-                H.tr(
-                    H.td(H.span["hreprt-str"]("x")),
-                    H.td["hrepr-delimiter"](" ↦ "),
-                    H.td(H.span["hreprt-int"]("1")),
-                ),
-                H.tr(
-                    H.td(H.span["hreprt-str"]("y")),
-                    H.td["hrepr-delimiter"](" ↦ "),
-                    H.td(H.span["hreprt-int"]("2")),
-                ),
-            )
+    assert hrepr(pt) == H.div[f"hreprt-dict", "hrepr-bracketed"](
+        H.div["hrepr-open"]("{"),
+        H.table["hrepr-body"](
+            H.tr(
+                H.td(H.span["hreprt-str"]("x")),
+                H.td["hrepr-delim"](":"),
+                H.td(H.span["hreprt-int"]("1")),
+            ),
+            H.tr(
+                H.td(H.span["hreprt-str"]("y")),
+                H.td["hrepr-delim"](":"),
+                H.td(H.span["hreprt-int"]("2")),
+            ),
         ),
-        H.div["hrepr-title"]("}"),
+        H.div["hrepr-close"]("}"),
     )
 
-    assert hrepr(pt, mapping_layout="h") == H.div[
-        f"hreprt-dict", "hrepr-titled-h"
-    ](
-        H.div["hrepr-title"]("{"),
-        H.div["hrepr-contents-h"](
-            H.div["hrepr-instance-kvpair"](
-                H.span["hreprt-str"]("x"), " ↦ ", H.span["hreprt-int"]("1"),
-            ),
-            H.div["hrepr-instance-kvpair"](
-                H.span["hreprt-str"]("y"), " ↦ ", H.span["hreprt-int"]("2"),
-            ),
-        ),
-        H.div["hrepr-title"]("}"),
-    )
+    # assert hrepr(pt, mapping_layout="h") == H.div[
+    #     f"hreprt-dict", "hrepr-titled-h"
+    # ](
+    #     H.div["hrepr-title"]("{"),
+    #     H.div["hrepr-contents-h"](
+    #         H.div["hrepr-instance-kvpair"](
+    #             H.span["hreprt-str"]("x"), " ↦ ", H.span["hreprt-int"]("1"),
+    #         ),
+    #         H.div["hrepr-instance-kvpair"](
+    #             H.span["hreprt-str"]("y"), " ↦ ", H.span["hreprt-int"]("2"),
+    #         ),
+    #     ),
+    #     H.div["hrepr-title"]("}"),
+    # )
 
 
 def test_dataclass():
     pt = Point(1, 2)
-    assert hrepr(pt) == H.div[f"hreprt-Point", "hrepr-titled-v"](
+
+    assert hrepr(pt) == H.div[f"hreprt-Point", "hrepr-instance", "hreprl-v"](
         H.div["hrepr-title"]("Point"),
-        H.div["hrepr-contents-v"](
-            H.table["hrepr-instance-table"](
-                H.tr(
-                    H.td("x"),
-                    H.td["hrepr-delimiter"]("="),
-                    H.td(H.span["hreprt-int"]("1")),
-                ),
-                H.tr(
-                    H.td("y"),
-                    H.td["hrepr-delimiter"]("="),
-                    H.td(H.span["hreprt-int"]("2")),
-                ),
-            )
+        H.table["hrepr-body"](
+            H.tr(
+                H.td(H.span["hrepr-symbol"]("x")),
+                H.td["hrepr-delim"]("="),
+                H.td(H.span["hreprt-int"]("1")),
+            ),
+            H.tr(
+                H.td(H.span["hrepr-symbol"]("y")),
+                H.td["hrepr-delim"]("="),
+                H.td(H.span["hreprt-int"]("2")),
+            ),
         ),
     )
 
-    assert hrepr(pt, max_depth=0) == H.span[
-        f"hreprs-Point", "hrepr-short-instance"
-    ](f"Point ...")
+    assert hrepr(pt, max_depth=0) == H.div[
+        f"hreprt-Point", "hrepr-instance", "hreprl-s"
+    ](
+        H.div["hrepr-title"]("Point"),
+        H.div["hrepr-body", "hreprl-s"](H.div("...")),
+    )
 
 
 def test_tag():
     tg = H.span["hello"](1, 2, H.b("there"))
-    assert hrepr(tg) is tg
+    assert hrepr(tg) == tg
 
 
 def test_multiref():
     li = [1, 2]
     lili = [li, li]
 
-    assert hrepr(lili) == H.div["hreprt-list", "hrepr-titled-h"](
-        H.div["hrepr-title"]("["),
-        H.div["hrepr-contents-h"](
+    assert hrepr(lili) == H.div["hreprt-list", "hrepr-bracketed"](
+        H.div["hrepr-open"]("["),
+        H.div["hrepr-body", "hreprl-h"](
             H.div(
                 H.div["hrepr-refbox"](
                     H.span["hrepr-ref"]("#", 1, "="),
-                    H.div["hreprt-list", "hrepr-titled-h"](
-                        H.div["hrepr-title"]("["),
-                        H.div["hrepr-contents-h"](
+                    H.div["hreprt-list", "hrepr-bracketed"](
+                        H.div["hrepr-open"]("["),
+                        H.div["hrepr-body", "hreprl-h"](
                             H.div(H.span["hreprt-int"]("1")),
                             H.div(H.span["hreprt-int"]("2")),
                         ),
-                        H.div["hrepr-title"]("]"),
+                        H.div["hrepr-close"]("]"),
                     ),
                 )
             ),
             H.div(
                 H.div["hrepr-refbox"](
                     H.span["hrepr-ref"]("#", 1, "="),
-                    H.span["hreprs-list"]("[...]"),
+                    H.div["hreprt-list", "hrepr-bracketed"](
+                        H.div["hrepr-open"]("["),
+                        H.div["hrepr-body", "hreprl-s"](H.div("..."),),
+                        H.div["hrepr-close"]("]"),
+                    ),
                 )
             ),
         ),
-        H.div["hrepr-title"]("]"),
+        H.div["hrepr-close"]("]"),
     )
 
-    assert hrepr(lili, shortref=True) == H.div["hreprt-list", "hrepr-titled-h"](
-        H.div["hrepr-title"]("["),
-        H.div["hrepr-contents-h"](
+    assert hrepr(lili, shortref=True) == H.div[
+        "hreprt-list", "hrepr-bracketed"
+    ](
+        H.div["hrepr-open"]("["),
+        H.div["hrepr-body", "hreprl-h"](
             H.div(
                 H.div["hrepr-refbox"](
                     H.span["hrepr-ref"]("#", 1, "="),
-                    H.div["hreprt-list", "hrepr-titled-h"](
-                        H.div["hrepr-title"]("["),
-                        H.div["hrepr-contents-h"](
+                    H.div["hreprt-list", "hrepr-bracketed"](
+                        H.div["hrepr-open"]("["),
+                        H.div["hrepr-body", "hreprl-h"](
                             H.div(H.span["hreprt-int"]("1")),
                             H.div(H.span["hreprt-int"]("2")),
                         ),
-                        H.div["hrepr-title"]("]"),
+                        H.div["hrepr-close"]("]"),
                     ),
                 )
             ),
             H.div(H.span["hrepr-ref"]("#", 1)),
         ),
-        H.div["hrepr-title"]("]"),
+        H.div["hrepr-close"]("]"),
     )
 
 
@@ -227,30 +237,34 @@ def test_recursive():
 
     assert hrepr(li) == H.div["hrepr-refbox"](
         H.span["hrepr-ref"]("#", 1, "="),
-        H.div["hreprt-list", "hrepr-titled-h"](
-            H.div["hrepr-title"]("["),
-            H.div["hrepr-contents-h"](
+        H.div["hreprt-list", "hrepr-bracketed"](
+            H.div["hrepr-open"]("["),
+            H.div["hreprl-h", "hrepr-body"](
                 H.div(H.span["hreprt-int"]("1")),
                 H.div(
                     H.div["hrepr-refbox"](
                         H.span["hrepr-ref"]("⟳", 1, "="),
-                        H.span["hreprs-list"]("[...]"),
+                        H.div["hreprt-list", "hrepr-bracketed"](
+                            H.div["hrepr-open"]("["),
+                            H.div["hrepr-body", "hreprl-s"](H.div("..."),),
+                            H.div["hrepr-close"]("]"),
+                        ),
                     )
                 ),
             ),
-            H.div["hrepr-title"]("]"),
+            H.div["hrepr-close"]("]"),
         ),
     )
 
     assert hrepr(li, shortref=True) == H.div["hrepr-refbox"](
         H.span["hrepr-ref"]("#", 1, "="),
-        H.div["hreprt-list", "hrepr-titled-h"](
-            H.div["hrepr-title"]("["),
-            H.div["hrepr-contents-h"](
+        H.div["hreprt-list", "hrepr-bracketed"](
+            H.div["hrepr-open"]("["),
+            H.div["hreprl-h", "hrepr-body"](
                 H.div(H.span["hreprt-int"]("1")),
                 H.div(H.span["hrepr-ref"]("⟳", 1)),
             ),
-            H.div["hrepr-title"]("]"),
+            H.div["hrepr-close"]("]"),
         ),
     )
 

@@ -6,7 +6,7 @@
 	--list-color: #080;
 	--set-color: #080;
 	--frozenset-color: #88f;
-	--titled-box-radius: 0px;
+	--struct-border: 2px;
 }
 
 /* Scalar/string formatting */
@@ -42,14 +42,10 @@
 
 .hreprt-bytes:before {
 	content: "b“";
-	/* font-family: normal;
-	color: #888; */
 }
 
 .hreprt-bytes:after {
 	content: "”";
-	/* font-family: normal;
-	color: #888; */
 }
 
 .hreprv-True {
@@ -64,124 +60,123 @@
 	color: grey;
 }
 
-/* Generic object formatting */
+/* Generic layouts */
 
-.hrepr-title, .hrepr-short-instance {
-	background: var(--instance-color);
-	color: white;
-	vertical-align: middle;
-	display: flex;
-	align-items: center;
-}
-
-.hrepr-titled-v > .hrepr-title, .hrepr-short-instance {
-	font-weight: bold;
-	padding-left: 5px;
-	padding-right: 5px;
-	padding-top: 2px;
-	padding-bottom: 2px;
-}
-
-.hrepr-titled-h > .hrepr-title {
-	padding-left: 2px;
-	padding-right: 2px;
-}
-
-.hrepr-titled-h > .hrepr-title:first-child {
-	padding-right: 5px;
-}
-
-.hrepr-titled-h > .hrepr-title:last-child {
-	padding-left: 5px;
-}
-
-.hrepr-titled-h, .hrepr-contents-h {
-	display: flex;
+.hreprl-s {
+	display: inline-flex;
 	flex-direction: row;
 }
 
-.hrepr-titled-v, .hrepr-contents-v {
-	display: flex;
+.hreprl-v {
+	display: inline-flex;
 	flex-direction: column;
 }
 
-.hrepr-titled-h, .hrepr-titled-v {
+.hreprl-h {
 	display: inline-flex;
-	border: 1px solid var(--instance-color);
-	border-radius: var(--titled-box-radius);
-	background: #fff;
+	flex-direction: row;
 }
 
-.hrepr-contents-h {
-	align-items: center;
-	flex-wrap: wrap;
-}
-
-.hrepr-contents-h > * {
-	margin-left: 2px;
-	margin-right: 2px;
-}
-
-.hrepr-contents-h > :nth-child(odd),
-.hrepr-contents-v > :nth-child(odd),
-.hrepr-instance-table > tbody > tr:nth-child(odd) {
-	background: #fff;
-}
-
-.hrepr-contents-h > :nth-child(even),
-.hrepr-contents-v > :nth-child(even),
-.hrepr-instance-table > tbody > tr:nth-child(even) {
+.hrepr-body.hreprl-h,
+.hrepr-body.hreprl-v {
 	background: #ddd;
 }
 
-.hrepr-instance-table {
-	display: inline-block;
+.hrepr-body.hreprl-v > *,
+.hrepr-body.hreprl-h > * {
+	margin: 2px;
+	padding: 1px;
+	background: white;
+	display: inline-flex;
+	place-items: center;
+}
+
+.hrepr-body.hreprl-s > * {
+	padding: 1px;
+}
+
+.hrepr-bracketed {
+	display: inline-flex;
+	flex-direction: row;
+}
+
+.hrepr-bracketed {
+	display: inline-flex;
+	flex-direction: row;
+	place-items: center;
+	background: black;
+	border: var(--struct-border) solid black;
+}
+
+.hrepr-bracketed > .hrepr-open {
+	padding-right: var(--struct-border);
+}
+.hrepr-bracketed > .hrepr-close {
+	padding-left: var(--struct-border);
+}
+.hrepr-bracketed > .hrepr-open,
+.hrepr-bracketed > .hrepr-close,
+.hrepr-instance > .hrepr-title,
+.hreprl-s {
+	color: white;
+	font-weight: bold;
+}
+
+.hrepr-instance {
+	background: var(--instance-color);
+	border: var(--struct-border) solid var(--instance-color);
+}
+.hrepr-instance > .hrepr-title {
+	color: white;
+	font-weight: bold;
+}
+.hrepr-instance.hreprl-v > .hrepr-title {
+	padding-bottom: var(--struct-border);
+}
+.hrepr-instance.hreprl-h > .hrepr-title,
+.hrepr-instance.hreprl-s > .hrepr-title {
+	padding-right: var(--struct-border);
+	place-self: center;
+}
+
+
+/* Colors for structures. */
+
+.hreprt-dict {
+	background: var(--dict-color);
+	border-color: var(--dict-color);
+}
+
+.hreprt-list {
+	background: var(--list-color);
+	border-color: var(--list-color);
+}
+
+.hreprt-set {
+	background: var(--set-color);
+	border-color: var(--set-color);
+}
+
+.hreprt-frozenset {
+	background: var(--frozenset-color);
+	border-color: var(--frozenset-color);
+}
+
+table.hrepr-body {
 	border-collapse: collapse;
 	width: 100%;
-	border-radius: var(--titled-box-radius);
 }
 
-.hrepr-instance-table > tbody > tr > td {
-	padding-left: 5px;
-	padding-right: 5px;
+table.hrepr-body > tbody > tr:nth-child(even) {
+	background: #ddd;
 }
 
-.hrepr-instance-table > tbody > tr > td.hrepr-delimiter {
-	padding: 0px;
+table.hrepr-body > tbody > tr:nth-child(odd) {
+	background: #fff;
 }
 
-/* .hrepr-instance-table > tbody > tr > td > * {
-	display: inline-block;
-} */
 
-.hrepr-instance-kvpair {
-	padding-left: 5px;
-	padding-right: 5px;
-	background: #eee;
-}
-
-/* Colorize boxes for standard data structures */
-
-.hreprt-dict { border: 1px solid var(--dict-color); }
-.hreprt-dict > .hrepr-title { background: var(--dict-color); }
-.hreprs-dict { background: var(--dict-color); color: white; padding: 2px; }
-
-.hreprt-tuple { border: 1px solid var(--tuple-color); }
-.hreprt-tuple > .hrepr-title { background: var(--tuple-color); }
-.hreprs-tuple { background: var(--tuple-color); color: white; padding: 2px; }
-
-.hreprt-list { border: 1px solid var(--list-color); }
-.hreprt-list > .hrepr-title { background: var(--list-color); }
-.hreprs-list { background: var(--list-color); color: white; padding: 2px; }
-
-.hreprt-set { border: 1px solid var(--set-color); }
-.hreprt-set > .hrepr-title { background: var(--set-color); }
-.hreprs-set { background: var(--set-color); color: white; padding: 2px; }
-
-.hreprt-frozenset { border: 1px solid var(--frozenset-color); }
-.hreprt-frozenset > .hrepr-title { background: var(--frozenset-color); }
-.hreprs-frozenset { background: var(--frozenset-color); color: white; padding: 2px; }
-
+/* References */
 
 .hrepr-ref {
 	font-weight: bold;

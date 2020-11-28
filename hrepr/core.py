@@ -7,9 +7,14 @@ from ovld import OvldCall, OvldMC, meta, ovld
 
 from . import std
 from .h import HTML, H, Tag, css_hrepr
+from .std import standard_html
 
 default_string_cutoff = 20
 default_bytes_cutoff = 20
+
+
+def _tn(x):
+    return type(x).__name__
 
 
 def dataclass_without(prop):
@@ -113,12 +118,10 @@ class Hrepr(metaclass=OvldMC):
 
     def ref(self, obj, loop=False):
         num = self.state.get_ref(id(obj))
-        sym = "⟳" if loop else "#"
-        ref = self.H.span["hrepr-ref"](sym, num)
-        if self.config.shortref:
-            return ref
-        else:
-            return self.H.div["hrepr-refbox"](ref("="), self.hrepr_short(obj))
+        ref = self.H.ref(loop=loop, num=num)
+        if not self.config.shortref:
+            ref = ref(self.hrepr_short(obj))
+        return ref
 
     def global_resources(self):  # pragma: no cover
         return set()
@@ -149,7 +152,7 @@ class Hrepr(metaclass=OvldMC):
         if hasattr(obj, "__hrepr_short__"):
             return obj.__hrepr_short__(self.H, self)
         else:
-            clsn = type(obj).__name__
+            clsn = _tn(obj)
             rval = self.H.span[f"hreprs-{clsn}"]("<", clsn, ">")
             self.state.register(id(obj), rval)
             return rval
@@ -213,67 +216,76 @@ class StdHrepr(Hrepr):
     # Lists
 
     def hrepr(self, xs: list):
-        return self.std.iterable(self, xs, before="[", after="]")
+        return self.H.bracketed(
+            *[self(x) for x in xs], start="[", end="]", type=_tn(xs),
+        )
 
     def hrepr_short(self, xs: list):
-        return self.H.span["hreprs-list"]("[...]")
+        return self.H.bracketed(
+            "...", short=True, start="[", end="]", type=_tn(xs),
+        )
 
     # Tuples
 
     def hrepr(self, xs: tuple):
-        return self.std.iterable(self, xs, before="(", after=")")
+        return self.H.bracketed(
+            *[self(x) for x in xs], start="(", end=")", type=_tn(xs),
+        )
 
     def hrepr_short(self, xs: tuple):
-        return self.H.span["hreprs-tuple"]("(...)")
+        return self.H.bracketed(
+            "...", short=True, start="(", end=")", type=_tn(xs),
+        )
 
     # Sets
 
     def hrepr(self, xs: (set, frozenset)):
-        return self.std.iterable(self, xs, before="{", after="}")
+        return self.H.bracketed(
+            *[self(x) for x in xs], start="{", end="}", type=_tn(xs),
+        )
 
     def hrepr_short(self, xs: (set, frozenset)):
-        cls = type(xs).__name__
-        return self.H.span[f"hreprs-{cls}"]("{...}")
+        return self.H.bracketed(
+            "...", short=True, start="{", end="}", type=_tn(xs),
+        )
 
     # Dictionaries
 
     def hrepr(self, obj: dict):
-        cls = type(obj).__name__
-        return self.std.instance(
-            self,
-            ("{", "}"),
-            list(obj.items()),
-            cls=f"hreprt-{cls}",
-            quote_string_keys=True,
-            short=self.config.mapping_layout == "h",
+        return self.H.bracketed(
+            *[
+                self.H.pair(self(k), self(v), delimiter=":",)
+                for k, v in obj.items()
+            ],
+            type="dict",
+            start="{",
+            end="}",
+            vertical=True,
         )
 
     def hrepr_short(self, xs: dict):
-        cls = type(xs).__name__
-        return self.H.span[f"hreprs-{cls}"]("{...}")
+        return self.H.bracketed(
+            "...", type="dict", start="{", end="}", short=True,
+        )
 
     # Dataclasses
 
     def hrepr(self, obj: dataclass_without("__hrepr__")):
-        cls = type(obj).__name__
-        props = {
-            field.name: getattr(obj, field.name)
-            for field in dataclass_fields(obj)
-        }
-        return self.std.instance(
-            self,
-            cls,
-            props,
-            cls=f"hreprt-{cls}",
-            quote_string_keys=False,
-            delimiter="=",
+        return self.H.instance(
+            *[
+                self.H.pair(
+                    self.H.symbol(field.name),
+                    self(getattr(obj, field.name)),
+                    delimiter="=",
+                )
+                for field in dataclass_fields(obj)
+            ],
+            type=_tn(obj),
+            vertical=True,
         )
 
-    def hrepr_short(self, xs: dataclass_without("__hrepr_short__")):
-        cls = type(xs).__name__
-        return self.H.span[f"hreprs-{cls}", "hrepr-short-instance"](
-            f"{cls} ..."
-        )
+    def hrepr_short(self, obj: dataclass_without("__hrepr_short__")):
+        return self.H.instance(f"...", type=_tn(obj), short=True,)
 
     # Strings
 
@@ -282,12 +294,12 @@ class StdHrepr(Hrepr):
         if len(x) <= cutoff:
             return NotImplemented
         else:
-            return self.H.span[f"hreprt-str"](x)
+            return self.H.atom(x, type="str")
 
     def hrepr_short(self, x: str):
         cutoff = self.config.string_cutoff or default_string_cutoff
-        return self.H.span[f"hreprt-str"](
-            textwrap.shorten(x, cutoff, placeholder="...")
+        return self.H.atom(
+            textwrap.shorten(x, cutoff, placeholder="..."), type="str",
         )
 
     # Bytes
@@ -297,30 +309,29 @@ class StdHrepr(Hrepr):
         if len(x) <= cutoff:
             return NotImplemented
         else:
-            return self.H.span[f"hreprt-bytes"](x.hex())
+            return self.H.atom(x.hex(), type="bytes")
 
     def hrepr_short(self, x: bytes):
         cutoff = self.config.bytes_cutoff or default_bytes_cutoff
         hx = x.hex()
         if len(hx) > cutoff:
             hx = hx[: cutoff - 3] + "..."
-        return self.H.span[f"hreprt-bytes"](hx)
+        return self.H.atom(hx, type="bytes")
 
     # Numbers
 
     def hrepr_short(self, x: (int, float)):
-        cls = type(x).__name__
-        return self.H.span[f"hreprt-{cls}"](str(x))
+        return self.H.atom(str(x), type=_tn(x))
 
     # Booleans
 
     def hrepr_short(self, x: bool):
-        return self.H.span[f"hreprv-{x}"](str(x))
+        return self.H.atom(str(x), value=x)
 
     # None
 
     def hrepr_short(self, x: type(None)):
-        return self.H.span[f"hreprv-{x}"](str(x))
+        return self.H.atom(str(x), value=x)
 
     # Tags
 
@@ -336,8 +347,7 @@ def inject_reference_numbers(hcall, node, refmap):
         )
         refnum = refmap.get(id(node), None)
         if refnum is not None:
-            ref = hcall.H.span["hrepr-ref"]("#", refnum)
-            return hcall.H.div["hrepr-refbox"](ref("="), node)
+            return hcall.H.ref(node, num=refnum)
         else:
             return node
     else:
@@ -357,6 +367,7 @@ class Interface:
         mixins=None,
         preprocess=None,
         postprocess=None,
+        backend=standard_html,
         **config,
     ):
         hcls = hclass or self._hcls
@@ -380,6 +391,7 @@ class Interface:
             )
         if self.fill_resources:
             rval = rval.fill(resources=hcall.global_resources())
+        rval = backend(rval)
         return rval
 
 

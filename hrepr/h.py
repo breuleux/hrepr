@@ -121,6 +121,9 @@ class Tag:
                 child.collect_resources(coll=coll)
         return coll
 
+    def get_attribute(self, attr, dflt):
+        return self.attributes.get(attr, dflt)
+
     def __getitem__(self, items):
         if not isinstance(items, tuple):
             items = (items,)

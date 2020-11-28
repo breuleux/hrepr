@@ -113,12 +113,12 @@ def test_dict():
         H.table["hrepr-body"](
             H.tr(
                 H.td(H.span["hreprt-str"]("x")),
-                H.td["hrepr-delim"](":"),
+                H.td["hrepr-delim"](": "),
                 H.td(H.span["hreprt-int"]("1")),
             ),
             H.tr(
                 H.td(H.span["hreprt-str"]("y")),
-                H.td["hrepr-delim"](":"),
+                H.td["hrepr-delim"](": "),
                 H.td(H.span["hreprt-int"]("2")),
             ),
         ),

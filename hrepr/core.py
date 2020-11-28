@@ -254,7 +254,7 @@ class StdHrepr(Hrepr):
     def hrepr(self, obj: dict):
         return self.H.bracketed(
             *[
-                self.H.pair(self(k), self(v), delimiter=":",)
+                self.H.pair(self(k), self(v), delimiter=": ",)
                 for k, v in obj.items()
             ],
             type="dict",

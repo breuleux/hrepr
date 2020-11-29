@@ -62,19 +62,15 @@
 
 /* Generic layouts */
 
-.hreprl-s {
+.hreprl-h, .hreprl-s {
 	display: inline-flex;
 	flex-direction: row;
+	flex-wrap: wrap;
 }
 
 .hreprl-v {
 	display: inline-flex;
 	flex-direction: column;
-}
-
-.hreprl-h {
-	display: inline-flex;
-	flex-direction: row;
 }
 
 .hrepr-body.hreprl-h,
@@ -150,6 +146,11 @@
 .hreprt-list {
 	background: var(--list-color);
 	border-color: var(--list-color);
+}
+
+.hreprt-tuple {
+	background: var(--tuple-color);
+	border-color: var(--tuple-color);
 }
 
 .hreprt-set {

@@ -2,10 +2,13 @@
  * Override Jupyter's default css inside elements with the hrepr class.
  */
 
-.hrepr td {
-	text-align: left;
+.rendered_html .hrepr table {
+	margin-top: 0px;
+	margin-bottom: 0px;
+	table-layout: auto;
 }
 
-.jp-RenderedHTMLCommon .hrepr table {
-	margin-bottom: 0px;
+.rendered_html tr, .rendered_html th, .rendered_html td {
+	padding: 2px;
+	text-align: left;
 }

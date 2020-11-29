@@ -137,7 +137,10 @@ def standard_html(self, node: type(H.require)):
         self, node, "script", src=None, name=None
     )
     assert not children
-    rval = rval(f'requirejs.config({{paths: {{{data.name}: "{data.src}"}}}});')
+    src = data.src
+    if src.endswith(".js"):
+        src += "?noext"
+    rval = rval(f'requirejs.config({{paths: {{{data.name}: "{src}"}}}});')
     return rval.fill(
         resources=H.script(
             type="text/javascript",

@@ -45,8 +45,8 @@ def test_bracketed():
 
 
 def test_require():
-    assert sht(H.require(name="blah", src="thing")) == H.script(
-        'requirejs.config({paths: {blah: "thing"}});'
+    assert sht(H.require(name="blah", src="thing.js")) == H.script(
+        'requirejs.config({paths: {blah: "thing.js?noext"}});'
     ).fill(
         resources=H.script(
             type="text/javascript",

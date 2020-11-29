@@ -125,21 +125,6 @@ def test_dict():
         H.div["hrepr-close"]("}"),
     )
 
-    # assert hrepr(pt, mapping_layout="h") == H.div[
-    #     f"hreprt-dict", "hrepr-titled-h"
-    # ](
-    #     H.div["hrepr-title"]("{"),
-    #     H.div["hrepr-contents-h"](
-    #         H.div["hrepr-instance-kvpair"](
-    #             H.span["hreprt-str"]("x"), " ↦ ", H.span["hreprt-int"]("1"),
-    #         ),
-    #         H.div["hrepr-instance-kvpair"](
-    #             H.span["hreprt-str"]("y"), " ↦ ", H.span["hreprt-int"]("2"),
-    #         ),
-    #     ),
-    #     H.div["hrepr-title"]("}"),
-    # )
-
 
 def test_dataclass():
     pt = Point(1, 2)

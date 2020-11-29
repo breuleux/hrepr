@@ -266,7 +266,7 @@ class StdHrepr(Hrepr):
         return self.H.instance(
             *[
                 self.H.pair(
-                    self.H.symbol(field.name),
+                    self.H.atom(field.name, type="symbol"),
                     self(getattr(obj, field.name)),
                     delimiter="=",
                 )

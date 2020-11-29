@@ -133,12 +133,12 @@ def test_dataclass():
         H.div["hrepr-title"]("Point"),
         H.table["hrepr-body"](
             H.tr(
-                H.td(H.span["hrepr-symbol"]("x")),
+                H.td(H.span["hreprt-symbol"]("x")),
                 H.td["hrepr-delim"]("="),
                 H.td(H.span["hreprt-int"]("1")),
             ),
             H.tr(
-                H.td(H.span["hrepr-symbol"]("y")),
+                H.td(H.span["hreprt-symbol"]("y")),
                 H.td["hrepr-delim"]("="),
                 H.td(H.span["hreprt-int"]("2")),
             ),

@@ -132,11 +132,6 @@ def standard_html(self, node: type(H.atom)):
 
 
 @ovld
-def standard_html(self, node: type(H.symbol)):
-    return H.span["hrepr-symbol"](*node.children)
-
-
-@ovld
 def standard_html(self, node: type(H.require)):
     rval, children, data = _extract_as(
         self, node, "script", src=None, name=None

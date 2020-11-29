@@ -3,7 +3,7 @@ from collections import Counter
 from dataclasses import fields as dataclass_fields
 from dataclasses import is_dataclass
 
-from ovld import OvldMC, meta, ovld
+from ovld import OvldMC, has_attribute, meta, ovld
 
 from . import std
 from .h import H, Tag, css_hrepr
@@ -15,14 +15,6 @@ default_bytes_cutoff = 20
 
 def _tn(x):
     return type(x).__name__
-
-
-def with_attribute(attr):
-    @meta
-    def fn(cls):
-        return hasattr(cls, attr)
-
-    return fn
 
 
 class Config:
@@ -117,7 +109,7 @@ class Hrepr(metaclass=OvldMC):
     def hrepr_resources(self, cls: object):
         return []
 
-    def hrepr_resources(self, cls: with_attribute("__hrepr_resources__")):
+    def hrepr_resources(self, cls: has_attribute("__hrepr_resources__")):
         return cls.__hrepr_resources__(self.H)
 
     @ovld.dispatch
@@ -133,7 +125,7 @@ class Hrepr(metaclass=OvldMC):
     def hrepr(self, obj: object):
         return NotImplemented
 
-    def hrepr(self, obj: with_attribute("__hrepr__")):
+    def hrepr(self, obj: has_attribute("__hrepr__")):
         return obj.__hrepr__(self.H, self)
 
     @ovld
@@ -144,7 +136,7 @@ class Hrepr(metaclass=OvldMC):
         return rval
 
     @ovld
-    def hrepr_short(self, obj: with_attribute("__hrepr_short__")):
+    def hrepr_short(self, obj: has_attribute("__hrepr_short__")):
         return obj.__hrepr_short__(self.H, self)
 
     def __call__(self, obj, **config):

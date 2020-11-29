@@ -17,10 +17,10 @@ def _tn(x):
     return type(x).__name__
 
 
-def dataclass_without(prop):
+def with_attribute(attr):
     @meta
     def fn(cls):
-        return is_dataclass(cls) and not hasattr(cls, prop)
+        return hasattr(cls, attr)
 
     return fn
 
@@ -130,8 +130,10 @@ class Hrepr(metaclass=OvldMC):
 
     @ovld
     def hrepr_resources(self, cls: object):
-        if hasattr(cls, "__hrepr_resources__"):
-            return cls.__hrepr_resources__(self.H)
+        return []
+
+    def hrepr_resources(self, cls: with_attribute("__hrepr_resources__")):
+        return cls.__hrepr_resources__(self.H)
 
     @ovld.dispatch
     def hrepr(ovldcall, obj):
@@ -144,20 +146,21 @@ class Hrepr(metaclass=OvldMC):
             return rval
 
     def hrepr(self, obj: object):
-        if hasattr(obj, "__hrepr__"):
-            return obj.__hrepr__(self.H, self)
-        else:
-            return NotImplemented
+        return NotImplemented
+
+    def hrepr(self, obj: with_attribute("__hrepr__")):
+        return obj.__hrepr__(self.H, self)
 
     @ovld
     def hrepr_short(self, obj: object):
-        if hasattr(obj, "__hrepr_short__"):
-            return obj.__hrepr_short__(self.H, self)
-        else:
-            clsn = _tn(obj)
-            rval = self.H.span[f"hreprs-{clsn}"]("<", clsn, ">")
-            self.state.register(id(obj), rval)
-            return rval
+        clsn = _tn(obj)
+        rval = self.H.span[f"hreprs-{clsn}"]("<", clsn, ">")
+        self.state.register(id(obj), rval)
+        return rval
+
+    @ovld
+    def hrepr_short(self, obj: with_attribute("__hrepr_short__")):
+        return obj.__hrepr_short__(self.H, self)
 
     def __call__(self, obj, **config):
         if self.preprocess is not None:
@@ -274,7 +277,7 @@ class StdHrepr(Hrepr):
 
     # Dataclasses
 
-    def hrepr(self, obj: dataclass_without("__hrepr__")):
+    def hrepr(self, obj: meta(is_dataclass)):
         return self.H.instance(
             *[
                 self.H.pair(
@@ -288,7 +291,7 @@ class StdHrepr(Hrepr):
             vertical=True,
         )
 
-    def hrepr_short(self, obj: dataclass_without("__hrepr_short__")):
+    def hrepr_short(self, obj: meta(is_dataclass)):
         return self.H.instance("...", type=_tn(obj), short=True,)
 
     # Strings

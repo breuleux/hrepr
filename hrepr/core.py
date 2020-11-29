@@ -40,27 +40,6 @@ class Config:
         return None
 
 
-# class ResourceAccumulator:
-#     def __init__(self, acq):
-#         self.consulted = set()
-#         self.resources = set()
-#         self.spent = set()
-#         self.acq = acq
-
-#     def acquire(self, cls):
-#         if cls not in self.consulted:
-#             self.consulted.add(cls)
-#             resources = self.acq(cls)
-#             resources -= self.spent
-#             self.resources |= resources
-
-#     def dump(self):
-#         rval = self.resources
-#         self.spent |= self.resources
-#         self.resources.clear()
-#         return rval
-
-
 class HreprState:
     def __init__(self):
         self.types_seen = set()
@@ -116,7 +95,13 @@ class Hrepr(metaclass=OvldMC):
             return self
         else:
             cfg = self.config.with_config(config)
-            return type(self)(H=self.H, config=cfg, master=self.master)
+            return type(self)(
+                H=self.H,
+                config=cfg,
+                master=self.master,
+                preprocess=self.preprocess,
+                postprocess=self.postprocess,
+            )
 
     def ref(self, obj, loop=False):
         num = self.state.get_ref(id(obj))

@@ -361,6 +361,10 @@ class Interface:
         self.inject_references = inject_references
         self.fill_resources = fill_resources
 
+    def page(self, *objs, **config):
+        result = self(*objs, **config)
+        return result.as_page()
+
     def __call__(
         self,
         *objs,

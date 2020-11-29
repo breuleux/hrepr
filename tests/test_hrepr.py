@@ -277,7 +277,7 @@ def test_as_page():
     utf8 = H.meta(
         {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
     )
-    assert real_hrepr(1).as_page() == H.inline(
+    assert real_hrepr.page(1) == H.inline(
         H.raw("<!DOCTYPE html>"),
         H.html(H.head(utf8, H.style(css_hrepr)), H.body(real_hrepr(1)),),
     )

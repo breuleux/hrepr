@@ -118,7 +118,10 @@ class Tag:
     def collect_resources(self, coll=None, exclude=None):
         coll = [] if coll is None else coll
         exclude = set() if exclude is None else exclude
-        coll.extend([res for res in self.resources if res not in exclude])
+        for res in self.resources:
+            if res not in exclude:
+                res.collect_resources(coll=coll, exclude=exclude)
+                coll.append(res)
         exclude.update(self.resources)
         for child in iterate_children(self.children):
             if isinstance(child, Tag):

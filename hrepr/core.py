@@ -355,9 +355,15 @@ class Interface:
         self.inject_references = inject_references
         self.fill_resources = fill_resources
 
-    def page(self, *objs, **config):
-        result = self(*objs, **config)
-        return result.as_page()
+    def page(self, *objs, file=None, **config):
+        result = self(*objs, **config).as_page()
+        if file is None:
+            return result
+        elif isinstance(file, str):  # pragma: no cover
+            with open(file, "w") as f:
+                f.write(str(result) + "\n")
+        else:  # pragma: no cover
+            file.write(str(result) + "\n")
 
     def __call__(
         self,

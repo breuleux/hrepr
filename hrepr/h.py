@@ -74,7 +74,7 @@ class Tag:
         attributes (dict): A dictionary of attributes. Attributes that
             start with ``__`` are reserved for internal use.
         children (tuple): Children of this node.
-        resources (set): Set of resources needed by this node or its
+        resources (tuple): List of resources needed by this node or its
             children.
     """
 
@@ -92,9 +92,7 @@ class Tag:
         self.name = name
         self.attributes = attributes or {}
         self.children = children or ()
-        self.resources = (
-            frozenset() if resources is None else frozenset(resources)
-        )
+        self.resources = () if resources is None else tuple(resources)
 
     def fill(self, children=None, attributes=None, resources=None):
         if not children and not attributes and not resources:
@@ -104,9 +102,11 @@ class Tag:
             {**self.attributes, **attributes} if attributes else self.attributes
         )
         if isinstance(resources, Tag):
-            resources = {resources}
+            resources = (resources,)
         resources = (
-            {*self.resources, *resources} if resources else self.resources
+            tuple([*self.resources, *resources])
+            if resources
+            else self.resources
         )
         return type(self)(
             name=self.name,
@@ -115,12 +115,14 @@ class Tag:
             resources=resources,
         )
 
-    def collect_resources(self, coll=None):
-        coll = set() if coll is None else coll
-        coll.update(self.resources)
+    def collect_resources(self, coll=None, exclude=None):
+        coll = [] if coll is None else coll
+        exclude = set() if exclude is None else exclude
+        coll.extend([res for res in self.resources if res not in exclude])
+        exclude.update(self.resources)
         for child in iterate_children(self.children):
             if isinstance(child, Tag):
-                child.collect_resources(coll=coll)
+                child.collect_resources(coll=coll, exclude=exclude)
         return coll
 
     def get_attribute(self, attr, dflt):
@@ -189,6 +191,7 @@ class Tag:
     def __getitem__(self, items):
         if not isinstance(items, tuple):
             items = (items,)
+        assert all(isinstance(item, str) for item in items)
         classes = self.attributes.get("class", frozenset()) | frozenset(items)
         return self.fill(attributes={"class": classes})
 

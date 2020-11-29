@@ -122,7 +122,7 @@ class Hrepr(metaclass=OvldMC):
         return ref
 
     def global_resources(self):  # pragma: no cover
-        return set()
+        return ()
 
     @ovld
     def hrepr_resources(self, cls: object):
@@ -209,7 +209,7 @@ class StdHrepr(Hrepr):
         self.std = std
 
     def global_resources(self):
-        return {self.H.style(css_hrepr)}
+        return (self.H.style(css_hrepr),)
 
     # Lists
 

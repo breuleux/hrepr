@@ -25,7 +25,7 @@ def pprint(x, **config):  # pragma: no cover
         config: Configuration settings (dependent on the pretty-printer for
             each object).
     """
-    print(pstr(**config))
+    print(pstr(x, **config))
 
 
 def pstr(x, indent=4, max_col=80, max_indent=None, overflow="allow", **config):

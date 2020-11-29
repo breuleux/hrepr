@@ -142,9 +142,9 @@ def test_as_page():
 def test_as_page_with_resources():
     sty = H.style("b { color: red; }")
     scr = H.script("x = 1234;")
-    resources = frozenset({sty, scr})
-    inner = H.b("resources").fill(resources={scr})
-    tag = H.div("with ", inner).fill(resources={sty})
+    resources = (sty, scr)
+    inner = H.b("resources").fill(resources=scr)
+    tag = H.div("with ", inner).fill(resources=sty)
     utf8 = H.meta(
         {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
     )

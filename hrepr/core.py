@@ -78,6 +78,10 @@ class HreprState:
     def register(self, objid, value):
         self.registry.setdefault(objid, value)
 
+    def reregister(self, objid, value):
+        if objid in self.registry:
+            self.registry[objid] = value
+
     def make_refmap(self):
         rval = {}
         for objid, label in self.refs.items():
@@ -182,6 +186,7 @@ class Hrepr(metaclass=OvldMC):
 
         if self.postprocess is not None:
             rval = self.postprocess(rval, obj, self)
+            self.state.reregister(id(obj), rval)
 
         # Check that it's the right type
         htype = self.H.tag_class
@@ -199,6 +204,7 @@ class Hrepr(metaclass=OvldMC):
         cls = type(obj)
         resources = self.hrepr_resources[cls](cls)
         rval = rval.fill(resources=resources)
+        self.state.reregister(id(obj), rval)
 
         return rval
 

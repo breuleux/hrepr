@@ -185,16 +185,7 @@ table.hrepr-body > tbody > tr:nth-child(odd) {
 }
 
 .hrepr-refbox {
-	display: inline-block;
+	display: inline-flex;
 	position: relative;
+	place-items: center;
 }
-
-/* .hrepr-refbox > :first-child {
-	position: absolute;
-	color: white;
-	background: magenta;
-	padding: 2px;
-	font-size: 9px;
-	left: 0px;
-	top: 0px;
-} */

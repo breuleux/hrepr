@@ -154,7 +154,7 @@ description = "Overloading Python functions"
 name = "ovld"
 optional = false
 python-versions = ">=3.6,<4.0"
-version = "0.2.6"
+version = "0.2.7"
 
 [[package]]
 category = "dev"
@@ -302,7 +302,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "jaraco.test (>=3.2.0)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [metadata]
-content-hash = "48eb05f5b4bb31f5b4c041e47b4bad0b999c00dd4b6835951b2ef7193f705585"
+content-hash = "cefa06ceb737d0d2a89381f90ccb971c3994ba2fe37d4831dca77887bc0a3f25"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -391,8 +391,8 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 ovld = [
-    {file = "ovld-0.2.6-py3-none-any.whl", hash = "sha256:ba019fe01aec852dba421c4ce8cc34862a83c35fb1fcdf9d00ad1172610a07e7"},
-    {file = "ovld-0.2.6.tar.gz", hash = "sha256:64dd7ab98cc058a1cfba1d5af1b41f2db2c9cc5c0448704eb74b8f22dea2aabd"},
+    {file = "ovld-0.2.7-py3-none-any.whl", hash = "sha256:e62b26f68eb3b289e9c831fed648ffd52e31d42307d75241e02f4b0a1d91caaa"},
+    {file = "ovld-0.2.7.tar.gz", hash = "sha256:28e33c67ef368b71945ec580b3824c7618749551eb949632e6d81f8bab4bac24"},
 ]
 packaging = [
     {file = "packaging-20.7-py2.py3-none-any.whl", hash = "sha256:eb41423378682dadb7166144a4926e443093863024de508ca5c9737d6bc08376"},

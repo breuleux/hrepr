@@ -5,8 +5,6 @@ from textwrap import dedent
 
 from _pytest.assertion.rewrite import AssertionRewriter
 
-from hrepr.core import Config, H, StdHrepr, inject_reference_numbers
-
 
 class AssertTransformer(NodeTransformer):
     def visit_FunctionDef(self, node):

@@ -108,7 +108,7 @@ def test_short_structures():
 
 def test_dict():
     pt = {"x": 1, "y": 2}
-    assert hrepr(pt) == H.div[f"hreprt-dict", "hrepr-bracketed"](
+    assert hrepr(pt) == H.div["hreprt-dict", "hrepr-bracketed"](
         H.div["hrepr-open"]("{"),
         H.table["hrepr-body"](
             H.tr(
@@ -144,7 +144,7 @@ def test_dict():
 def test_dataclass():
     pt = Point(1, 2)
 
-    assert hrepr(pt) == H.div[f"hreprt-Point", "hrepr-instance", "hreprl-v"](
+    assert hrepr(pt) == H.div["hreprt-Point", "hrepr-instance", "hreprl-v"](
         H.div["hrepr-title"]("Point"),
         H.table["hrepr-body"](
             H.tr(
@@ -161,7 +161,7 @@ def test_dataclass():
     )
 
     assert hrepr(pt, max_depth=0) == H.div[
-        f"hreprt-Point", "hrepr-instance", "hreprl-s"
+        "hreprt-Point", "hrepr-instance", "hreprl-s"
     ](
         H.div["hrepr-title"]("Point"),
         H.div["hrepr-body", "hreprl-s"](H.div("...")),

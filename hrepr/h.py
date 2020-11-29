@@ -5,7 +5,7 @@ from types import GeneratorType
 
 from ovld import ovld
 
-from .textgen import Breakable, Context, Sequence, Text, join
+from .textgen import Breakable, Context, Text
 
 # CSS for hrepr
 styledir = f"{os.path.dirname(__file__)}/style"
@@ -51,7 +51,7 @@ class Tag:
     .. note::
 
         Create tags using an instance of the HTML class.
-    
+
     A Tag should be immutable, but you can create modified versions
     of a tag by calling it with additional attributes or children,
     or indexing it with class names:

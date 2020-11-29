@@ -1,6 +1,6 @@
 import pytest
 
-from hrepr import H, Hrepr, StdHrepr
+from hrepr import H, StdHrepr
 
 from .common import one_test_per_assert
 

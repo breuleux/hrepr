@@ -3,10 +3,10 @@ from collections import Counter
 from dataclasses import fields as dataclass_fields
 from dataclasses import is_dataclass
 
-from ovld import OvldCall, OvldMC, meta, ovld
+from ovld import OvldMC, meta, ovld
 
 from . import std
-from .h import HTML, H, Tag, css_hrepr
+from .h import H, Tag, css_hrepr
 from .std import standard_html
 
 default_string_cutoff = 20
@@ -283,7 +283,7 @@ class StdHrepr(Hrepr):
         )
 
     def hrepr_short(self, obj: dataclass_without("__hrepr_short__")):
-        return self.H.instance(f"...", type=_tn(obj), short=True,)
+        return self.H.instance("...", type=_tn(obj), short=True,)
 
     # Strings
 

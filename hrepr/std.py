@@ -41,7 +41,7 @@ def _format_sequence(fn, seq, layout):
         container = H.div[f"hreprl-{layout}", "hrepr-body"]
         return container(*[H.div(fn(x)) for x in seq])
     elif layout == "v":
-        table = H.table[f"hrepr-body"]()
+        table = H.table["hrepr-body"]()
         for x in seq:
             if isinstance(x, type(H.pair)):
                 delimiter = x.get_attribute("delimiter", "")
@@ -104,7 +104,7 @@ def standard_html(self, node: type(H.instance)):
     )
     layout = _get_layout(data, "h")
     body = _format_sequence(self, children, layout)
-    return rval[f"hrepr-instance", f"hreprl-{layout}"](
+    return rval["hrepr-instance", f"hreprl-{layout}"](
         H.div["hrepr-title"](self(data.type)), body
     )
 
@@ -126,7 +126,7 @@ def standard_html(self, node: type(H.atom)):
 
 @ovld
 def standard_html(self, node: type(H.symbol)):
-    return H.span[f"hrepr-symbol"](*node.children)
+    return H.span["hrepr-symbol"](*node.children)
 
 
 @ovld

@@ -1,4 +1,3 @@
-import re
 from dataclasses import dataclass
 
 from hrepr import H, pstr, trepr
@@ -61,7 +60,7 @@ _expected = """[
         'b': 3
     }, 
     4
-]"""
+]"""  # noqa: W291
 
 
 def test_nested_indent():

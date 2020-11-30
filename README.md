@@ -10,7 +10,12 @@
 
 <img src="images/hrepr1.png" width="400px"><img src="images/hrepr2.png" width="400px">
 
-See `examples/Basics.ipynb` and `examples/Advanced.ipynb` for more examples, but keep in mind that GitHub can't display them properly.
+I suggest studying the two example files to learn `hrepr`:
+
+* `python examples/exhibit.py > exhibit.html` (and then view the HTML file)
+* `python examples/pretty.py`
+
+Also see the Jupyter notebook at `examples/Basics.ipynb`, but keep in mind that GitHub can't display it properly because of the injected styles/scripts.
 
 
 ## Install

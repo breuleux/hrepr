@@ -8,7 +8,7 @@
 ✅ Compatible with Jupyter notebooks<br/>
 ✅ Also pretty-prints to the terminal<br/>
 
-<img src="images/hrepr1.png" width="400px"><img src="images/hrepr2.png" width="400px">
+<img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr1.png" width="400px"><img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr2.png" width="400px">
 
 I suggest studying the two example files to learn `hrepr`:
 
@@ -102,7 +102,7 @@ class Person:
         return H.atom["person-short"](self.name)
 ```
 
-<img src="images/hrepr3.png" width="600px">
+<img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr3.png" width="600px">
 
 Note how this also gave us a textual representation *for free*, using `hrepr.pprint`. This feature requires using special tags like `H.instance`, `H.bracketed`, `H.pair` or `H.atom` -- other ones will pretty-print like HTML -- but it's neat regardless!
 
@@ -111,11 +111,11 @@ Note how this also gave us a textual representation *for free*, using `hrepr.ppr
 
 `hrepr` (and `hrepr.pprint` for that matter) can handle circular references. Furthermore, if an object is found at several places in a structure, only the first occurrence will be printed in full, and any other will be a numeric reference mapped to the short representation for the object. It looks like this:
 
-<img src="images/hrepr4.png" width="600px">
+<img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr4.png" width="600px">
 
 The `shortrefs` and `norefs` configuration keys control the representation of references:
 
-<img src="images/hrepr5.png" width="600px">
+<img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr5.png" width="600px">
 
 `norefs` is ignored when there are circular references.
 
@@ -206,7 +206,7 @@ class Plot:
 
 And just like that:
 
-<img src="images/hrepr6.png" width="600px">
+<img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr6.png" width="600px">
 
 
 ## Customize hrepr
@@ -236,7 +236,7 @@ class MyMixin(Hrepr):
         return self.H.span("🦆")
 ```
 
-<img src="images/hrepr7.png" width="600px">
+<img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr7.png" width="600px">
 
 The annotation for a rule can either be a type, `ovld.has_attribute`, or pretty much any function wrapped with the `ovld.meta` decorator, as long as the function operates on classes. See the documentation for [ovld](https://github.com/breuleux/ovld#other-features) for more information.
 
@@ -264,7 +264,7 @@ def highlight(x):
 hrepr([1, 2, [3, 4, 2]], postprocess=highlight(2))
 ```
 
-<img src="images/hrepr8.png" width="600px">
+<img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr8.png" width="600px">
 
 
 ### hrepr variants

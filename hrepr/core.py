@@ -131,7 +131,7 @@ class Hrepr(metaclass=OvldMC):
     @ovld
     def hrepr_short(self, obj: object):
         clsn = _tn(obj)
-        rval = self.H.span[f"hreprs-{clsn}"]("<", clsn, ">")
+        rval = self.H.atom("<", clsn, ">", type=clsn)
         self.state.register(id(obj), rval)
         return rval
 

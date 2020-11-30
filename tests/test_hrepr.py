@@ -255,7 +255,7 @@ def test_recursive():
 
 
 def test_unsupported():
-    assert hshort(Opaque()) == H.span["hreprs-Opaque"]("<", "Opaque", ">")
+    assert hshort(Opaque()) == H.span["hreprt-Opaque"]("<", "Opaque", ">")
 
 
 def test_as_page():

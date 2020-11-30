@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from hrepr import H, pstr, trepr
+from hrepr.term import standard_terminal
 from hrepr.textgen import Context, Text
 
 
@@ -102,3 +103,26 @@ def test_overflow_whitespace():
     t = Text("hello                        ")
     val, offset = ctx.format(t)
     assert val == "hello     "
+
+
+def test_variant_hclass():
+    from hrepr import Hrepr
+
+    obj = {"a": [1, 2, 3], "b": 4}
+    assert str(trepr.variant(hclass=Hrepr)(obj)) == "<dict>"
+
+
+def test_variant_backend():
+    from hrepr import hrepr
+
+    obj = {"a": [1, 2, 3], "b": 4}
+    assert str(trepr(obj)) == str(hrepr.variant(backend=standard_terminal)(obj))
+
+
+def test_variant_no_refinject():
+    li = [1, 2]
+    obj = [li, li]
+    assert trepr_s(obj) == "[#1=[1, 2], #1=[...]]"
+    assert (
+        str(trepr.variant(inject_references=False)(obj)) == "[[1, 2], #1=[...]]"
+    )

@@ -13,6 +13,9 @@ default_string_cutoff = 20
 default_bytes_cutoff = 20
 
 
+ABSENT = object()
+
+
 def _tn(x):
     return type(x).__name__
 
@@ -338,14 +341,76 @@ def inject_reference_numbers(hcall, node, refmap):
         return node
 
 
+def _mix(hclass, mixins):
+    if mixins:
+        if isinstance(mixins, type):
+            mixins = [mixins]
+        hclass = hclass.create_subclass(*mixins)
+    return hclass
+
+
 class Interface:
     def __init__(
-        self, hclass, backend, inject_references=True, fill_resources=True
+        self,
+        hclass,
+        *,
+        backend,
+        mixins=None,
+        preprocess=None,
+        postprocess=None,
+        inject_references=True,
+        fill_resources=True,
+        **config_defaults,
     ):
-        self._hcls = hclass
+        self.hclass = _mix(hclass, mixins)
         self.backend = backend
+        self.preprocess = preprocess
+        self.postprocess = postprocess
         self.inject_references = inject_references
         self.fill_resources = fill_resources
+        self.config_defaults = config_defaults
+
+    def copy(self):
+        return type(self)(
+            hclass=self.hclass,
+            backend=self.backend,
+            preprocess=self.preprocess,
+            postprocess=self.postprocess,
+            inject_references=self.inject_references,
+            fill_resources=self.fill_resources,
+            **self.config_defaults,
+        )
+
+    def variant(self, **options):
+        return self.copy().configure(**options)
+
+    def configure(
+        self,
+        *,
+        hclass=None,
+        mixins=None,
+        backend=None,
+        preprocess=ABSENT,
+        postprocess=ABSENT,
+        inject_references=ABSENT,
+        fill_resources=ABSENT,
+        **config_defaults,
+    ):
+        if hclass is not None:
+            self.hclass = hclass
+        self.hclass = _mix(self.hclass, mixins)
+        if backend is not None:
+            self.backend = backend
+        if preprocess is not ABSENT:
+            self.preprocess = preprocess
+        if postprocess is not ABSENT:
+            self.postprocess = postprocess
+        if inject_references is not ABSENT:
+            self.inject_references = inject_references
+        if fill_resources is not ABSENT:
+            self.fill_resources = fill_resources
+        self.config_defaults.update(config_defaults)
+        return self
 
     def page(self, *objs, file=None, **config):
         result = self(*objs, **config).as_page()
@@ -357,35 +422,25 @@ class Interface:
         else:  # pragma: no cover
             file.write(str(result) + "\n")
 
-    def __call__(
-        self,
-        *objs,
-        hclass=None,
-        mixins=None,
-        preprocess=None,
-        postprocess=None,
-        **config,
-    ):
-        hcls = hclass or self._hcls
-        if mixins:
-            if isinstance(mixins, type):
-                mixins = [mixins]
-            hcls = hcls.create_subclass(*mixins)
-        hcall = hcls(
-            H=H,
-            config=Config(config),
-            preprocess=preprocess,
-            postprocess=postprocess,
-        )
-        if len(objs) == 1:
-            rval = hcall(objs[0])
+    def __call__(self, *objs, **config):
+        if config:
+            return self.variant(**config)(*objs)
         else:
-            rval = H.inline(*map(hcall, objs))
-        if self.inject_references:
-            rval = inject_reference_numbers(
-                hcall, rval, hcall.state.make_refmap()
+            hcall = self.hclass(
+                H=H,
+                config=Config(self.config_defaults),
+                preprocess=self.preprocess,
+                postprocess=self.postprocess,
             )
-        if self.fill_resources:
-            rval = rval.fill(resources=hcall.global_resources())
-        rval = self.backend(rval)
-        return rval
+            if len(objs) == 1:
+                rval = hcall(objs[0])
+            else:
+                rval = H.inline(*map(hcall, objs))
+            if self.inject_references:
+                rval = inject_reference_numbers(
+                    hcall, rval, hcall.state.make_refmap()
+                )
+            if self.fill_resources:
+                rval = rval.fill(resources=hcall.global_resources())
+            rval = self.backend(rval)
+            return rval

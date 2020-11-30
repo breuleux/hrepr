@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
-from hrepr import H, StdHrepr
+from hrepr import H
 from hrepr import hrepr as real_hrepr
 from hrepr.h import css_hrepr
 
 from .common import one_test_per_assert
 
-hrepr = StdHrepr.make_interface(fill_resources=False)
+hrepr = real_hrepr.variant(fill_resources=False)
 
 
 @dataclass

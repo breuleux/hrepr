@@ -12,12 +12,12 @@ def standard_terminal(self, node: Tag):
 
 @ovld
 def standard_terminal(self, node: type(H.atom)):
-    (child,) = node.children
     typ = node.get_attribute("type", None)
     if typ == "str":
+        (child,) = node.children
         return Text(repr(child))
     else:
-        return Text(str(child))
+        return Text("".join(map(str, node.children)))
 
 
 @ovld

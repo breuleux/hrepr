@@ -265,3 +265,24 @@ hrepr([1, 2, [3, 4, 2]], postprocess=highlight(2))
 ```
 
 <img src="images/hrepr8.png" width="600px">
+
+
+### hrepr variants
+
+To put this all together, you can create a *variant* of `hrepr`:
+
+```python
+hrepr2 = hrepr.variant(mixins=MyMixin, postprocess=highlight(2))
+hrepr2([1, 2, 3])  # Will use the mixins and postprocessor
+```
+
+
+### Configure the hrepr function itself
+
+Alternatively, you can configure the main `hrepr`:
+
+```python
+hrepr.configure(mixins=MyMixin, postprocess=highlight(2))
+```
+
+But keep in mind that unlike the variant, the above will modify `hrepr` for everything else as well.

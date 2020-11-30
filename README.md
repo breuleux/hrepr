@@ -233,7 +233,7 @@ class MyMixin(Hrepr):
 
 <img src="images/hrepr7.png" width="600px">
 
-The annotation for a rule can either be a type, `ovld.has_attribute`, or pretty much any function wrapped with the `ovld.meta` decorator. See the documentation for [ovld](https://github.com/breuleux/ovld#other-features) for more information.
+The annotation for a rule can either be a type, `ovld.has_attribute`, or pretty much any function wrapped with the `ovld.meta` decorator, as long as the function operates on classes. See the documentation for [ovld](https://github.com/breuleux/ovld#other-features) for more information.
 
 And yes, you can define `hrepr` multiple times inside the class, as long as they have distinct annotations and you inherit from `Hrepr`. You can also define `hrepr_short` or `hrepr_resources` the same way.
 

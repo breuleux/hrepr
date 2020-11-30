@@ -8,8 +8,7 @@
 ✅ Compatible with Jupyter notebooks<br/>
 ✅ Also pretty-prints to the terminal<br/>
 
-<img src="images/hrepr1.png" width="400px">
-<img src="images/hrepr2.png" width="400px">
+<img src="images/hrepr1.png" width="400px"><img src="images/hrepr2.png" width="400px">
 
 See `examples/Basics.ipynb` and `examples/Advanced.ipynb` for more examples, but keep in mind that GitHub can't display them properly.
 

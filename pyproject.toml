@@ -4,11 +4,12 @@ version = "0.2.4"
 description = "Extensible HTML representation for Python objects."
 authors = ["Olivier Breuleux <breuleux@gmail.com>"]
 license = "MIT"
-readme = "README.rst"
+readme = "README.md"
+homepage = "https://github.com/breuleux/hrepr"
+repository = "https://github.com/breuleux/hrepr"
 classifiers = [
-    'Development Status :: 3 - Alpha',
+    'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
-    'Topic :: Software Development :: Build Tools',
 ]
 
 [tool.poetry.dependencies]

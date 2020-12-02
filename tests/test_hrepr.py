@@ -80,7 +80,7 @@ def test_structures():
             f"hreprt-{clsname}", "hrepr-bracketed"
         ](
             H.div["hrepr-open"](o),
-            H.div["hrepr-body", "hreprl-h"](
+            H.div["hreprl-h", "hrepr-body"](
                 H.div(H.span["hreprt-int"]("1")),
                 H.div(H.span["hreprt-int"]("2")),
             ),
@@ -101,7 +101,7 @@ def test_short_structures():
             f"hreprt-{clsname}", "hrepr-bracketed"
         ](
             H.div["hrepr-open"](o),
-            H.div["hrepr-body", "hreprl-s"](H.div("...")),
+            H.div["hreprl-s", "hrepr-body"](H.div("...")),
             H.div["hrepr-close"](c),
         )
 
@@ -149,7 +149,7 @@ def test_dataclass():
         "hreprt-Point", "hrepr-instance", "hreprl-s"
     ](
         H.div["hrepr-title"]("Point"),
-        H.div["hrepr-body", "hreprl-s"](H.div("...")),
+        H.div["hreprl-s", "hrepr-body"](H.div("...")),
     )
 
 
@@ -164,13 +164,13 @@ def test_multiref():
 
     assert hrepr(lili) == H.div["hreprt-list", "hrepr-bracketed"](
         H.div["hrepr-open"]("["),
-        H.div["hrepr-body", "hreprl-h"](
+        H.div["hreprl-h", "hrepr-body"](
             H.div(
                 H.div["hrepr-refbox"](
                     H.span["hrepr-ref"]("#", 1, "="),
                     H.div["hreprt-list", "hrepr-bracketed"](
                         H.div["hrepr-open"]("["),
-                        H.div["hrepr-body", "hreprl-h"](
+                        H.div["hreprl-h", "hrepr-body"](
                             H.div(H.span["hreprt-int"]("1")),
                             H.div(H.span["hreprt-int"]("2")),
                         ),
@@ -183,7 +183,7 @@ def test_multiref():
                     H.span["hrepr-ref"]("#", 1, "="),
                     H.div["hreprt-list", "hrepr-bracketed"](
                         H.div["hrepr-open"]("["),
-                        H.div["hrepr-body", "hreprl-s"](H.div("..."),),
+                        H.div["hreprl-s", "hrepr-body"](H.div("..."),),
                         H.div["hrepr-close"]("]"),
                     ),
                 )
@@ -196,13 +196,13 @@ def test_multiref():
         "hreprt-list", "hrepr-bracketed"
     ](
         H.div["hrepr-open"]("["),
-        H.div["hrepr-body", "hreprl-h"](
+        H.div["hreprl-h", "hrepr-body"](
             H.div(
                 H.div["hrepr-refbox"](
                     H.span["hrepr-ref"]("#", 1, "="),
                     H.div["hreprt-list", "hrepr-bracketed"](
                         H.div["hrepr-open"]("["),
-                        H.div["hrepr-body", "hreprl-h"](
+                        H.div["hreprl-h", "hrepr-body"](
                             H.div(H.span["hreprt-int"]("1")),
                             H.div(H.span["hreprt-int"]("2")),
                         ),
@@ -231,7 +231,7 @@ def test_recursive():
                         H.span["hrepr-ref"]("⟳", 1, "="),
                         H.div["hreprt-list", "hrepr-bracketed"](
                             H.div["hrepr-open"]("["),
-                            H.div["hrepr-body", "hreprl-s"](H.div("..."),),
+                            H.div["hreprl-s", "hrepr-body"](H.div("..."),),
                             H.div["hrepr-close"]("]"),
                         ),
                     )
@@ -282,5 +282,5 @@ def test_preprocess():
 
 def test_postprocess():
     assert hrepr(1, postprocess=lambda x, obj, hrepr: x["newclass"]) == H.span[
-        "hreprt-int", "newclass"
+        "newclass", "hreprt-int"
     ]("1")

@@ -141,7 +141,7 @@ class Tag:
                 return k
             elif v is False:
                 return ""
-            elif isinstance(v, (set, frozenset)):
+            elif isinstance(v, (tuple, frozenset)):
                 res = " ".join(escape(cls) for cls in v)
             else:
                 res = escape(str(v))
@@ -195,7 +195,7 @@ class Tag:
         if not isinstance(items, tuple):
             items = (items,)
         assert all(isinstance(item, str) for item in items)
-        classes = self.attributes.get("class", frozenset()) | frozenset(items)
+        classes = self.attributes.get("class", ()) + items
         return self.fill(attributes={"class": classes})
 
     def __call__(self, *children, **attributes):

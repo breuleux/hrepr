@@ -6,7 +6,7 @@ def test_pair():
     p = H.pair["kls"](
         "red", "blue", delimiter=" -> ", stuff="xyz", type="color"
     )
-    assert sht(p) == H.div["hrepr-pair", "hreprt-color", "kls"](
+    assert sht(p) == H.div["kls", "hreprt-color", "hrepr-pair"](
         "red", " -> ", "blue", stuff="xyz"
     )
 
@@ -21,7 +21,7 @@ def test_bracketed():
         stuff="xyz",
     )
 
-    assert sht(brack(vertical=True)) == H.div["hrepr-bracketed", "kls"](
+    assert sht(brack(vertical=True)) == H.div["kls", "hrepr-bracketed"](
         H.div["hrepr-open"]("START"),
         H.table["hrepr-body"](
             H.tr(H.td("a"), H.td["hrepr-delim"](" -> "), H.td("b"),),
@@ -32,9 +32,9 @@ def test_bracketed():
         stuff="xyz",
     )
 
-    assert sht(brack(horizontal=True)) == H.div["hrepr-bracketed", "kls"](
+    assert sht(brack(horizontal=True)) == H.div["kls", "hrepr-bracketed"](
         H.div["hrepr-open"]("START"),
-        H.div["hrepr-body", "hreprl-h"](
+        H.div["hreprl-h", "hrepr-body"](
             H.div(H.div["hrepr-pair"]("a", " -> ", "b",)),
             H.div(H.div["hrepr-pair"]("c", " <- ", "d",)),
             H.div("e"),

@@ -128,6 +128,10 @@ def test_misc():
     assert repr(H.div("soupe")) == str(H.div("soupe"))
 
 
+def test_dash():
+    assert matches(H.some_tag("xyz"), "<some-tag>xyz</some-tag>")
+
+
 def test_as_page():
     tag = H.div("simplicity")
     utf8 = H.meta(

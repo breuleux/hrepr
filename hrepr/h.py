@@ -1,5 +1,4 @@
 import os.path
-import re
 from html import escape
 from types import GeneratorType
 
@@ -298,9 +297,7 @@ class HTML:
         self.tag_class = tag_class
 
     def __getattr__(self, tag_name):
-        tag_name = re.sub(
-            "(?<=[a-z])([A-Z])", lambda m: f"-{m.group(0).lower()}", tag_name
-        )
+        tag_name = tag_name.replace("_", "-")
         tag_class = self.tag_class
         if hasattr(tag_class, "specialize"):
             tag_class = tag_class.specialize(tag_name)

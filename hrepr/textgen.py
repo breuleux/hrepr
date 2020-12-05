@@ -66,7 +66,11 @@ class TextFormatter:
     def to_string(self, **config):
         value, offset = self.format(
             Context(
-                tabsize=4, max_col=80, offset=0, line_offset=0, max_indent=None
+                tabsize=4,
+                max_col=None,
+                offset=0,
+                line_offset=0,
+                max_indent=None,
             ).replace(**config),
         )
         return value

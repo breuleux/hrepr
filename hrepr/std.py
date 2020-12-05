@@ -1,9 +1,9 @@
-import json
 from itertools import count
 from types import SimpleNamespace
 
 from ovld import ovld
 
+from . import hjson
 from .h import H, Tag
 
 _c = count()
@@ -72,6 +72,7 @@ def _format_sequence(fn, seq, layout):
                 src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js",
             )
         ],
+        "hjson": hjson.dumps,
     }
 )
 def standard_html(self, node: Tag):
@@ -84,7 +85,7 @@ def standard_html(self, node: Tag):
         elemid = data.id or f"_hrepr_elem{num}"
         target = target(id=elemid)
         export = data.export or f"_hrepr_i{num}"
-        opts = json.dumps(data.options)
+        opts = self.hjson(data.options)
         return H.inline(
             self(target(*children)),
             self(
@@ -100,7 +101,10 @@ def standard_html(self, node: Tag):
     else:
         return type(node)(
             name=node.name,
-            attributes={k: self(v) for k, v in node.attributes.items()},
+            attributes={
+                k: v if isinstance(v, str) or k == "class" else self.hjson(v)
+                for k, v in node.attributes.items()
+            },
             children=tuple(self(x) for x in node.children),
             resources=[self(res) for res in node.resources],
         )

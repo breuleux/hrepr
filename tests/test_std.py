@@ -44,39 +44,74 @@ def test_bracketed():
     )
 
 
-def test_require():
-    assert sht(H.require(name="blah", src="thing.js")) == H.script(
+_reqjs = sht.initial_state["requirejs_resources"]
+
+
+def test_javascript_tag():
+    assert sht(H.javascript(export="blah", src="thing.js")) == H.script(
         'requirejs.config({paths: {blah: "thing.js?noext"}});'
+    ).fill(resources=_reqjs)
+
+
+def test_javascript_tag_2():
+    assert sht(
+        H.javascript("xxx='hello';", require="abc", export="xxx")
+    ) == H.script(
+        "define('xxx', ['abc'], (abc) => {",
+        "xxx='hello';",
+        "\nreturn xxx;});",
+        "require(['xxx'], _ => {});",
     ).fill(
-        resources=H.script(
-            type="text/javascript",
-            src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js",
+        resources=_reqjs
+    )
+
+
+def test_javascript_tag_lazy():
+    assert sht(
+        H.javascript("xxx='hello';", require="abc", export="xxx", lazy=True)
+    ) == H.script(
+        "define('xxx', ['abc'], (abc) => {",
+        "xxx='hello';",
+        "\nreturn xxx;});",
+        "",
+    ).fill(
+        resources=_reqjs
+    )
+
+
+def test_javascript_tag_noexport():
+    assert sht(H.javascript("xxx='hello';", require="abc")) == H.script(
+        "require(['abc'], (abc) => {", "xxx='hello';", "});",
+    ).fill(resources=_reqjs)
+
+
+def test_interactive():
+    assert sht(
+        H.interactive(
+            H.div["chapeau"](id="melon"),
+            constructor="fou",
+            options={"x": 1},
+            export="everywhere",
         )
-    )
-
-
-def test_script():
-    from hrepr.std import _c
-
-    cnt = next(_c)
-    divname = f"_hrepr_{cnt + 1}"
-    one = sht(
-        H.script("code;", require=["apple", "banana"], create_div="divvo")
-    )
-    two = H.inline(
-        H.div(id=divname),
-        H.script(
-            "require(['apple', 'banana'], function (apple, banana) {",
-            "(function () {",
-            f"let divvo = document.getElementById('{divname}');",
-            "code;",
-            "})();",
-            "});",
+    ) == H.inline(
+        H.div["chapeau"](id="melon"),
+        sht(
+            H.javascript(
+                "let everywhere = fou(document.getElementById('melon'), {\"x\": 1});",
+                require="fou",
+                export="everywhere",
+                lazy=False,
+            )
         ),
     )
-    assert one == two
 
 
-def test_script_empty():
-    s = H.script(src="blah")
-    assert sht(s) == s
+def test_interactive_2():
+    sht(
+        H.interactive(
+            H.div["chapeau"](),
+            constructor="fou",
+            options={"x": 1},
+            export="everywhere",
+        )
+    )

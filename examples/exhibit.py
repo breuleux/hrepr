@@ -1,6 +1,5 @@
 # Redirect output to a HTML file and view it in your browser
 
-import json
 import math
 from dataclasses import dataclass
 
@@ -119,42 +118,45 @@ class Plot:
 
     @classmethod
     def __hrepr_resources__(cls, H):
-        return H.require(
-            name="plotly", src="https://cdn.plot.ly/plotly-latest.min.js",
-        )
+        return [
+            H.javascript(
+                export="plotly", src="https://cdn.plot.ly/plotly-latest.min.js",
+            ),
+            H.javascript(
+                """
+                function make_plot(element, data) {
+                    return plotly.newPlot(element, data);
+                }
+                """,
+                require="plotly",
+                export="make_plot",
+            ),
+        ]
 
     def __hrepr__(self, H, hrepr):
-        data = {
-            "x": list(range(len(self.data))),
-            "y": list(self.data),
-        }
-        return H.script(
-            f"plotly.newPlot(plotdiv, [{json.dumps(data)}]);",
-            require="plotly",
-            create_div="plotdiv",
+        return H.interactive(
+            H.div(),
+            constructor="make_plot",
+            options=[{"x": list(range(len(self.data))), "y": list(self.data),}],
         )
 
 
-cystyle = """
+cystyle = [
     {
-      selector: 'node',
-      style: {
-        'background-color': '#800',
-        'label': 'data(id)'
-      }
+        "selector": "node",
+        "style": {"background-color": "#800", "label": "data(id)"},
     },
-
     {
-      selector: 'edge',
-      style: {
-        'width': 3,
-        'line-color': '#ccc',
-        'target-arrow-color': '#ccc',
-        'target-arrow-shape': 'triangle',
-        'curve-style': 'bezier'
-      }
-    }
-"""
+        "selector": "edge",
+        "style": {
+            "width": 3,
+            "line-color": "#ccc",
+            "target-arrow-color": "#ccc",
+            "target-arrow-shape": "triangle",
+            "curve-style": "bezier",
+        },
+    },
+]
 
 
 class Graph:
@@ -164,31 +166,39 @@ class Graph:
 
     @classmethod
     def __hrepr_resources__(cls, H):
-        return H.require(
-            name="cytoscape",
-            src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.17.0/cytoscape.min.js",
-        )
+        return [
+            H.javascript(
+                src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.17.0/cytoscape.min.js",
+                export="cytoscape",
+            ),
+            H.javascript(
+                """
+                function make_graph(element, options) {
+                    cytoscape({
+                        container: element,
+                        elements: options.data,
+                        style: options.style,
+                        layout: {name: options.layout}
+                    });
+                }
+                """,
+                require="cytoscape",
+                export="make_graph",
+            ),
+        ]
 
     def __hrepr__(self, H, hrepr):
         width = hrepr.config.graph_width or 500
         height = hrepr.config.graph_height or 500
+        style = hrepr.config.graph_style or cystyle
         data = [{"data": {"id": node}} for node in self.nodes]
         data += [
             {"data": {"source": src, "target": tgt}} for src, tgt in self.edges
         ]
-        return H.script(
-            f"""
-            cydiv.style.width = "{width}px";
-            cydiv.style.height = "{height}px";
-            cytoscape({{
-                container: cydiv,
-                elements: {json.dumps(data)},
-                style: [{cystyle}],
-                layout: {{name: 'cose'}}
-            }});
-            """,
-            require="cytoscape",
-            create_div="cydiv",
+        return H.interactive(
+            H.div(style=f"width:{width}px;height:{height}px;",),
+            constructor="make_graph",
+            options={"data": data, "style": style, "layout": "cose"},
         )
 
 

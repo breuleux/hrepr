@@ -1,3 +1,4 @@
+import json
 from itertools import count
 from types import SimpleNamespace
 
@@ -65,7 +66,12 @@ def _format_sequence(fn, seq, layout):
 
 @ovld(
     initial_state={
-        "requirejs_path": "https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"
+        "requirejs_resources": [
+            H.script(
+                type="text/javascript",
+                src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js",
+            )
+        ],
     }
 )
 def standard_html(self, node: Tag):
@@ -135,58 +141,71 @@ def standard_html(self, node: type(H.atom)):
     return rval(*children)
 
 
+def _parse_reqs(reqs):
+    reqs = [reqs] if isinstance(reqs, str) else (reqs or [])
+    reqargs = ", ".join([r.split("/")[-1] for r in reqs])
+    return str(reqs), reqargs
+
+
 @ovld
-def standard_html(self, node: type(H.require)):
+def standard_html(self, node: type(H.javascript)):
     rval, children, data = _extract_as(
-        self, node, "script", src=None, name=None
+        self, node, "script", require=None, export=None, src=None, lazy=False
     )
-    assert not children
+
     src = data.src
-    if src.endswith(".js"):
-        src += "?noext"
-    rval = rval(f'requirejs.config({{paths: {{{data.name}: "{src}"}}}});')
-    return rval.fill(
-        resources=H.script(type="text/javascript", src=self.requirejs_path)
-    )
+    if src is not None:
+        assert not children
+        assert not data.require
+        assert data.export is not None
+        if src.endswith(".js"):
+            src += "?noext"
+        rval = rval(f'requirejs.config({{paths: {{{data.export}: "{src}"}}}});')
+        return rval.fill(resources=self.requirejs_resources)
 
-
-@ovld
-def standard_html(self, node: type(H.script)):
-    rval, children, data = _extract_as(
-        self, node, "script", require=None, create_div=None
-    )
-
-    if children:
-        if data.create_div is not None:
-            divname = f"_hrepr_{next(_c)}"
+    else:
+        reqs, reqargs = _parse_reqs(data.require)
+        if data.export is not None:
             children = [
-                "(function () {",
-                f"let {data.create_div} = document.getElementById('{divname}');",
+                f"define('{data.export}', {reqs}, ({reqargs}) => {{",
                 *children,
-                "})();",
+                f"\nreturn {data.export};}});",
+                "" if data.lazy else f"require(['{data.export}'], _ => {{}});",
             ]
-
-        if data.require is not None:
-            reqs = (
-                list(data.require)
-                if isinstance(data.require, (list, tuple))
-                else [data.require]
-            )
-            reqargs = ", ".join(reqs)
+        else:
+            assert not data.lazy
             children = [
-                f"require({reqs}, function ({reqargs}) {{",
+                f"require({reqs}, ({reqargs}) => {{",
                 *children,
                 "});",
             ]
+        return rval(*children).fill(resources=self.requirejs_resources)
 
-        rval = rval(*children)
-        if data.create_div is not None:
-            rval = H.inline(H.div(id=divname), rval)
 
-        return rval
-
-    else:
-        return rval
+@ovld
+def standard_html(self, node: type(H.interactive)):
+    rval, children, data = _extract_as(
+        self, node, "inline", constructor=None, options=None, export=None,
+    )
+    assert len(children) == 1
+    (target,) = children
+    elemid = target.get_attribute("id", None)
+    if not elemid:
+        elemid = f"_hrepr_i{next(_c)}"
+        target = target(id=elemid)
+    export = data.export or f"_interactive_{next(_c)}"
+    opts = json.dumps(data.options)
+    return rval(
+        self(target),
+        self(
+            H.javascript(
+                f"let {export} = {data.constructor}(document.getElementById('{elemid}'), {opts});",
+                require=data.constructor,
+                export=export,
+                lazy=False,
+            )
+        ),
+    )
 
 
 @ovld

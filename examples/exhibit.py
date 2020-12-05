@@ -134,8 +134,7 @@ class Plot:
         ]
 
     def __hrepr__(self, H, hrepr):
-        return H.interactive(
-            H.div(),
+        return H.div(
             constructor="make_plot",
             options=[{"x": list(range(len(self.data))), "y": list(self.data),}],
         )
@@ -195,8 +194,8 @@ class Graph:
         data += [
             {"data": {"source": src, "target": tgt}} for src, tgt in self.edges
         ]
-        return H.interactive(
-            H.div(style=f"width:{width}px;height:{height}px;",),
+        return H.div(
+            style=f"width:{width}px;height:{height}px;",
             constructor="make_graph",
             options={"data": data, "style": style, "layout": "cose"},
         )

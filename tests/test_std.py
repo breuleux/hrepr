@@ -85,10 +85,10 @@ def test_javascript_tag_noexport():
     ).fill(resources=_reqjs)
 
 
-def test_interactive():
+def test_constructed_element():
     assert sht(
-        H.interactive(
-            H.div["chapeau"](id="melon"),
+        H.div["chapeau"](
+            id="melon",
             constructor="fou",
             options={"x": 1},
             export="everywhere",
@@ -103,15 +103,4 @@ def test_interactive():
                 lazy=False,
             )
         ),
-    )
-
-
-def test_interactive_2():
-    sht(
-        H.interactive(
-            H.div["chapeau"](),
-            constructor="fou",
-            options={"x": 1},
-            export="everywhere",
-        )
     )

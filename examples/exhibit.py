@@ -136,7 +136,7 @@ class Plot:
     def __hrepr__(self, H, hrepr):
         return H.div(
             constructor="make_plot",
-            options=[{"x": list(range(len(self.data))), "y": list(self.data),}],
+            options=[{"x": list(range(len(self.data))), "y": list(self.data)}],
         )
 
 

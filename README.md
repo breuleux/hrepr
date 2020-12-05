@@ -168,46 +168,62 @@ Standard tags like `H.span`, `H.div`, `H.strong`, etc. are handled according to 
 * `H.atom(element, type=<str>)`: essentially equivalent to `H.span["hreprt-<type>"](element)`, or `repr(element)` for pprint.
 
 
-### Script tags
+### Including JavaScript libraries
 
-To make it a bit easier to include and use JavaScript libraries, there is `H.require` and a small extension to `H.script`:
+To make it a bit easier to include and use JavaScript libraries, there is a new tag called `H.javascript` that uses RequireJS under the hood:
 
-* `H.require(name=<str>, src=<path>)` declares an import of the script at the given path (you can use a CDN link) and exports it under the given name.
-* `H.script(<code>, require=<str/list>, create_div=<str>)` will first wait for the modules given in `require` to be loaded (use the names declared in `H.require`).
-    * If `create_div` is given a name, a `div` will be auto-generated with a unique ID, inserted just above the script tag, and will be stored in the variable with the given name, so you can do something with it in the script.
+* `H.javascript(export=<name>, src=<path>)` declares an import of the script at the given path (you can use a CDN link) and exports it under the given name.
+* `H.javascript(<code>, require=<name/list>, export=<name>)` will wait for the required modules (the names in the require list are the ones given in the export field of other javascript tags) and will provide them to your script.
 
-Here's an example using Plotly:
+Optionally you can name a variable as the export, so that it can be required by other scripts.
+
+
+### Constructed elements
+
+Each element gains a new attribute, `constructor`, which must name a function exported using a `javascript` tag. If provided, the function is called with the element as the first argument, and the `options` attribute as the second element.
+
+To illustrate, here's an example of requiring and using Plotly:
 
 ```python
-import json
-
 class Plot:
     def __init__(self, data):
         self.data = data
 
     @classmethod
     def __hrepr_resources__(cls, H):
-        return H.require(
-            name="plotly",
-            src="https://cdn.plot.ly/plotly-latest.min.js",
-        )
+        return [
+            H.javascript(
+                export="plotly",
+                src="https://cdn.plot.ly/plotly-latest.min.js",
+            ),
+            H.javascript(
+                """
+                function make_plot(element, data) {
+                    return plotly.newPlot(element, data);
+                }
+                """,
+                require="plotly",
+                export="make_plot",
+            ),
+        ]
 
     def __hrepr__(self, H, hrepr):
-        data = {
-            "x": list(range(len(self.data))),
-            "y": list(self.data),
-        }
-        return H.script(
-            f"plotly.newPlot(plotdiv, [{json.dumps(data)}]);",
-            require="plotly",
-            create_div="plotdiv",
+        return H.div(
+            constructor="make_plot",
+            options=[{"x": list(range(len(self.data))), "y": list(self.data)}],
         )
 ```
 
-And just like that:
+* `__hrepr_resources__` declares two resources:
+  * The plotly library, loaded from a CDN, and exported as `plotly`.
+  * A small snippet of code that requires `plotly` and declares a `make_plot` function that takes an element and some data.
+* `__hrepr__` returns a div that has `make_plot` as the constructor. The function will be called with the element itself and `options` (which will be serialized as JSON and dumped into the call -- it will be the "data" argument in make_plot).
+
+We can then test it:
 
 <img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr6.png" width="600px">
 
+Alternatively, you can define custom elements using the [custom element API](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements). You can put the definition in a `<javascript>` tag that requires the library you want to use, and then simply use `H.my_element(...)` to instantiate it. The underscore in the Python attribute will become a dash, so hrepr will generate `<my-element>...</my-element>`.
 
 ## Customize hrepr
 

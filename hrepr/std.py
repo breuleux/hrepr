@@ -43,21 +43,19 @@ def _get_layout(ns, default="h"):
         return default
 
 
-def _format_sequence(fn, seq, layout):
+def _format_sequence(seq, layout):
     if layout == "h" or layout == "s":
         container = H.div[f"hreprl-{layout}", "hrepr-body"]
-        return container(*[H.div(fn(x)) for x in seq])
+        return container(*[H.div(x) for x in seq])
     elif layout == "v":
         table = H.table["hrepr-body"]()
         for x in seq:
             if isinstance(x, type(H.pair)):
                 delimiter = x.get_attribute("delimiter", "")
                 k, v = x.children
-                row = H.tr(
-                    H.td(fn(k)), H.td["hrepr-delim"](delimiter), H.td(fn(v))
-                )
+                row = H.tr(H.td(k), H.td["hrepr-delim"](delimiter), H.td(v))
             else:
-                row = H.tr(H.td(fn(x), colspan=3))
+                row = H.tr(H.td(x, colspan=3))
             table = table(row)
         return table
     else:  # pragma: no cover
@@ -134,9 +132,13 @@ def standard_html(self, node: type(H.bracketed)):
         vertical=False,
     )
     layout = _get_layout(data, "h")
-    body = _format_sequence(self, children, layout)
-    return rval["hrepr-bracketed"](
-        H.div["hrepr-open"](data.start), body, H.div["hrepr-close"](data.end)
+    body = _format_sequence(children, layout)
+    return self(
+        rval["hrepr-bracketed"](
+            H.div["hrepr-open"](data.start),
+            body,
+            H.div["hrepr-close"](data.end),
+        )
     )
 
 
@@ -146,9 +148,11 @@ def standard_html(self, node: type(H.instance)):
         self, node, "div", short=False, horizontal=False, vertical=False,
     )
     layout = _get_layout(data, "h")
-    body = _format_sequence(self, children, layout)
-    return rval["hrepr-instance", f"hreprl-{layout}"](
-        H.div["hrepr-title"](self(data.type)), body
+    body = _format_sequence(children, layout)
+    return self(
+        rval["hrepr-instance", f"hreprl-{layout}"](
+            H.div["hrepr-title"](self(data.type)), body
+        )
     )
 
 
@@ -156,7 +160,7 @@ def standard_html(self, node: type(H.instance)):
 def standard_html(self, node: type(H.pair)):
     rval, children, data = _extract_as(self, node, "div", delimiter="")
     k, v = children
-    return rval["hrepr-pair"](self(k), data.delimiter, self(v))
+    return self(rval["hrepr-pair"](k, data.delimiter, v))
 
 
 @ovld
@@ -164,7 +168,7 @@ def standard_html(self, node: type(H.atom)):
     rval, children, data = _extract_as(self, node, "span", value=ABSENT)
     if data.value is not ABSENT:
         rval = rval[f"hreprv-{data.value}"]
-    return rval(*children)
+    return self(rval(*children))
 
 
 def _parse_reqs(reqs):

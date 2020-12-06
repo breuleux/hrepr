@@ -26,7 +26,7 @@ def test_bracketed():
         H.table["hrepr-body"](
             H.tr(H.td("a"), H.td["hrepr-delim"](" -> "), H.td("b"),),
             H.tr(H.td("c"), H.td["hrepr-delim"](" <- "), H.td("d"),),
-            H.tr(H.td("e", colspan=3),),
+            H.tr(H.td("e", colspan="3"),),
         ),
         H.div["hrepr-close"]("END"),
         stuff="xyz",
@@ -95,6 +95,28 @@ def test_constructed_element():
         )
     ) == H.inline(
         H.div["chapeau"](id="melon"),
+        sht(
+            H.javascript(
+                "let everywhere = fou(document.getElementById('melon'), {\"x\": 1});",
+                require="fou",
+                export="everywhere",
+                lazy=False,
+            )
+        ),
+    )
+
+
+def test_constructed_special_element():
+    assert sht(
+        H.atom(
+            id="melon",
+            type="cool",
+            constructor="fou",
+            options={"x": 1},
+            export="everywhere",
+        )
+    ) == H.inline(
+        H.span["hreprt-cool"](id="melon"),
         sht(
             H.javascript(
                 "let everywhere = fou(document.getElementById('melon'), {\"x\": 1});",

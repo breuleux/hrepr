@@ -21,6 +21,12 @@ def standard_terminal(self, node: type(H.atom)):
 
 
 @ovld
+def standard_terminal(self, node: type(H.defn)):
+    key, name = node.children
+    return Text(f"{key} {name}")
+
+
+@ovld
 def standard_terminal(self, node: type(H.pair)):
     delim = node.get_attribute("delimiter", ": ")
     k, v = node.children

@@ -60,6 +60,26 @@
 	color: grey;
 }
 
+.hreprk-class > .hrepr-defn-key {
+	color: blue;
+}
+
+.hreprk-module > .hrepr-defn-key {
+	color: purple;
+}
+
+.hreprk-function > .hrepr-defn-key,
+.hreprk-builtin > .hrepr-defn-key,
+.hreprk-method > .hrepr-defn-key,
+.hreprk-descriptor > .hrepr-defn-key {
+	color: #080;
+}
+
+.hrepr-defn-key {
+	font-weight: bold;
+}
+
+
 /* Generic layouts */
 
 .hreprl-h, .hreprl-s {

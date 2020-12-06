@@ -171,6 +171,18 @@ def standard_html(self, node: type(H.atom)):
     return self(rval(*children))
 
 
+@ovld
+def standard_html(self, node: type(H.defn)):
+    rval, children, _ = _extract_as(self, node, "span")
+    assert len(children) == 2
+    key, name = children
+    return self(
+        rval[f"hreprk-{key}"](
+            H.span["hrepr-defn-key"](key), " ", H.span["hrepr-defn-name"](name),
+        )
+    )
+
+
 def _parse_reqs(reqs):
     reqs = [reqs] if isinstance(reqs, str) else (reqs or [])
     reqargs = ", ".join([r.split("/")[-1] for r in reqs])

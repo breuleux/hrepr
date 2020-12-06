@@ -68,6 +68,14 @@ def test_bytes():
     )
 
 
+def test_function():
+    assert hrepr(Opaque) == H.span["hreprk-class"](
+        H.span["hrepr-defn-key"]("class"),
+        " ",
+        H.span["hrepr-defn-name"]("Opaque"),
+    )
+
+
 def test_structures():
     for typ, o, c in (
         (tuple, "(", ")"),
@@ -255,7 +263,9 @@ def test_recursive():
 
 
 def test_unsupported():
-    assert hshort(Opaque()) == H.span["hreprt-Opaque"]("<", "Opaque", ">")
+    assert hshort(Opaque()) == H.span["hreprt-Opaque"](
+        "<", "tests.test_hrepr.Opaque", ">"
+    )
 
 
 def test_as_page():

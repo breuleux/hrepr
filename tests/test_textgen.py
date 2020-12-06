@@ -1,8 +1,10 @@
-from dataclasses import dataclass
+import dataclasses
 
 from hrepr import H, pstr, trepr
 from hrepr.term import standard_terminal
 from hrepr.textgen import Context, Text
+
+from .common import one_test_per_assert
 
 
 def trepr_s(x, **kw):
@@ -21,12 +23,16 @@ def lengths(s):
     return [len(line) for line in s.split("\n")]
 
 
-@dataclass
+@dataclasses.dataclass
 class Point:
     x: int
     y: int
 
+    def some_method(self):
+        pass
 
+
+@one_test_per_assert
 def test_trepr():
     assert pstr([1, 2, "hello"]) == "[1, 2, 'hello']"
     assert pstr({"a": 1, "b": 2}) == "{'a': 1, 'b': 2}"
@@ -35,6 +41,47 @@ def test_trepr():
         pstr(H.span["kls"](H.b("great"), "canyon"))
         == '<span class="kls"><b>great</b>canyon</span>'
     )
+
+
+def _gen(x):
+    yield x
+
+
+async def _coro(x):
+    pass
+
+
+async def _corogen(x):
+    yield x
+
+
+@one_test_per_assert
+def test_trepr_functions():
+    # Functions
+    assert pstr(lengths) == "function lengths"
+    assert pstr(Point.some_method) == "function some_method"
+    assert pstr(lambda x: x) == "function <lambda>"
+    # Generators
+    assert pstr(_gen(3)) == "generator _gen"
+    # Coroutines
+    assert pstr(_coro(3)) == "coroutine _coro"
+    assert pstr(_corogen(3)) == "async_generator _corogen"
+    # Classes
+    assert pstr(Point) == "class Point"
+    assert pstr(Exception) == "class Exception"
+    assert pstr(type) == "metaclass type"
+    # Builtins
+    assert pstr(pow) == "builtin pow"
+    assert pstr(open) == "builtin io.open"
+    assert pstr([].append) == "builtin <list>.append"
+    # Wrappers/Descriptors
+    assert pstr(dict.update) == "descriptor dict.update"
+    assert pstr(list.__str__) == "descriptor object.__str__"
+    # Methods
+    assert pstr(Point(1, 2).some_method) == "method <Point>.some_method"
+    assert pstr([].__str__) == "method <list>.__str__"
+    # Modules
+    assert pstr(dataclasses) == "module dataclasses"
 
 
 def test_recursive():

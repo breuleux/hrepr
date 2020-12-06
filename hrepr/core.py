@@ -1,4 +1,5 @@
 import textwrap
+import types
 from collections import Counter
 from dataclasses import fields as dataclass_fields
 from dataclasses import is_dataclass
@@ -18,6 +19,15 @@ ABSENT = object()
 
 def _tn(x):
     return type(x).__name__
+
+
+def _xtn(x):
+    tx = type(x)
+    mn = tx.__module__
+    if mn == "builtins":
+        return tx.__qualname__
+    else:
+        return f"{mn}.{tx.__qualname__}"
 
 
 class Config:
@@ -134,7 +144,7 @@ class Hrepr(metaclass=OvldMC):
     @ovld
     def hrepr_short(self, obj: object):
         clsn = _tn(obj)
-        rval = self.H.atom("<", clsn, ">", type=clsn)
+        rval = self.H.atom("<", _xtn(obj), ">", type=clsn)
         self.state.register(id(obj), rval)
         return rval
 
@@ -273,6 +283,56 @@ class StdHrepr(Hrepr):
 
     def hrepr_short(self, obj: meta(is_dataclass)):
         return self.H.instance("...", type=_tn(obj), short=True,)
+
+    # Functions and methods
+
+    def hrepr_short(self, obj: types.FunctionType):
+        # types.LambdaType is types.FunctionType
+        return self.H.defn("function", obj.__name__)
+
+    def hrepr_short(self, obj: types.CoroutineType):
+        return self.H.defn("coroutine", obj.__name__)
+
+    def hrepr_short(self, obj: types.GeneratorType):
+        return self.H.defn("generator", obj.__name__)
+
+    def hrepr_short(self, obj: types.AsyncGeneratorType):
+        return self.H.defn("async_generator", obj.__name__)
+
+    def hrepr_short(self, obj: types.MethodType):
+        slf = obj.__self__
+        slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
+        return self.H.defn("method", f"{slf}.{obj.__name__}")
+
+    def hrepr_short(self, obj: types.MethodWrapperType):
+        slf = obj.__self__
+        slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
+        return self.H.defn("method", f"{slf}.{obj.__name__}")
+
+    def hrepr_short(self, obj: types.WrapperDescriptorType):
+        objc = obj.__objclass__.__name__
+        return self.H.defn("descriptor", f"{objc}.{obj.__name__}")
+
+    def hrepr_short(self, obj: types.MethodDescriptorType):
+        objc = obj.__objclass__.__name__
+        return self.H.defn("descriptor", f"{objc}.{obj.__name__}")
+
+    def hrepr_short(self, obj: types.BuiltinMethodType):
+        # types.BuiltinFunctionType is types.BuiltinMethodType
+        slf = obj.__self__
+        slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
+        if slf == "builtins":
+            # Let's not be redundant
+            return self.H.defn("builtin", obj.__name__)
+        else:
+            return self.H.defn("builtin", f"{slf}.{obj.__name__}")
+
+    def hrepr_short(self, obj: type):
+        key = "metaclass" if issubclass(obj, type) else "class"
+        return self.H.defn(key, obj.__name__)
+
+    def hrepr_short(self, obj: types.ModuleType):
+        return self.H.defn("module", obj.__name__)
 
     # Strings
 

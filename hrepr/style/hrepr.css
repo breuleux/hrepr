@@ -6,6 +6,7 @@
 	--list-color: #080;
 	--set-color: #080;
 	--frozenset-color: #88f;
+	--error-color: #f00;
 	--struct-border: 2px;
 }
 
@@ -153,6 +154,10 @@
 .hrepr-instance.hreprl-s > .hrepr-title {
 	padding-right: var(--struct-border);
 	place-self: center;
+}
+.hrepr-instance.hrepr-error {
+	background: var(--error-color);
+	border: var(--struct-border) solid var(--error-color);
 }
 
 

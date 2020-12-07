@@ -284,6 +284,13 @@ class StdHrepr(Hrepr):
     def hrepr_short(self, obj: meta(is_dataclass)):
         return self.H.instance("...", type=_tn(obj), short=True,)
 
+    # Exceptions
+
+    def hrepr(self, obj: Exception):
+        return self.H.instance["hrepr-error"](
+            *map(self, obj.args), type=_tn(obj), horizontal=True,
+        )
+
     # Functions and methods
 
     def hrepr_short(self, obj: types.FunctionType):

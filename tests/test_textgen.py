@@ -84,6 +84,10 @@ def test_trepr_functions():
     assert pstr(dataclasses) == "module dataclasses"
 
 
+def test_trepr_exception():
+    assert pstr(TypeError("BAH")) == "TypeError('BAH')"
+
+
 def test_recursive():
     li = [1, 2]
     li.append(li)

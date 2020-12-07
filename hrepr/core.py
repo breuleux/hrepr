@@ -306,21 +306,16 @@ class StdHrepr(Hrepr):
     def hrepr_short(self, obj: types.AsyncGeneratorType):
         return self.H.defn("async_generator", obj.__name__)
 
-    def hrepr_short(self, obj: types.MethodType):
+    def hrepr_short(self, obj: (types.MethodType, type([].__str__))):
+        # Second one is types.MethodWrapperType but it's not exposed
+        # in the types module in 3.6
         slf = obj.__self__
         slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
         return self.H.defn("method", f"{slf}.{obj.__name__}")
 
-    def hrepr_short(self, obj: types.MethodWrapperType):
-        slf = obj.__self__
-        slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
-        return self.H.defn("method", f"{slf}.{obj.__name__}")
-
-    def hrepr_short(self, obj: types.WrapperDescriptorType):
-        objc = obj.__objclass__.__name__
-        return self.H.defn("descriptor", f"{objc}.{obj.__name__}")
-
-    def hrepr_short(self, obj: types.MethodDescriptorType):
+    def hrepr_short(self, obj: (type(object.__str__), type(dict.update))):
+        # These are types.WrapperDescriptorType and types.MethodDescriptorType
+        # but they are not exposed in the types module in 3.6
         objc = obj.__objclass__.__name__
         return self.H.defn("descriptor", f"{objc}.{obj.__name__}")
 

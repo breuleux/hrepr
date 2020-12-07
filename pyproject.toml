@@ -33,5 +33,5 @@ build-backend = "poetry.masonry.api"
 
 [tool.pytest.ini_options]
 filterwarnings = [
-    'ignore:coroutine \'_coro\' was never awaited',
+    "ignore:coroutine '_coro' was never awaited",
 ]

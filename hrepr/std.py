@@ -100,7 +100,15 @@ def standard_html(self, node: Tag):
         return type(node)(
             name=node.name,
             attributes={
-                k: v if isinstance(v, str) or k == "class" else self.hjson(v)
+                k: v
+                if (
+                    isinstance(v, str)
+                    or k == "class"
+                    or v is True
+                    or v is False
+                    or v is None
+                )
+                else self.hjson(v)
                 for k, v in node.attributes.items()
             },
             children=tuple(self(x) for x in node.children),

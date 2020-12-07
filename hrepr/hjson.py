@@ -17,7 +17,7 @@ from .textgen import Breakable, Sequence, Text, join
 
 
 @ovld
-def _dump(self, d: dict):
+def dump(self, d: dict):
     return Breakable(
         start="{",
         body=join(
@@ -28,26 +28,26 @@ def _dump(self, d: dict):
 
 
 @ovld
-def _dump(self, seq: (list, tuple)):
+def dump(self, seq: (list, tuple)):
     return Breakable(start="[", body=join(map(self, seq), sep=", "), end="]",)
 
 
 @ovld
-def _dump(self, x: (int, float, str, bool, type(None))):
+def dump(self, x: (int, float, str, bool, type(None))):
     return Text(json.dumps(x))
 
 
 @ovld
-def _dump(self, fn: (FunctionType, MethodType)):
+def dump(self, fn: (FunctionType, MethodType)):
     return self(None)
 
 
 @ovld
-def _dump(self, d: object):
+def dump(self, d: object):
     raise TypeError(
         f"Objects of type {type(d).__name__} cannot be JSON-serialized."
     )
 
 
 def dumps(obj, **fmt):
-    return _dump(obj).to_string(**fmt)
+    return dump(obj).to_string(**fmt)

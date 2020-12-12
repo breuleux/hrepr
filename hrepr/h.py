@@ -130,7 +130,11 @@ class Tag:
     def get_attribute(self, attr, dflt):
         return self.attributes.get(attr, dflt)
 
+    def is_virtual(self):
+        return self.name in _virtual_tags
+
     def text_parts(self):
+        is_virtual = self.is_virtual()
         escape_children = not self.attributes.get(
             "__raw", self.name in _raw_tags
         )
@@ -161,11 +165,11 @@ class Tag:
         )
         if attr:
             # raw tag cannot have attributes, because it's not a real tag
-            assert self.name not in _virtual_tags
+            assert not is_virtual
             attr = " " + attr
 
         children = list(map(convert_child, iterate_children(self.children)))
-        if self.name in _virtual_tags:
+        if is_virtual:
             # Virtual tags just inlines their contents directly.
             return Breakable(start=None, body=children, end=None)
         if self.attributes.get("__void", self.name in _void_tags):

@@ -39,18 +39,19 @@ def test_numbers():
 @one_test_per_assert
 def test_string():
     assert hshort("hello") == H.span["hreprt-str"]("hello")
+    assert hrepr("3   spaces") == H.span["hreprt-str"]("3   spaces")
     assert hrepr("hello this is a bit long") == H.span["hreprt-str"](
         "hello this is a bit long"
     )
     assert hshort("hello this is a bit long") == H.span["hreprt-str"](
-        "hello this is a..."
+        "hello this is a b..."
     )
     assert hshort("hello this is a bit long", string_cutoff=10) == H.span[
         "hreprt-str"
-    ]("hello...")
+    ]("hello t...")
     assert hshort("hello this is a bit long", string_cutoff=5) == H.span[
         "hreprt-str"
-    ]("...")
+    ]("he...")
     assert hshort("hello this is a bit long", string_cutoff=10000) == H.span[
         "hreprt-str"
     ]("hello this is a bit long")

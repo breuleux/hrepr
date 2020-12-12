@@ -85,7 +85,7 @@ def test_trepr_functions():
 
 
 def test_trepr_exception():
-    assert pstr(TypeError("BAH")) == "TypeError('BAH')"
+    assert pstr(TypeError("BAH")) == "TypeError(BAH)"
 
 
 def test_recursive():

@@ -22,7 +22,7 @@
 
 .hreprt-str {
 	color: #666;
-	white-space: pre;
+	white-space: pre-wrap;
 }
 
 .hreprt-str:before {
@@ -38,7 +38,7 @@
 .hreprt-bytes {
 	color: #666;
 	font-family: monospace;
-	white-space: pre;
+	white-space: pre-wrap;
 }
 
 .hreprt-bytes:before {

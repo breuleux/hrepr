@@ -202,6 +202,19 @@ class Hrepr(metaclass=OvldMC):
         return rval
 
 
+_remap = {}
+for i in range(0x20):
+    c = chr(i)
+    _remap[c] = f"\\x{c.encode().hex()}"
+_remap.update(
+    {"\\": "\\\\", "\r": "\\r", "\n": "\\n", "\t": "\\t",}
+)
+
+
+def _encode(s):
+    return "".join(_remap.get(c, c) for c in s)
+
+
 class StdHrepr(Hrepr):
     def __init__(self, *, std=std, **kw):
         super().__init__(**kw)
@@ -288,7 +301,10 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, obj: Exception):
         return self.H.instance["hrepr-error"](
-            *map(self, obj.args), type=_tn(obj), horizontal=True,
+            H.atom(str(obj.args[0])),
+            *map(self, obj.args[1:]),
+            type=_tn(obj),
+            horizontal=True,
         )
 
     # Functions and methods
@@ -339,17 +355,13 @@ class StdHrepr(Hrepr):
     # Strings
 
     def hrepr(self, x: str):
-        cutoff = self.config.string_cutoff or default_string_cutoff
-        if len(x) <= cutoff:
-            return NotImplemented
-        else:
-            return self.H.atom(x, type="str")
+        return self.H.atom(_encode(x), type="str")
 
     def hrepr_short(self, x: str):
         cutoff = self.config.string_cutoff or default_string_cutoff
-        return self.H.atom(
-            textwrap.shorten(x, cutoff, placeholder="..."), type="str",
-        )
+        if len(x) > cutoff:
+            x = x[: cutoff - 3] + "..."
+        return self.H.atom(_encode(x), type="str")
 
     # Bytes
 

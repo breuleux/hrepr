@@ -115,14 +115,10 @@
 .hrepr-bracketed {
 	display: inline-flex;
 	flex-direction: row;
-}
-
-.hrepr-bracketed {
-	display: inline-flex;
-	flex-direction: row;
 	place-items: center;
 	background: black;
 	border: var(--struct-border) solid black;
+	box-sizing: border-box;
 }
 
 .hrepr-bracketed > .hrepr-open {
@@ -142,6 +138,7 @@
 .hrepr-instance {
 	background: var(--instance-color);
 	border: var(--struct-border) solid var(--instance-color);
+	box-sizing: border-box;
 }
 .hrepr-instance > .hrepr-title {
 	color: white;

@@ -87,6 +87,21 @@ def test_javascript_tag_noexport():
 
 def test_constructed_element():
     assert sht(
+        H.div["chapeau"](id="melon", constructor="fou", options={"x": 1},)
+    ) == H.inline(
+        H.div["chapeau"](id="melon"),
+        sht(
+            H.javascript(
+                "new fou(document.getElementById('melon'), {\"x\": 1});",
+                require="fou",
+                lazy=False,
+            )
+        ),
+    )
+
+
+def test_constructed_element_export():
+    assert sht(
         H.div["chapeau"](
             id="melon",
             constructor="fou",
@@ -97,7 +112,7 @@ def test_constructed_element():
         H.div["chapeau"](id="melon"),
         sht(
             H.javascript(
-                "let everywhere = fou(document.getElementById('melon'), {\"x\": 1});",
+                "let everywhere = new fou(document.getElementById('melon'), {\"x\": 1});",
                 require="fou",
                 export="everywhere",
                 lazy=False,
@@ -119,7 +134,7 @@ def test_constructed_special_element():
         H.span["hreprt-cool"](id="melon"),
         sht(
             H.javascript(
-                "let everywhere = fou(document.getElementById('melon'), {\"x\": 1});",
+                "let everywhere = new fou(document.getElementById('melon'), {\"x\": 1});",
                 require="fou",
                 export="everywhere",
                 lazy=False,

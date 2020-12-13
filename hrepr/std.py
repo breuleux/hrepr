@@ -79,21 +79,21 @@ def standard_html(self, node: Tag):
         self, node, None, constructor=None, options=None, export=None, id=None
     )
     if data.constructor is not None:
-        num = next(_c)
-        elemid = data.id or f"_hrepr_elem{num}"
+        elemid = data.id or f"_hrepr_elem{next(_c)}"
         target = target(id=elemid)
-        export = data.export or f"_hrepr_i{num}"
         opts = self.hjson(data.options)
+        code = f"new {data.constructor}(document.getElementById('{elemid}'), {opts});"
+
+        if data.export:
+            jsnode = H.javascript(
+                f"let {data.export} = {code}", export=data.export,
+            )
+        else:
+            jsnode = H.javascript(code)
+
         return H.inline(
             self(target(*children)),
-            self(
-                H.javascript(
-                    f"let {export} = {data.constructor}(document.getElementById('{elemid}'), {opts});",
-                    require=data.constructor,
-                    export=export,
-                    lazy=False,
-                )
-            ),
+            self(jsnode(require=data.constructor, lazy=False)),
         )
 
     else:

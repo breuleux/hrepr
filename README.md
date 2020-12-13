@@ -198,26 +198,26 @@ class Plot:
             ),
             H.javascript(
                 """
-                function make_plot(element, data) {
-                    return plotly.newPlot(element, data);
+                function PlotlyPlot(element, data) {
+                    plotly.newPlot(element, data);
                 }
                 """,
                 require="plotly",
-                export="make_plot",
+                export="PlotlyPlot",
             ),
         ]
 
     def __hrepr__(self, H, hrepr):
         return H.div(
-            constructor="make_plot",
+            constructor="PlotlyPlot",
             options=[{"x": list(range(len(self.data))), "y": list(self.data)}],
         )
 ```
 
 * `__hrepr_resources__` declares two resources:
   * The plotly library, loaded from a CDN, and exported as `plotly`.
-  * A small snippet of code that requires `plotly` and declares a `make_plot` function that takes an element and some data.
-* `__hrepr__` returns a div that has `make_plot` as the constructor. The function will be called with the element itself and `options` (which will be serialized as JSON and dumped into the call -- it will be the "data" argument in make_plot).
+  * A small snippet of code that requires `plotly` and declares a `PlotlyPlot` function that takes an element and some data.
+* `__hrepr__` returns a div that has `PlotlyPlot` as the constructor. It will be called as `new PlotlyPlot(element, options)` (this is so it may equally be defined as an ES6 class if you wish). The options serialized as JSON and dumped into the call -- they are the "data" argument in make_plot.
 
 We can then test it:
 

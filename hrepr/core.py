@@ -205,9 +205,7 @@ _remap = {}
 for i in range(0x20):
     c = chr(i)
     _remap[c] = f"\\x{c.encode().hex()}"
-_remap.update(
-    {"\\": "\\\\", "\r": "\\r", "\n": "\\n", "\t": "\\t"}
-)
+_remap.update({"\\": "\\\\", "\r": "\\r", "\n": "\\n", "\t": "\\t"})
 
 
 def _encode(s):

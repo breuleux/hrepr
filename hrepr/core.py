@@ -1,4 +1,3 @@
-import textwrap
 import types
 from collections import Counter
 from dataclasses import fields as dataclass_fields
@@ -207,7 +206,7 @@ for i in range(0x20):
     c = chr(i)
     _remap[c] = f"\\x{c.encode().hex()}"
 _remap.update(
-    {"\\": "\\\\", "\r": "\\r", "\n": "\\n", "\t": "\\t",}
+    {"\\": "\\\\", "\r": "\\r", "\n": "\\n", "\t": "\\t"}
 )
 
 

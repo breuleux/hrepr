@@ -58,8 +58,12 @@ def ensure_text(x):
 
 
 def join(seq, sep):
-    *first, last = seq
-    return [Sequence(x, sep) for x in first] + [last]
+    seq = list(seq)
+    if not seq:
+        return []
+    else:
+        *first, last = seq
+        return [Sequence(x, sep) for x in first] + [last]
 
 
 class TextFormatter:

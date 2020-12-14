@@ -22,6 +22,9 @@ def test_hjson():
     assert same([1, 2, 3])
     assert same(("patate", "au", "four"))
     assert same({"a": 1, "b": (2, 3)})
+    assert same({})
+    assert same([])
+    assert same([[[[]]]])
 
 
 def test_bad():

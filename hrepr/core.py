@@ -298,7 +298,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, obj: Exception):
         return self.H.instance["hrepr-error"](
-            H.atom(str(obj.args[0])),
+            H.atom(str(obj.args[0])) if obj.args else "",
             *map(self, obj.args[1:]),
             type=_tn(obj),
             horizontal=True,

@@ -43,6 +43,16 @@ _raw_tags = {"raw", "script", "style"}
 _virtual_tags = {None, "inline", "raw"}
 
 
+def flatten(seq):
+    results = []
+    for element in seq:
+        if isinstance(element, (list, tuple)):
+            results.extend(flatten(element))
+        else:
+            results.append(element)
+    return results
+
+
 class Tag:
     """
     Representation of an HTML tag.
@@ -90,7 +100,7 @@ class Tag:
     def __init__(self, name, attributes=None, children=None, resources=None):
         self.name = name
         self.attributes = attributes or {}
-        self.children = children or ()
+        self.children = tuple(flatten(children or ()))
         self.resources = () if resources is None else tuple(resources)
 
     def fill(self, children=None, attributes=None, resources=None):

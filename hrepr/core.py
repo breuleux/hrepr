@@ -224,7 +224,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, xs: list):
         return self.H.bracketed(
-            *[self(x) for x in xs], start="[", end="]", type=_tn(xs),
+            [self(x) for x in xs], start="[", end="]", type=_tn(xs),
         )
 
     def hrepr_short(self, xs: list):
@@ -236,7 +236,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, xs: tuple):
         return self.H.bracketed(
-            *[self(x) for x in xs], start="(", end=")", type=_tn(xs),
+            [self(x) for x in xs], start="(", end=")", type=_tn(xs),
         )
 
     def hrepr_short(self, xs: tuple):
@@ -248,7 +248,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, xs: (set, frozenset)):
         return self.H.bracketed(
-            *[self(x) for x in xs], start="{", end="}", type=_tn(xs),
+            [self(x) for x in xs], start="{", end="}", type=_tn(xs),
         )
 
     def hrepr_short(self, xs: (set, frozenset)):
@@ -260,7 +260,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, obj: dict):
         return self.H.bracketed(
-            *[
+            [
                 self.H.pair(self(k), self(v), delimiter=": ",)
                 for k, v in obj.items()
             ],
@@ -279,7 +279,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, obj: meta(is_dataclass)):
         return self.H.instance(
-            *[
+            [
                 self.H.pair(
                     self.H.atom(field.name, type="symbol"),
                     self(getattr(obj, field.name)),
@@ -298,7 +298,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, dk: type({}.keys())):
         return self.H.bracketed(
-            *[self(x) for x in dk], start="dict_keys(", end=")", type=_tn(dk),
+            [self(x) for x in dk], start="dict_keys(", end=")", type=_tn(dk),
         )
 
     def hrepr_short(self, dk: type({}.keys())):
@@ -308,7 +308,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, dv: type({}.values())):
         return self.H.bracketed(
-            *[self(x) for x in dv], start="dict_values(", end=")", type=_tn(dv),
+            [self(x) for x in dv], start="dict_values(", end=")", type=_tn(dv),
         )
 
     def hrepr_short(self, dv: type({}.values())):

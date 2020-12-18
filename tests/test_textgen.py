@@ -51,6 +51,11 @@ def test_trepr_misc():
     assert pstr({"a": 1, "b": 2}.values(), max_depth=0) == "dict_values(...)"
 
 
+def test_str_short_dup():
+    s = "a"
+    assert pstr([s, s, s]) == "['a', 'a', 'a']"
+
+
 def _gen(x):
     yield x
 

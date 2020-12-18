@@ -374,7 +374,13 @@ class StdHrepr(Hrepr):
     # Strings
 
     def hrepr(self, x: str):
-        return self.H.atom(_encode(x), type="str")
+        cutoff = self.config.string_cutoff or default_string_cutoff
+        if len(x) <= cutoff:
+            # This will fall back to hrepr_short, which will not display #ref=
+            # for multiple instances of the same string.
+            return NotImplemented
+        else:
+            return self.H.atom(_encode(x), type="str")
 
     def hrepr_short(self, x: str):
         cutoff = self.config.string_cutoff or default_string_cutoff

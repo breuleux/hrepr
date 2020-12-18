@@ -43,6 +43,14 @@ def test_trepr():
     )
 
 
+@one_test_per_assert
+def test_trepr_misc():
+    assert pstr({"a": 1, "b": 2}.keys()) == "dict_keys('a', 'b')"
+    assert pstr({"a": 1, "b": 2}.keys(), max_depth=0) == "dict_keys(...)"
+    assert pstr({"a": 1, "b": 2}.values()) == "dict_values(1, 2)"
+    assert pstr({"a": 1, "b": 2}.values(), max_depth=0) == "dict_values(...)"
+
+
 def _gen(x):
     yield x
 

@@ -294,6 +294,28 @@ class StdHrepr(Hrepr):
     def hrepr_short(self, obj: meta(is_dataclass)):
         return self.H.instance("...", type=_tn(obj), short=True,)
 
+    # Other structures
+
+    def hrepr(self, dk: type({}.keys())):
+        return self.H.bracketed(
+            *[self(x) for x in dk], start="dict_keys(", end=")", type=_tn(dk),
+        )
+
+    def hrepr_short(self, dk: type({}.keys())):
+        return self.H.bracketed(
+            "...", short=True, start="dict_keys(", end=")", type=_tn(dk),
+        )
+
+    def hrepr(self, dv: type({}.values())):
+        return self.H.bracketed(
+            *[self(x) for x in dv], start="dict_values(", end=")", type=_tn(dv),
+        )
+
+    def hrepr_short(self, dv: type({}.values())):
+        return self.H.bracketed(
+            "...", short=True, start="dict_values(", end=")", type=_tn(dv),
+        )
+
     # Exceptions
 
     def hrepr(self, obj: Exception):

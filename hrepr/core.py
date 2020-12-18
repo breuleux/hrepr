@@ -11,6 +11,7 @@ from .std import standard_html
 
 default_string_cutoff = 20
 default_bytes_cutoff = 20
+default_sequence_max = 100
 
 
 ABSENT = object()
@@ -113,6 +114,26 @@ class Hrepr(metaclass=OvldMC):
         if not self.config.shortrefs:
             ref = ref(self.hrepr_short(obj))
         return ref
+
+    def transform_sequence(
+        self,
+        seq,
+        transform=None,
+        ellipsis=H.atom["hrepr-ellipsis"]("..."),
+        cap=None,
+        ntrail=2,
+    ):
+        if cap is None:
+            cap = self.config.sequence_max or default_sequence_max
+        if transform is None:
+            transform = self
+        if not cap or cap < ntrail or len(seq) <= cap:
+            return [transform(x) for x in seq]
+        else:
+            seq = list(seq)
+            before = [transform(x) for x in seq[: cap - ntrail]]
+            after = [transform(x) for x in seq[-ntrail:]] if ntrail else []
+            return [*before, ellipsis, *after]
 
     def global_resources(self):  # pragma: no cover
         return ()
@@ -224,7 +245,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, xs: list):
         return self.H.bracketed(
-            [self(x) for x in xs], start="[", end="]", type=_tn(xs),
+            self.transform_sequence(xs), start="[", end="]", type=_tn(xs),
         )
 
     def hrepr_short(self, xs: list):
@@ -236,7 +257,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, xs: tuple):
         return self.H.bracketed(
-            [self(x) for x in xs], start="(", end=")", type=_tn(xs),
+            self.transform_sequence(xs), start="(", end=")", type=_tn(xs),
         )
 
     def hrepr_short(self, xs: tuple):
@@ -248,7 +269,7 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, xs: (set, frozenset)):
         return self.H.bracketed(
-            [self(x) for x in xs], start="{", end="}", type=_tn(xs),
+            self.transform_sequence(xs), start="{", end="}", type=_tn(xs),
         )
 
     def hrepr_short(self, xs: (set, frozenset)):
@@ -260,10 +281,12 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, obj: dict):
         return self.H.bracketed(
-            [
-                self.H.pair(self(k), self(v), delimiter=": ",)
-                for k, v in obj.items()
-            ],
+            self.transform_sequence(
+                obj.items(),
+                transform=lambda it: self.H.pair(
+                    self(it[0]), self(it[1]), delimiter=": "
+                ),
+            ),
             type="dict",
             start="{",
             end="}",
@@ -278,15 +301,15 @@ class StdHrepr(Hrepr):
     # Dataclasses
 
     def hrepr(self, obj: meta(is_dataclass)):
+        def mapping(field):
+            return self.H.pair(
+                self.H.atom(field.name, type="symbol"),
+                self(getattr(obj, field.name)),
+                delimiter="=",
+            )
+
         return self.H.instance(
-            [
-                self.H.pair(
-                    self.H.atom(field.name, type="symbol"),
-                    self(getattr(obj, field.name)),
-                    delimiter="=",
-                )
-                for field in dataclass_fields(obj)
-            ],
+            self.transform_sequence(dataclass_fields(obj), transform=mapping),
             type=_tn(obj),
             vertical=True,
         )
@@ -298,7 +321,10 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, dk: type({}.keys())):
         return self.H.bracketed(
-            [self(x) for x in dk], start="dict_keys(", end=")", type=_tn(dk),
+            self.transform_sequence(dk),
+            start="dict_keys(",
+            end=")",
+            type=_tn(dk),
         )
 
     def hrepr_short(self, dk: type({}.keys())):
@@ -308,7 +334,10 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, dv: type({}.values())):
         return self.H.bracketed(
-            [self(x) for x in dv], start="dict_values(", end=")", type=_tn(dv),
+            self.transform_sequence(dv),
+            start="dict_values(",
+            end=")",
+            type=_tn(dv),
         )
 
     def hrepr_short(self, dv: type({}.values())):

@@ -56,6 +56,30 @@ def test_str_short_dup():
     assert pstr([s, s, s]) == "['a', 'a', 'a']"
 
 
+@one_test_per_assert
+def test_sequence_max():
+    assert pstr(list(range(10)), sequence_max=6) == "[0, 1, 2, 3, ..., 8, 9]"
+    # Sets don't guarantee ordering, but this is good enough for now:
+    assert pstr(set(range(10)), sequence_max=6) == "{0, 1, 2, 3, ..., 8, 9}"
+    assert (
+        pstr({i: i * i for i in range(10)}, sequence_max=3)
+        == "{0: 0, ..., 8: 64, 9: 81}"
+    )
+    # sequence_max is too small, so it does nothing:
+    assert (
+        pstr(list(range(10)), sequence_max=0)
+        == "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+    )
+    assert (
+        pstr(list(range(10)), sequence_max=1)
+        == "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+    )
+    assert (
+        pstr(list(range(10)), sequence_max=-1)
+        == "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+    )
+
+
 def _gen(x):
     yield x
 

@@ -96,16 +96,34 @@
 
 .hrepr-body.hreprl-h,
 .hrepr-body.hreprl-v {
+	gap: 4px;
 	background: #ddd;
+}
+
+.hrepr-body.hreprl-h {
+	align-items: center;
 }
 
 .hrepr-body.hreprl-v > *,
 .hrepr-body.hreprl-h > * {
-	margin: 2px;
-	padding: 1px;
 	background: white;
 	display: inline-flex;
 	place-items: center;
+}
+
+.hrepr-body.hreprl-h > div > .hrepr-ellipsis,
+.hrepr-body.hreprl-v > div > .hrepr-ellipsis {
+	background: #ddd;
+}
+
+.hrepr-body.hreprl-h > div > .hrepr-ellipsis {
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.hrepr-body.hreprl-v > div > .hrepr-ellipsis {
+	padding-top: 5px;
+	padding-bottom: 5px;
 }
 
 .hrepr-body.hreprl-s > * {

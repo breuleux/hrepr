@@ -1,3 +1,4 @@
+import math
 import types
 from collections import Counter
 from dataclasses import fields as dataclass_fields
@@ -8,10 +9,6 @@ from ovld import OvldMC, has_attribute, meta, ovld
 from . import std
 from .h import H, Tag, css_hrepr
 from .std import standard_html
-
-default_string_cutoff = 20
-default_bytes_cutoff = 20
-default_sequence_max = 100
 
 
 ABSENT = object()
@@ -120,11 +117,9 @@ class Hrepr(metaclass=OvldMC):
         seq,
         transform=None,
         ellipsis=H.atom["hrepr-ellipsis"]("..."),
-        cap=None,
         ntrail=2,
     ):
-        if cap is None:
-            cap = self.config.sequence_max or default_sequence_max
+        cap = self.config.sequence_max
         if transform is None:
             transform = self
         if not cap or cap < ntrail or len(seq) <= cap:
@@ -403,7 +398,7 @@ class StdHrepr(Hrepr):
     # Strings
 
     def hrepr(self, x: str):
-        cutoff = self.config.string_cutoff or default_string_cutoff
+        cutoff = self.config.string_cutoff or math.inf
         if len(x) <= cutoff:
             # This will fall back to hrepr_short, which will not display #ref=
             # for multiple instances of the same string.
@@ -412,7 +407,7 @@ class StdHrepr(Hrepr):
             return self.H.atom(_encode(x), type="str")
 
     def hrepr_short(self, x: str):
-        cutoff = self.config.string_cutoff or default_string_cutoff
+        cutoff = self.config.string_cutoff or math.inf
         if len(x) > cutoff:
             x = x[: cutoff - 3] + "..."
         return self.H.atom(_encode(x), type="str")
@@ -420,14 +415,14 @@ class StdHrepr(Hrepr):
     # Bytes
 
     def hrepr(self, x: bytes):
-        cutoff = self.config.bytes_cutoff or default_bytes_cutoff
+        cutoff = self.config.bytes_cutoff or math.inf
         if len(x) <= cutoff:
             return NotImplemented
         else:
             return self.H.atom(x.hex(), type="bytes")
 
     def hrepr_short(self, x: bytes):
-        cutoff = self.config.bytes_cutoff or default_bytes_cutoff
+        cutoff = self.config.bytes_cutoff or math.inf
         hx = x.hex()
         if len(hx) > cutoff:
             hx = hx[: cutoff - 3] + "..."

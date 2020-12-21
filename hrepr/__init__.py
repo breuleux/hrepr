@@ -5,8 +5,14 @@ from .h import HTML, H, Tag, css_hrepr  # noqa: F401
 from .std import standard_html
 from .term import standard_terminal
 
-hrepr = Interface(StdHrepr, backend=standard_html)
-trepr = Interface(StdHrepr, backend=standard_terminal)
+config_defaults = {
+    "string_cutoff": 20,
+    "bytes_cutoff": 20,
+    "sequence_max": 100,
+}
+
+hrepr = Interface(StdHrepr, backend=standard_html, **config_defaults)
+trepr = Interface(StdHrepr, backend=standard_terminal, **config_defaults)
 
 
 def pprint(x, **config):  # pragma: no cover

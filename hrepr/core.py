@@ -10,7 +10,6 @@ from . import std
 from .h import H, Tag, css_hrepr
 from .std import standard_html
 
-
 ABSENT = object()
 
 

@@ -220,7 +220,9 @@ def standard_html(self, node: type(H.javascript)):
         assert data.export is not None
         if src.endswith(".js"):
             src += "?noext"
-        rval = rval(f'requirejs.config({{paths: {{{data.export}: "{src}"}}}});')
+        rval = rval(
+            f'requirejs.config({{paths: {{"{data.export}": "{src}"}}}});'
+        )
         return rval.fill(resources=self.requirejs_resources)
 
     else:

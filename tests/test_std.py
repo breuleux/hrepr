@@ -49,7 +49,7 @@ _reqjs = sht.initial_state["requirejs_resources"]
 
 def test_javascript_tag():
     assert sht(H.javascript(export="blah", src="thing.js")) == H.script(
-        'requirejs.config({paths: {blah: "thing.js?noext"}});'
+        'requirejs.config({paths: {"blah": "thing.js?noext"}});'
     ).fill(resources=_reqjs)
 
 

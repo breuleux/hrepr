@@ -66,6 +66,34 @@ def test_javascript_tag_2():
     )
 
 
+def test_javascript_tag_req_list():
+    assert sht(
+        H.javascript("xxx='hello';", require=["abc", "d/ef"], export="xxx")
+    ) == H.script(
+        "define('xxx', ['abc', 'd/ef'], (abc, ef) => {",
+        "xxx='hello';",
+        "\nreturn xxx;});",
+        "require(['xxx'], _ => {});",
+    ).fill(
+        resources=_reqjs
+    )
+
+
+def test_javascript_tag_req_dict():
+    assert sht(
+        H.javascript(
+            "xxx='hello';", require={"abc": "A", "d/ef": "B"}, export="xxx"
+        )
+    ) == H.script(
+        "define('xxx', ['abc', 'd/ef'], (A, B) => {",
+        "xxx='hello';",
+        "\nreturn xxx;});",
+        "require(['xxx'], _ => {});",
+    ).fill(
+        resources=_reqjs
+    )
+
+
 def test_javascript_tag_lazy():
     assert sht(
         H.javascript("xxx='hello';", require="abc", export="xxx", lazy=True)

@@ -191,10 +191,20 @@ def standard_html(self, node: type(H.defn)):
     )
 
 
-def _parse_reqs(reqs):
-    reqs = [reqs] if isinstance(reqs, str) else (reqs or [])
-    reqargs = ", ".join([r.split("/")[-1] for r in reqs])
-    return str(reqs), reqargs
+@ovld
+def _parse_reqs(reqs: dict):
+    return tuple(zip(*reqs.items()))
+
+
+@ovld
+def _parse_reqs(reqs: str):
+    return [reqs], [reqs.split("/")[-1]]
+
+
+@ovld
+def _parse_reqs(reqs: (list, tuple, set, frozenset)):
+    reqs = list(reqs)
+    return reqs, [r.split("/")[-1] for r in reqs]
 
 
 @ovld
@@ -215,6 +225,8 @@ def standard_html(self, node: type(H.javascript)):
 
     else:
         reqs, reqargs = _parse_reqs(data.require)
+        reqs = str(list(reqs))
+        reqargs = ", ".join(reqargs)
         if data.export is not None:
             children = [
                 f"define('{data.export}', {reqs}, ({reqargs}) => {{",

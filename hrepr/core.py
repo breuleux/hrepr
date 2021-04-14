@@ -7,7 +7,7 @@ from dataclasses import is_dataclass
 from ovld import OvldMC, has_attribute, meta, ovld
 
 from . import std
-from .h import H, Tag, css_hrepr
+from .h import H, Tag, styledir
 from .std import standard_html
 
 ABSENT = object()
@@ -233,7 +233,7 @@ class StdHrepr(Hrepr):
         self.std = std
 
     def global_resources(self):
-        return (self.H.style(css_hrepr),)
+        return (self.H.include(path=f"{styledir}/hrepr.css", type="text/css"),)
 
     # Lists
 

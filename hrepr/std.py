@@ -247,5 +247,19 @@ def standard_html(self, node: type(H.javascript)):
 
 
 @ovld
+def standard_html(self, node: type(H.include)):
+    _, children, data = _extract_as(self, node, "include", path=None, type=None)
+    if data.type is None or data.path is None:
+        raise TypeError("H.include must have a type and a path")
+
+    if data.type == "text/css":
+        return H.style(open(data.path).read())
+    elif data.type == "text/javascript":
+        return H.script(open(data.path).read())
+    else:
+        raise TypeError(f"Cannot include type '{data.type}'")
+
+
+@ovld
 def standard_html(self, node: object):
     return node

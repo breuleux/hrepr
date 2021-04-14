@@ -2,10 +2,11 @@ from dataclasses import dataclass
 
 from hrepr import H
 from hrepr import hrepr as real_hrepr
-from hrepr.h import css_hrepr
+from hrepr.h import styledir
 
 from .common import one_test_per_assert
 
+css_hrepr = open(f"{styledir}/hrepr.css", encoding="utf-8").read()
 hrepr = real_hrepr.variant(fill_resources=False)
 
 

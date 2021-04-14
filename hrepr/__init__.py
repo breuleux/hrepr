@@ -1,7 +1,7 @@
 """Extensible HTML representation for Python objects."""
 
 from .core import Config, Hrepr, HreprState, Interface, StdHrepr  # noqa: F401
-from .h import HTML, H, Tag, css_hrepr  # noqa: F401
+from .h import HTML, H, Tag  # noqa: F401
 from .std import standard_html
 from .term import standard_terminal
 

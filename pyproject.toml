@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hrepr"
-version = "0.3.10"
+version = "0.3.11"
 description = "Extensible HTML representation for Python objects."
 authors = ["Olivier Breuleux <breuleux@gmail.com>"]
 license = "MIT"

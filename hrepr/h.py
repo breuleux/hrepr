@@ -77,10 +77,14 @@ class Tag:
     >>> tag['klass'](id='dividi')(1, 2, 3)
     <div class="klass" id="dividi">123</div>
 
+    Underscores in attributes are converted to dashes when they are
+    given as keyword arguments. Attribute names with underscores can
+    be provided via the ``fill`` method.
+
     Attributes:
         name (str): The tag name (div, span, a, etc.)
         attributes (dict): A dictionary of attributes. Attributes that
-            start with ``__`` are reserved for internal use.
+            start with ``__`` or ``--`` are reserved for internal use.
         children (tuple): Children of this node.
         resources (tuple): List of resources needed by this node or its
             children.
@@ -145,7 +149,7 @@ class Tag:
     def text_parts(self):
         is_virtual = self.is_virtual()
         escape_children = not self.attributes.get(
-            "__raw", self.name in _raw_tags
+            "--raw", self.name in _raw_tags
         )
 
         def convert_attribute(k, v):
@@ -170,7 +174,7 @@ class Tag:
         attr = " ".join(
             convert_attribute(k, v)
             for k, v in self.attributes.items()
-            if not k.startswith("__")
+            if not k.startswith("--")
         )
         if attr:
             # raw tag cannot have attributes, because it's not a real tag
@@ -181,7 +185,7 @@ class Tag:
         if is_virtual:
             # Virtual tags just inlines their contents directly.
             return Breakable(start=None, body=children, end=None)
-        if self.attributes.get("__void", self.name in _void_tags):
+        if self.attributes.get("--void", self.name in _void_tags):
             assert len(self.children) == 0
             return Text(f"<{self.name}{attr} />")
         else:
@@ -211,6 +215,9 @@ class Tag:
         return self.fill(attributes={"class": classes})
 
     def __call__(self, *children, **attributes):
+        attributes = {
+            attr.replace("_", "-"): value for attr, value in attributes.items()
+        }
         if len(children) > 0 and isinstance(children[0], dict):
             attributes = {**children[0], **attributes}
             children = children[1:]

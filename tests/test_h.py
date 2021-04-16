@@ -21,6 +21,11 @@ def test_div():
         H.div["classy"](id="eyedee", thing="thang"),
         '<div class="classy" id="eyedee" thing="thang"></div>',
     )
+    assert matches(H.div(dash_es=True), "<div dash-es></div>")
+    assert matches(
+        H.div.fill(attributes={"un_der_scores": True}),
+        "<div un_der_scores></div>",
+    )
     assert matches(
         H.div['qu"ote'](id='qu"ite'),
         '<div class="qu&quot;ote" id="qu&quot;ite"></div>',

@@ -1,6 +1,7 @@
 import os.path
 from html import escape
 from types import GeneratorType
+from typing import Union
 
 from ovld import ovld
 
@@ -290,7 +291,7 @@ class Tag:
 
 
 @ovld
-def iterate_children(self, children: (list, tuple, GeneratorType)):
+def iterate_children(self, children: Union[list, tuple, GeneratorType]):
     for child in children:
         yield from self(child)
 

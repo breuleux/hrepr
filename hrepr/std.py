@@ -1,5 +1,6 @@
 from itertools import count
 from types import SimpleNamespace
+from typing import Union
 
 from ovld import ovld
 
@@ -202,7 +203,7 @@ def _parse_reqs(reqs: str):
 
 
 @ovld
-def _parse_reqs(reqs: (list, tuple, set, frozenset)):
+def _parse_reqs(reqs: Union[list, tuple, set, frozenset]):
     reqs = list(reqs)
     return reqs, [r.split("/")[-1] for r in reqs]
 

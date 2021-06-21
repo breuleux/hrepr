@@ -10,6 +10,7 @@ returns null as the representation of functions.
 
 import json
 from types import FunctionType, MethodType
+from typing import Union
 
 from ovld import ovld
 
@@ -28,17 +29,17 @@ def dump(self, d: dict):
 
 
 @ovld
-def dump(self, seq: (list, tuple)):
+def dump(self, seq: Union[list, tuple]):
     return Breakable(start="[", body=join(map(self, seq), sep=", "), end="]",)
 
 
 @ovld
-def dump(self, x: (int, float, str, bool, type(None))):
+def dump(self, x: Union[int, float, str, bool, type(None)]):
     return Text(json.dumps(x))
 
 
 @ovld
-def dump(self, fn: (FunctionType, MethodType)):
+def dump(self, fn: Union[FunctionType, MethodType]):
     return self(None)
 
 

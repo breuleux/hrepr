@@ -3,6 +3,7 @@ import types
 from collections import Counter
 from dataclasses import fields as dataclass_fields
 from dataclasses import is_dataclass
+from typing import Union
 
 from ovld import OvldMC, extend_super, has_attribute, meta, ovld
 
@@ -263,12 +264,12 @@ class StdHrepr(Hrepr):
 
     # Sets
 
-    def hrepr(self, xs: (set, frozenset)):
+    def hrepr(self, xs: Union[set, frozenset]):
         return self.H.bracketed(
             self.transform_sequence(xs), start="{", end="}", type=_tn(xs),
         )
 
-    def hrepr_short(self, xs: (set, frozenset)):
+    def hrepr_short(self, xs: Union[set, frozenset]):
         return self.H.bracketed(
             "...", short=True, start="{", end="}", type=_tn(xs),
         )
@@ -366,14 +367,14 @@ class StdHrepr(Hrepr):
     def hrepr_short(self, obj: types.AsyncGeneratorType):
         return self.H.defn("async_generator", obj.__name__)
 
-    def hrepr_short(self, obj: (types.MethodType, type([].__str__))):
+    def hrepr_short(self, obj: Union[types.MethodType, type([].__str__)]):
         # Second one is types.MethodWrapperType but it's not exposed
         # in the types module in 3.6
         slf = obj.__self__
         slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
         return self.H.defn("method", f"{slf}.{obj.__name__}")
 
-    def hrepr_short(self, obj: (type(object.__str__), type(dict.update))):
+    def hrepr_short(self, obj: Union[type(object.__str__), type(dict.update)]):
         # These are types.WrapperDescriptorType and types.MethodDescriptorType
         # but they are not exposed in the types module in 3.6
         objc = obj.__objclass__.__name__
@@ -431,7 +432,7 @@ class StdHrepr(Hrepr):
 
     # Numbers
 
-    def hrepr_short(self, x: (int, float)):
+    def hrepr_short(self, x: Union[int, float]):
         return self.H.atom(str(x), type=_tn(x))
 
     # Booleans

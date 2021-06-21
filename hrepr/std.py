@@ -5,7 +5,7 @@ from typing import Union
 from ovld import ovld
 
 from . import hjson
-from .h import H, Tag
+from .h import H, HType, Tag
 
 _c = count()
 
@@ -51,7 +51,7 @@ def _format_sequence(seq, layout):
     elif layout == "v":
         table = H.table["hrepr-body"]()
         for x in seq:
-            if isinstance(x, type(H.pair)):
+            if isinstance(x, HType.pair):
                 delimiter = x.get_attribute("delimiter", "")
                 k, v = x.children
                 row = H.tr(H.td(k), H.td["hrepr-delim"](delimiter), H.td(v))
@@ -118,7 +118,7 @@ def standard_html(self, node: Tag):
 
 
 @ovld
-def standard_html(self, node: type(H.ref)):
+def standard_html(self, node: HType.ref):
     _, children, data = _extract_as(self, node, "div", loop=False, num=-1)
     sym = "⟳" if data.loop else "#"
     ref = H.span["hrepr-ref"](sym, data.num)
@@ -129,7 +129,7 @@ def standard_html(self, node: type(H.ref)):
 
 
 @ovld
-def standard_html(self, node: type(H.bracketed)):
+def standard_html(self, node: HType.bracketed):
     rval, children, data = _extract_as(
         self,
         node,
@@ -152,7 +152,7 @@ def standard_html(self, node: type(H.bracketed)):
 
 
 @ovld
-def standard_html(self, node: type(H.instance)):
+def standard_html(self, node: HType.instance):
     rval, children, data = _extract_as(
         self, node, "div", short=False, horizontal=False, vertical=False,
     )
@@ -166,14 +166,14 @@ def standard_html(self, node: type(H.instance)):
 
 
 @ovld
-def standard_html(self, node: type(H.pair)):
+def standard_html(self, node: HType.pair):
     rval, children, data = _extract_as(self, node, "div", delimiter="")
     k, v = children
     return self(rval["hrepr-pair"](k, data.delimiter, v))
 
 
 @ovld
-def standard_html(self, node: type(H.atom)):
+def standard_html(self, node: HType.atom):
     rval, children, data = _extract_as(self, node, "span", value=ABSENT)
     if data.value is not ABSENT:
         rval = rval[f"hreprv-{data.value}"]
@@ -181,7 +181,7 @@ def standard_html(self, node: type(H.atom)):
 
 
 @ovld
-def standard_html(self, node: type(H.defn)):
+def standard_html(self, node: HType.defn):
     rval, children, _ = _extract_as(self, node, "span")
     assert len(children) == 2
     key, name = children
@@ -209,7 +209,7 @@ def _parse_reqs(reqs: Union[list, tuple, set, frozenset]):
 
 
 @ovld
-def standard_html(self, node: type(H.javascript)):
+def standard_html(self, node: HType.javascript):
     rval, children, data = _extract_as(
         self, node, "script", require=None, export=None, src=None, lazy=False
     )
@@ -248,7 +248,7 @@ def standard_html(self, node: type(H.javascript)):
 
 
 @ovld
-def standard_html(self, node: type(H.include)):
+def standard_html(self, node: HType.include):
     _, children, data = _extract_as(self, node, "include", path=None, type=None)
     if data.type is None or data.path is None:
         raise TypeError("H.include must have a type and a path")

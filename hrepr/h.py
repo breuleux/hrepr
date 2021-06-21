@@ -314,15 +314,20 @@ class HTML:
     <span class="cool beans">How stylish!</span>
     """
 
-    def __init__(self, tag_class=Tag):
+    def __init__(self, tag_class=Tag, instantiate=True):
         self.tag_class = tag_class
+        self.instantiate = instantiate
 
     def __getattr__(self, tag_name):
         tag_name = tag_name.replace("_", "-")
         tag_class = self.tag_class
         if hasattr(tag_class, "specialize"):
             tag_class = tag_class.specialize(tag_name)
-        return tag_class(tag_name)
+        if self.instantiate:
+            return tag_class(tag_name)
+        else:
+            return tag_class
 
 
-H = HTML(tag_class=Tag)
+H = HTML(tag_class=Tag, instantiate=True)
+HType = HTML(tag_class=Tag, instantiate=False)

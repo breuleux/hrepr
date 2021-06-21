@@ -1,6 +1,6 @@
 from ovld import ovld
 
-from .h import H, Tag
+from .h import HType, Tag
 from .textgen import Breakable, Sequence, Text, join
 
 
@@ -11,7 +11,7 @@ def standard_terminal(self, node: Tag):
 
 
 @ovld
-def standard_terminal(self, node: type(H.atom)):
+def standard_terminal(self, node: HType.atom):
     typ = node.get_attribute("type", None)
     if typ == "str":
         (child,) = node.children
@@ -21,20 +21,20 @@ def standard_terminal(self, node: type(H.atom)):
 
 
 @ovld
-def standard_terminal(self, node: type(H.defn)):
+def standard_terminal(self, node: HType.defn):
     key, name = node.children
     return Text(f"{key} {name}")
 
 
 @ovld
-def standard_terminal(self, node: type(H.pair)):
+def standard_terminal(self, node: HType.pair):
     delim = node.get_attribute("delimiter", ": ")
     k, v = node.children
     return Sequence(self(k), delim, self(v))
 
 
 @ovld
-def standard_terminal(self, node: type(H.bracketed)):
+def standard_terminal(self, node: HType.bracketed):
     start = node.get_attribute("start", "(")
     end = node.get_attribute("end", ")")
     delim = node.get_attribute("delimiter", ", ")
@@ -44,7 +44,7 @@ def standard_terminal(self, node: type(H.bracketed)):
 
 
 @ovld
-def standard_terminal(self, node: type(H.instance)):
+def standard_terminal(self, node: HType.instance):
     typ = node.get_attribute("type", "<object>")
     delim = node.get_attribute("delimiter", ", ")
     start = node.get_attribute("start", "(")
@@ -57,7 +57,7 @@ def standard_terminal(self, node: type(H.instance)):
 
 
 @ovld
-def standard_terminal(self, node: type(H.ref)):
+def standard_terminal(self, node: HType.ref):
     num = node.get_attribute("num", -1)
     ref = Sequence("#", str(num))
     if node.children:

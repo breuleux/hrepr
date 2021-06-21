@@ -14,7 +14,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
-ovld = "^0.3.1"
+ovld = "^0.3.2"
 dataclasses = { version = "^0.8", python = "~3.6" }
 
 [tool.poetry.dev-dependencies]

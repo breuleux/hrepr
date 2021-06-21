@@ -148,7 +148,7 @@ python-versions = "*"
 
 [[package]]
 name = "ovld"
-version = "0.3.1"
+version = "0.3.2"
 description = "Overloading Python functions"
 category = "main"
 optional = false
@@ -304,7 +304,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "1c4e136cde15bb8ee2bbd75bd98bc55c34cb2db674481a27ad077de8f7d4560e"
+content-hash = "6b909c3a1d74a1110f5e4aaa53025a30cf2d6fcb1588b71d2f54ea1ebbd27972"
 
 [metadata.files]
 appdirs = [
@@ -410,8 +410,8 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 ovld = [
-    {file = "ovld-0.3.1-py3-none-any.whl", hash = "sha256:a2d6829ffe96400e1d47ec79e50e8399b9d8f61e385e62dc02fc482cca4f5123"},
-    {file = "ovld-0.3.1.tar.gz", hash = "sha256:3101a5cbfdb20014dd3bd7db53c514f0aa5d556c7cb73b0dcffb1d4518b54132"},
+    {file = "ovld-0.3.2-py3-none-any.whl", hash = "sha256:3a5f08f66573198b490fc69dcf93a2ad9b4d90fd1fef885cf7a8dbe565f17837"},
+    {file = "ovld-0.3.2.tar.gz", hash = "sha256:f8918636c240a2935175406801944d4314823710b3afbd5a8db3e79cd9391c42"},
 ]
 packaging = [
     {file = "packaging-20.9-py2.py3-none-any.whl", hash = "sha256:67714da7f7bc052e064859c05c595155bd1ee9f69f76557e21f051443c20947a"},

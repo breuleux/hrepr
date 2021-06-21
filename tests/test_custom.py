@@ -1,4 +1,5 @@
 import pytest
+from ovld import extend_super
 
 from hrepr import H, StdHrepr
 
@@ -33,6 +34,7 @@ class KatanaWrapper:
 
 
 class CustomHrepr(StdHrepr):
+    @extend_super
     def hrepr(self, x: int):
         return self.H.span["myint"](str(-x))
 
@@ -82,9 +84,11 @@ def test_bad_return_type():
 
 
 class MyIntRepr:
+    @extend_super
     def hrepr_resources(self, cls: int):
         return self.H.style(".my-integer { color: fuchsia; }")
 
+    @extend_super
     def hrepr(self, n: int):
         return self.H.span["my-integer"]("The number ", str(n))
 

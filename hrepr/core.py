@@ -4,7 +4,7 @@ from collections import Counter
 from dataclasses import fields as dataclass_fields
 from dataclasses import is_dataclass
 
-from ovld import OvldMC, has_attribute, meta, ovld
+from ovld import OvldMC, extend_super, has_attribute, meta, ovld
 
 from . import std
 from .h import H, Tag, styledir
@@ -237,11 +237,13 @@ class StdHrepr(Hrepr):
 
     # Lists
 
+    @extend_super
     def hrepr(self, xs: list):
         return self.H.bracketed(
             self.transform_sequence(xs), start="[", end="]", type=_tn(xs),
         )
 
+    @extend_super
     def hrepr_short(self, xs: list):
         return self.H.bracketed(
             "...", short=True, start="[", end="]", type=_tn(xs),

@@ -233,16 +233,18 @@ If you want to *really* customize hrepr, you can use mixins. They look like a bi
 
 ```python
 # ovld is one of the dependencies of hrepr
-from ovld import ovld, has_attribute
+from ovld import ovld, extend_super, has_attribute
 from hrepr import hrepr, Hrepr
 
 class MyMixin(Hrepr):
     # Change the representation of integers
 
+    @extend_super
     def hrepr_resources(self, cls: int):
         # Note: in hrepr_resources, cls is the int type, not an integer
         return self.H.style(".my-integer { color: fuchsia; }")
 
+    @extend_super
     def hrepr(self, n: int):
         return self.H.span["my-integer"]("The number ", str(n))
 

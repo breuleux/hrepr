@@ -72,6 +72,7 @@ def _format_sequence(seq, layout):
             )
         ],
         "hjson": hjson.dumps,
+        "attribute_translators": {},
     }
 )
 def standard_html(self, node: Tag):
@@ -98,20 +99,27 @@ def standard_html(self, node: Tag):
         )
 
     else:
+
+        def _default_translator(k, v):
+            if (
+                isinstance(v, str)
+                or k == "class"
+                or v is True
+                or v is False
+                or v is None
+            ):
+                return {k: v}
+            else:
+                return {k: self.hjson(v)}
+
+        attributes = {}
+        for k, v in node.attributes.items():
+            translator = self.attribute_translators.get(k, _default_translator)
+            attributes.update(translator(k, v))
+
         return type(node)(
             name=node.name,
-            attributes={
-                k: v
-                if (
-                    isinstance(v, str)
-                    or k == "class"
-                    or v is True
-                    or v is False
-                    or v is None
-                )
-                else self.hjson(v)
-                for k, v in node.attributes.items()
-            },
+            attributes=attributes,
             children=tuple(self(x) for x in node.children),
             resources=[self(res) for res in node.resources],
         )

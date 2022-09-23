@@ -197,3 +197,13 @@ def test_include_notype():
 def test_include_badtype():
     with pytest.raises(TypeError):
         sht(H.include(path=os.path.join(here, "x.css"), type="text/whatever"))
+
+
+def test_variant():
+    def x_attribute(k, v):
+        return {"y": v * 2}
+
+    sht2 = sht.copy(initial_state={"attribute_translators": {"x": x_attribute}})
+    assert sht2(H.div("oh!", x="hello", z="zebra")) == H.div(
+        "oh!", y="hellohello", z="zebra"
+    )

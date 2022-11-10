@@ -1,12 +1,10 @@
+import dataclasses
+import re
 from dataclasses import dataclass
-
-import pytest
 
 from hrepr import H
 from hrepr import hrepr as real_hrepr
 from hrepr.h import styledir
-
-from .common import one_test_per_assert
 
 css_hrepr = open(f"{styledir}/hrepr.css", encoding="utf-8").read()
 hrepr = real_hrepr.variant(fill_resources=False)
@@ -17,6 +15,9 @@ class Point:
     x: int
     y: int
 
+    def some_method(self):
+        pass
+
 
 class Opaque:
     pass
@@ -24,60 +25,6 @@ class Opaque:
 
 def hshort(x, **kw):
     return hrepr(x, max_depth=0, **kw)
-
-
-@one_test_per_assert
-def test_singletons():
-    assert hrepr(True) == H.span["hreprv-True"]("True")
-    assert hrepr(False) == H.span["hreprv-False"]("False")
-    assert hrepr(None) == H.span["hreprv-None"]("None")
-
-
-@one_test_per_assert
-def test_numbers():
-    assert hrepr(123) == H.span["hreprt-int"]("123")
-    assert hrepr(1.25) == H.span["hreprt-float"]("1.25")
-
-
-@one_test_per_assert
-def test_string():
-    assert hshort("hello") == H.span["hreprt-str"]("hello")
-    assert hrepr("3   spaces") == H.span["hreprt-str"]("3   spaces")
-    assert hrepr("hello this is a bit long") == H.span["hreprt-str"](
-        "hello this is a bit long"
-    )
-    assert hshort("hello this is a bit long") == H.span["hreprt-str"](
-        "hello this is a b..."
-    )
-    assert hshort("hello this is a bit long", string_cutoff=10) == H.span[
-        "hreprt-str"
-    ]("hello t...")
-    assert hshort("hello this is a bit long", string_cutoff=5) == H.span[
-        "hreprt-str"
-    ]("he...")
-    assert hshort("hello this is a bit long", string_cutoff=10000) == H.span[
-        "hreprt-str"
-    ]("hello this is a bit long")
-
-
-@one_test_per_assert
-def test_bytes():
-    assert hrepr(b"hello") == H.span["hreprt-bytes"]("68656c6c6f")
-    assert hshort(b"hello") == H.span["hreprt-bytes"]("68656c6c6f")
-    assert hrepr(b"hello this is a bit long") == H.span["hreprt-bytes"](
-        "68656c6c6f2074686973206973206120626974206c6f6e67"
-    )
-    assert hshort(b"hello this is a bit long") == H.span["hreprt-bytes"](
-        "68656c6c6f2074686..."
-    )
-
-
-def test_function():
-    assert hrepr(Opaque) == H.span["hreprk-class"](
-        H.span["hrepr-defn-key"]("class"),
-        " ",
-        H.span["hrepr-defn-name"]("Opaque"),
-    )
 
 
 def check_hrepr(file_regression, **sections):
@@ -125,7 +72,7 @@ def standard(obj, file_regression):
     check_hrepr(
         file_regression,
         description="hrepr(obj)",
-        obj=repr(obj),
+        obj=re.sub(pattern=r"at 0x[0-9a-f]+", string=repr(obj), repl="XXX"),
         result=hrepr(obj),
     )
 
@@ -152,17 +99,101 @@ def depth(i):
     return _
 
 
+def maxlen(i):
+    def _(obj, file_regression):
+        check_hrepr(
+            file_regression,
+            description=f"hrepr(obj, sequence_max={i})",
+            obj=repr(obj),
+            result=hrepr(obj, sequence_max=i),
+        )
+
+    _.__name__ = f"maxlen{i}"
+    return _
+
+
+def string_cutoff(i):
+    def _(obj, file_regression):
+        check_hrepr(
+            file_regression,
+            description=f"hrepr(obj, string_cutoff={i})",
+            obj=repr(obj),
+            result=hrepr(obj, string_cutoff=i, max_depth=0),
+        )
+
+    _.__name__ = f"string_cutoff{i}"
+    return _
+
+
+factory.true(True, standard)
+factory.false(False, standard)
+factory.none(None, standard)
+
+factory.int(123, standard)
+factory.float(1.25, standard)
+
+factory.str("hello", standard)
+factory.spaces("3   spaces", standard)
+factory.sentence(
+    "hello this is a bit long",
+    standard,
+    depth(0),
+    string_cutoff(10),
+    string_cutoff(5),
+    string_cutoff(10000),
+)
+
+factory.bytes(b"hello", standard)
+factory.bsentence(b"hello this is a bit long", standard, depth(0))
+
 factory.tuple0((), standard)
 factory.tuple1((1,), standard)
-factory.tuple2((11, 22), standard)
+factory.tuple2((11, 22), standard, depth(0))
 factory.list([1, 2, 3], standard)
-factory.set({11, 22}, standard)
-factory.frozenset(frozenset({11, 22, 33}), standard)
+factory.biglist(list(range(1000)), standard, depth(0))
+factory.set({11, 22}, standard, depth(0))
+factory.frozenset(frozenset({11, 22, 33}), standard, depth(0))
 factory.dict0({}, standard)
 factory.dict({"a": 1, "b": 2, "c": 3}, standard)
-
-factory.biglist(list(range(1000)), standard, depth(0))
+factory.dict_keys({"a": 1, "b": 2, "c": 3}.keys(), standard, depth(0))
+factory.dict_values({"a": 1, "b": 2, "c": 3}.values(), standard, depth(0))
 factory.dataclass(Point(1, 2), standard, depth(0))
+factory.unknown(Opaque, standard)
+
+factory.list10(
+    list(range(10)), maxlen(5), maxlen(0), maxlen(1), maxlen(-1), maxlen(10)
+)
+factory.set10(set(range(10)), maxlen(5))
+factory.dict10(dict((i, i * i) for i in range(10)), maxlen(5))
+
+factory.exception(TypeError("oh no!"), standard)
+
+
+def _gen(x):
+    yield x
+
+
+async def _coro(x):
+    pass
+
+
+async def _corogen(x):
+    yield x
+
+
+factory.misc(
+    {
+        "functions": [hshort, Point.some_method, (lambda x: x)],
+        "generators": [_gen(3)],
+        "coroutines": [_coro(3), _corogen(3)],
+        "classes": [Point, Exception, type],
+        "builtins": [pow, open, [].append],
+        "wrappers": [dict.update, list.__str__],
+        "methods": [Point(1, 2).some_method, [].__str__],
+        "modules": [dataclasses],
+    },
+    standard,
+)
 
 factory.deep(
     {

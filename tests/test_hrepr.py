@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+import pytest
+
 from hrepr import H
 from hrepr import hrepr as real_hrepr
 from hrepr.h import styledir
@@ -78,190 +80,118 @@ def test_function():
     )
 
 
-def test_structures():
-    for typ, o, c in (
-        (tuple, "(", ")"),
-        (list, "[", "]"),
-        (set, "{", "}"),
-        (frozenset, "{", "}"),
-    ):
-        clsname = typ.__name__
-        assert hrepr(typ((1, 2))) == H.div[
-            f"hreprt-{clsname}", "hrepr-bracketed"
-        ](
-            H.div["hrepr-open"](o),
-            H.div["hreprl-h", "hrepr-body"](
-                H.div(H.span["hreprt-int"]("1")),
-                H.div(H.span["hreprt-int"]("2")),
-            ),
-            H.div["hrepr-close"](c),
-        )
-
-
-def test_short_structures():
-    for val, o, c in (
-        ((1, 2), "(", ")"),
-        ([1, 2], "[", "]"),
-        ({1, 2}, "{", "}"),
-        (frozenset({1, 2}), "{", "}"),
-        ({"x": 1, "y": 2}, "{", "}"),
-    ):
-        clsname = type(val).__name__
-        assert hrepr(val, max_depth=0) == H.div[
-            f"hreprt-{clsname}", "hrepr-bracketed"
-        ](
-            H.div["hrepr-open"](o),
-            H.div["hreprl-s", "hrepr-body"](H.div("...")),
-            H.div["hrepr-close"](c),
-        )
-
-
-def test_dict():
-    pt = {"x": 1, "y": 2}
-    assert hrepr(pt) == H.div["hreprt-dict", "hrepr-bracketed"](
-        H.div["hrepr-open"]("{"),
-        H.table["hrepr-body"](
-            H.tr(
-                H.td(H.span["hreprt-str"]("x")),
-                H.td["hrepr-delim"](": "),
-                H.td(H.span["hreprt-int"]("1")),
-            ),
-            H.tr(
-                H.td(H.span["hreprt-str"]("y")),
-                H.td["hrepr-delim"](": "),
-                H.td(H.span["hreprt-int"]("2")),
-            ),
-        ),
-        H.div["hrepr-close"]("}"),
+def check_hrepr(file_regression, **sections):
+    utf8 = H.meta(
+        {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
     )
-
-
-def test_dataclass():
-    pt = Point(1, 2)
-
-    assert hrepr(pt) == H.div["hreprt-Point", "hrepr-instance", "hreprl-v"](
-        H.div["hrepr-title"]("Point"),
-        H.table["hrepr-body"](
-            H.tr(
-                H.td(H.span["hreprt-symbol"]("x")),
-                H.td["hrepr-delim"]("="),
-                H.td(H.span["hreprt-int"]("1")),
-            ),
-            H.tr(
-                H.td(H.span["hreprt-symbol"]("y")),
-                H.td["hrepr-delim"]("="),
-                H.td(H.span["hreprt-int"]("2")),
+    page = H.inline(
+        H.raw("<!DOCTYPE html>"),
+        H.html(
+            H.head(utf8, H.style(css_hrepr)),
+            H.body(
+                H.inline(H.h2(k), H.pre(v) if isinstance(v, str) else v,)
+                for k, v in sections.items()
             ),
         ),
     )
+    file_regression.check(str(page), extension=".html")
 
-    assert hrepr(pt, max_depth=0) == H.div[
-        "hreprt-Point", "hrepr-instance", "hreprl-s"
-    ](
-        H.div["hrepr-title"]("Point"),
-        H.div["hreprl-s", "hrepr-body"](H.div("...")),
+
+class Check:
+    def __init__(self, test_name):
+        self.test_name = test_name
+
+    def create_single_test(self, obj, test):
+        def _(file_regression):
+            test(obj, file_regression)
+
+        name = _.__name__ = f"{self.test_name}[{test.__name__}]"
+        globals()[name] = _
+
+    def __getattr__(self, attr):
+        return Check(test_name=f"test_{attr}")
+
+    def __call__(self, obj, *tests):
+        assert self.test_name
+
+        for t in tests:
+            self.create_single_test(obj, t)
+
+
+factory = Check(None)
+
+
+def standard(obj, file_regression):
+    check_hrepr(
+        file_regression,
+        description="hrepr(obj)",
+        obj=repr(obj),
+        result=hrepr(obj),
     )
+
+
+def shortrefs(obj, file_regression):
+    check_hrepr(
+        file_regression,
+        description="hrepr(obj, shortrefs=True)",
+        obj=repr(obj),
+        result=hrepr(obj, shortrefs=True),
+    )
+
+
+def depth(i):
+    def _(obj, file_regression):
+        check_hrepr(
+            file_regression,
+            description=f"hrepr(obj, max_depth={i})",
+            obj=repr(obj),
+            result=hrepr(obj, max_depth=i),
+        )
+
+    _.__name__ = f"depth{i}"
+    return _
+
+
+factory.tuple0((), standard)
+factory.tuple1((1,), standard)
+factory.tuple2((11, 22), standard)
+factory.list([1, 2, 3], standard)
+factory.set({11, 22}, standard)
+factory.frozenset(frozenset({11, 22, 33}), standard)
+factory.dict0({}, standard)
+factory.dict({"a": 1, "b": 2, "c": 3}, standard)
+
+factory.biglist(list(range(1000)), standard, depth(0))
+factory.dataclass(Point(1, 2), standard, depth(0))
+
+factory.deep(
+    {
+        "apple": [1, [[2]]],
+        "banana": [7, (8, 9)],
+        "cherry": {str: "fire", int: "forest", Point: Point(3, 4)},
+    },
+    standard,
+    depth(0),
+    depth(1),
+    depth(2),
+)
+
+factory.multiref([[1, 2]] * 2, standard, shortrefs)
+
+
+def _recursive():
+    li = [1]
+    li.append(li)
+    return li
+
+
+factory.recursive(_recursive(), standard, shortrefs)
+factory.recursive2([_recursive()] * 2, standard, shortrefs)
 
 
 def test_tag():
     tg = H.span["hello"](1, 2, H.b("there"))
     assert hrepr(tg) == tg
-
-
-def test_multiref():
-    li = [1, 2]
-    lili = [li, li]
-
-    assert hrepr(lili) == H.div["hreprt-list", "hrepr-bracketed"](
-        H.div["hrepr-open"]("["),
-        H.div["hreprl-h", "hrepr-body"](
-            H.div(
-                H.div["hrepr-refbox"](
-                    H.span["hrepr-ref"]("#", 1, "="),
-                    H.div["hreprt-list", "hrepr-bracketed"](
-                        H.div["hrepr-open"]("["),
-                        H.div["hreprl-h", "hrepr-body"](
-                            H.div(H.span["hreprt-int"]("1")),
-                            H.div(H.span["hreprt-int"]("2")),
-                        ),
-                        H.div["hrepr-close"]("]"),
-                    ),
-                )
-            ),
-            H.div(
-                H.div["hrepr-refbox"](
-                    H.span["hrepr-ref"]("#", 1, "="),
-                    H.div["hreprt-list", "hrepr-bracketed"](
-                        H.div["hrepr-open"]("["),
-                        H.div["hreprl-s", "hrepr-body"](H.div("..."),),
-                        H.div["hrepr-close"]("]"),
-                    ),
-                )
-            ),
-        ),
-        H.div["hrepr-close"]("]"),
-    )
-
-    assert hrepr(lili, shortrefs=True) == H.div[
-        "hreprt-list", "hrepr-bracketed"
-    ](
-        H.div["hrepr-open"]("["),
-        H.div["hreprl-h", "hrepr-body"](
-            H.div(
-                H.div["hrepr-refbox"](
-                    H.span["hrepr-ref"]("#", 1, "="),
-                    H.div["hreprt-list", "hrepr-bracketed"](
-                        H.div["hrepr-open"]("["),
-                        H.div["hreprl-h", "hrepr-body"](
-                            H.div(H.span["hreprt-int"]("1")),
-                            H.div(H.span["hreprt-int"]("2")),
-                        ),
-                        H.div["hrepr-close"]("]"),
-                    ),
-                )
-            ),
-            H.div(H.span["hrepr-ref"]("#", 1)),
-        ),
-        H.div["hrepr-close"]("]"),
-    )
-
-
-def test_recursive():
-    li = [1]
-    li.append(li)
-
-    assert hrepr(li) == H.div["hrepr-refbox"](
-        H.span["hrepr-ref"]("#", 1, "="),
-        H.div["hreprt-list", "hrepr-bracketed"](
-            H.div["hrepr-open"]("["),
-            H.div["hreprl-h", "hrepr-body"](
-                H.div(H.span["hreprt-int"]("1")),
-                H.div(
-                    H.div["hrepr-refbox"](
-                        H.span["hrepr-ref"]("⟳", 1, "="),
-                        H.div["hreprt-list", "hrepr-bracketed"](
-                            H.div["hrepr-open"]("["),
-                            H.div["hreprl-s", "hrepr-body"](H.div("..."),),
-                            H.div["hrepr-close"]("]"),
-                        ),
-                    )
-                ),
-            ),
-            H.div["hrepr-close"]("]"),
-        ),
-    )
-
-    assert hrepr(li, shortrefs=True) == H.div["hrepr-refbox"](
-        H.span["hrepr-ref"]("#", 1, "="),
-        H.div["hreprt-list", "hrepr-bracketed"](
-            H.div["hrepr-open"]("["),
-            H.div["hreprl-h", "hrepr-body"](
-                H.div(H.span["hreprt-int"]("1")),
-                H.div(H.span["hrepr-ref"]("⟳", 1)),
-            ),
-            H.div["hrepr-close"]("]"),
-        ),
-    )
 
 
 def test_unsupported():

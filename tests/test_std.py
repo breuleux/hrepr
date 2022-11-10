@@ -8,6 +8,26 @@ from hrepr.std import standard_html as sht
 here = os.path.dirname(__file__)
 
 
+def gentest(f):
+    def _(file_regression):
+        file_regression.check(str(sht(f())), extension=".html")
+
+    _.__name__ = f.__name__
+    return _
+
+
+@gentest
+def test_brack():
+    return H.bracketed["kls"](
+        H.pair("a", "b", delimiter=" -> "),
+        H.pair("c", "d", delimiter=" <- "),
+        "e",
+        start="START",
+        end="END",
+        stuff="xyz",
+    )
+
+
 def test_pair():
     p = H.pair["kls"](
         "red", "blue", delimiter=" -> ", stuff="xyz", type="color"

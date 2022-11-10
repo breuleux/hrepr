@@ -6,7 +6,6 @@
 ✅ Ridiculously extensible and configurable<br/>
 ✅ Handles recursive data structures<br/>
 ✅ Compatible with Jupyter notebooks<br/>
-✅ Also pretty-prints to the terminal<br/>
 
 <img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr1.png" width="400px"><img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr2.png" width="400px">
 
@@ -96,20 +95,16 @@ class Person:
         )
 
     def __hrepr_short__(self, H, hrepr):
-        # H.atom is really mostly like H.span, but the textual representation
-        # of H.atom(x) through pprint is "x" whereas H.span(x) would be 
-        # "<span>x</span>".
+        # H.atom is really mostly like H.span.
         return H.atom["person-short"](self.name)
 ```
 
 <img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr3.png" width="600px">
 
-Note how this also gave us a textual representation *for free*, using `hrepr.pprint`. This feature requires using special tags like `H.instance`, `H.bracketed`, `H.pair` or `H.atom` -- other ones will pretty-print like HTML -- but it's neat regardless!
-
 
 ## References
 
-`hrepr` (and `hrepr.pprint` for that matter) can handle circular references. Furthermore, if an object is found at several places in a structure, only the first occurrence will be printed in full, and any other will be a numeric reference mapped to the short representation for the object. It looks like this:
+`hrepr` can handle circular references. Furthermore, if an object is found at several places in a structure, only the first occurrence will be printed in full, and any other will be a numeric reference mapped to the short representation for the object. It looks like this:
 
 <img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr4.png" width="600px">
 
@@ -151,7 +146,7 @@ This can be handy if you want to tweak generated HTML a little. For example, `hr
 
 ### Special tags
 
-Standard tags like `H.span`, `H.div`, `H.strong`, etc. are handled according to standards. But there are some special tags which are postprocessed by the hrepr "backend". The HTML backend will reduce them to standard tags, whereas the pprint backend will display them like Python data structures.
+Standard tags like `H.span`, `H.div`, `H.strong`, etc. are handled according to standards. But there are some special tags which are postprocessed by the hrepr "backend":
 
 * `H.instance(*children, type=<str>, delimiter=<str>, short=<bool>, horizontal=<bool>, vertical=<bool>)`
     * Represents some kind of object
@@ -165,7 +160,7 @@ Standard tags like `H.span`, `H.div`, `H.strong`, etc. are handled according to 
     * `delimiter`: the delimiter between elements, defaults to a comma. The HTML formatter ignores this.
     * `short/horizontal/vertical`: the layout/style. Lists use horizontal, dicts use vertical, and the short representations use short.
 * `H.pair(x, y, delimiter=<str>)`: a key -> value mapping. They are handled specially inside of `bracketed` and `instance` so that the delimiters are aligned.
-* `H.atom(element, type=<str>)`: essentially equivalent to `H.span["hreprt-<type>"](element)`, or `repr(element)` for pprint.
+* `H.atom(element, type=<str>)`: essentially equivalent to `H.span["hreprt-<type>"](element)`.
 
 
 ### Including JavaScript libraries

@@ -17,12 +17,13 @@ python = "^3.6"
 ovld = "^0.3.2"
 dataclasses = { version = "^0.8", python = "~3.6" }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^19.3b0"
 isort = "^5.4.2"
 pytest = "^6.0.1"
 pytest-cov = "^2.10.1"
 flake8 = "^3.8.3"
+pytest-regressions = "^2.4.1"
 
 [tool.black]
 line-length = 80

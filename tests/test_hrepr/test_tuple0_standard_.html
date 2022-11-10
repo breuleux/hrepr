@@ -1,0 +1,232 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /><style>
+:root, :host {
+	--instance-color: #00a;
+	--dict-color: #00a;
+	--tuple-color: #080;
+	--list-color: #080;
+	--set-color: #080;
+	--frozenset-color: #88f;
+	--error-color: #f00;
+	--struct-border: 2px;
+}
+
+/* Scalar/string formatting */
+
+.hreprv-True, .hreprv-False, .hreprv-None, .hreprt-int, .hreprt-float {
+	font-weight: bold;
+}
+
+.hreprt-int, .hreprt-float {
+	color: #88f;
+}
+
+.hreprt-str {
+	color: #666;
+	white-space: pre-wrap;
+}
+
+.hreprt-str:before {
+	content: "“";
+	color: #888;
+}
+
+.hreprt-str:after {
+	content: "”";
+	color: #888;
+}
+
+.hreprt-bytes {
+	color: #666;
+	font-family: monospace;
+	white-space: pre-wrap;
+}
+
+.hreprt-bytes:before {
+	content: "b“";
+}
+
+.hreprt-bytes:after {
+	content: "”";
+}
+
+.hreprv-True {
+	color: green;
+}
+
+.hreprv-False {
+	color: red;
+}
+
+.hreprv-None {
+	color: grey;
+}
+
+.hreprk-class > .hrepr-defn-key {
+	color: blue;
+}
+
+.hreprk-module > .hrepr-defn-key {
+	color: purple;
+}
+
+.hreprk-function > .hrepr-defn-key,
+.hreprk-builtin > .hrepr-defn-key,
+.hreprk-method > .hrepr-defn-key,
+.hreprk-descriptor > .hrepr-defn-key {
+	color: #080;
+}
+
+.hrepr-defn-key {
+	font-weight: bold;
+}
+
+
+/* Generic layouts */
+
+.hreprl-h, .hreprl-s {
+	display: inline-flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+
+.hreprl-v {
+	display: inline-flex;
+	flex-direction: column;
+}
+
+.hrepr-body.hreprl-h,
+.hrepr-body.hreprl-v {
+	gap: 4px;
+	background: #ddd;
+}
+
+.hrepr-body.hreprl-h {
+	align-items: center;
+}
+
+.hrepr-body.hreprl-v > *,
+.hrepr-body.hreprl-h > * {
+	background: white;
+	display: inline-flex;
+	place-items: center;
+}
+
+.hrepr-body.hreprl-h > div > .hrepr-ellipsis,
+.hrepr-body.hreprl-v > div > .hrepr-ellipsis {
+	background: #ddd;
+}
+
+.hrepr-body.hreprl-h > div > .hrepr-ellipsis {
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.hrepr-body.hreprl-v > div > .hrepr-ellipsis {
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+.hrepr-body.hreprl-s > * {
+	padding: 1px;
+}
+
+.hrepr-bracketed {
+	display: inline-flex;
+	flex-direction: row;
+	place-items: center;
+	background: black;
+	border: var(--struct-border) solid black;
+	box-sizing: border-box;
+}
+
+.hrepr-bracketed > .hrepr-open {
+	padding-right: var(--struct-border);
+}
+.hrepr-bracketed > .hrepr-close {
+	padding-left: var(--struct-border);
+}
+.hrepr-bracketed > .hrepr-open,
+.hrepr-bracketed > .hrepr-close,
+.hrepr-instance > .hrepr-title,
+.hreprl-s {
+	color: white;
+	font-weight: bold;
+}
+
+.hrepr-instance {
+	background: var(--instance-color);
+	border: var(--struct-border) solid var(--instance-color);
+	box-sizing: border-box;
+}
+.hrepr-instance > .hrepr-title {
+	color: white;
+	font-weight: bold;
+}
+.hrepr-instance.hreprl-v > .hrepr-title {
+	padding-bottom: var(--struct-border);
+}
+.hrepr-instance.hreprl-h > .hrepr-title,
+.hrepr-instance.hreprl-s > .hrepr-title {
+	padding-right: var(--struct-border);
+	place-self: center;
+}
+.hrepr-instance.hrepr-error {
+	background: var(--error-color);
+	border: var(--struct-border) solid var(--error-color);
+}
+
+
+/* Colors for structures. */
+
+.hreprt-dict {
+	background: var(--dict-color);
+	border-color: var(--dict-color);
+}
+
+.hreprt-list {
+	background: var(--list-color);
+	border-color: var(--list-color);
+}
+
+.hreprt-tuple {
+	background: var(--tuple-color);
+	border-color: var(--tuple-color);
+}
+
+.hreprt-set {
+	background: var(--set-color);
+	border-color: var(--set-color);
+}
+
+.hreprt-frozenset {
+	background: var(--frozenset-color);
+	border-color: var(--frozenset-color);
+}
+
+table.hrepr-body {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+table.hrepr-body > tbody > tr:nth-child(even) {
+	background: #ddd;
+}
+
+table.hrepr-body > tbody > tr:nth-child(odd) {
+	background: #fff;
+}
+
+
+/* References */
+
+.hrepr-ref {
+	font-weight: bold;
+	color: magenta;
+}
+
+.hrepr-refbox {
+	display: inline-flex;
+	position: relative;
+	place-items: center;
+}
+</style></head><body><h2>description</h2><pre>hrepr(obj)</pre><h2>obj</h2><pre>()</pre><h2>result</h2><div class="hreprt-tuple hrepr-bracketed"><div class="hrepr-open">(</div><div class="hreprl-h hrepr-body"></div><div class="hrepr-close">)</div></div></body></html>

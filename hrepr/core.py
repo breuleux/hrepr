@@ -9,6 +9,7 @@ from ovld import OvldMC, extend_super, has_attribute, meta, ovld
 
 from . import std
 from .h import H, Tag, styledir
+from .make import StandardMaker
 from .std import standard_html
 
 ABSENT = object()
@@ -80,6 +81,7 @@ class Hrepr(metaclass=OvldMC):
         self,
         *,
         H=H,
+        maker=StandardMaker,
         config=None,
         master=None,
         preprocess=None,
@@ -91,6 +93,7 @@ class Hrepr(metaclass=OvldMC):
         self.state = master.state if master else HreprState()
         self.preprocess = preprocess
         self.postprocess = postprocess
+        self.make = maker(self)
 
     def with_config(self, config):
         if not config:
@@ -107,16 +110,18 @@ class Hrepr(metaclass=OvldMC):
 
     def ref(self, obj, loop=False):
         num = self.state.get_ref(id(obj))
-        ref = self.H.ref(loop=loop, num=num)
-        if not self.config.shortrefs:
-            ref = ref(self.hrepr_short(obj))
-        return ref
+        if self.config.shortrefs:
+            return self.make.ref(loop=loop, num=num)
+        else:
+            return self.make.ref(
+                loop=loop, num=num, content=self.hrepr_short(obj)
+            )
 
     def transform_sequence(
         self,
         seq,
         transform=None,
-        ellipsis=H.atom["hrepr-ellipsis"]("..."),
+        ellipsis=H.span["hrepr-ellipsis"]("..."),
         ntrail=2,
     ):
         cap = self.config.sequence_max
@@ -158,8 +163,7 @@ class Hrepr(metaclass=OvldMC):
 
     @ovld
     def hrepr_short(self, obj: object):
-        clsn = _tn(obj)
-        rval = self.H.atom("<", _xtn(obj), ">", type=clsn)
+        rval = self.make.atom("<", _xtn(obj), ">", type=type(obj))
         self.state.register(id(obj), rval)
         return rval
 
@@ -240,59 +244,55 @@ class StdHrepr(Hrepr):
 
     @extend_super
     def hrepr(self, xs: list):
-        return self.H.bracketed(
-            self.transform_sequence(xs), start="[", end="]", type=_tn(xs),
+        return self.make.bracketed(
+            self.make.flow(xs), start="[", end="]", type=type(xs),
         )
 
     @extend_super
     def hrepr_short(self, xs: list):
-        return self.H.bracketed(
-            "...", short=True, start="[", end="]", type=_tn(xs),
+        return self.make.bracketed(
+            self.make.short("..."), start="[", end="]", type=type(xs),
         )
 
     # Tuples
 
     def hrepr(self, xs: tuple):
-        return self.H.bracketed(
-            self.transform_sequence(xs), start="(", end=")", type=_tn(xs),
+        return self.make.bracketed(
+            self.make.flow(xs), start="(", end=")", type=type(xs),
         )
 
     def hrepr_short(self, xs: tuple):
-        return self.H.bracketed(
-            "...", short=True, start="(", end=")", type=_tn(xs),
+        return self.make.bracketed(
+            self.make.short("..."), start="(", end=")", type=type(xs),
         )
 
     # Sets
 
     def hrepr(self, xs: Union[set, frozenset]):
-        return self.H.bracketed(
-            self.transform_sequence(xs), start="{", end="}", type=_tn(xs),
+        return self.make.bracketed(
+            self.make.flow(xs), start="{", end="}", type=type(xs),
         )
 
     def hrepr_short(self, xs: Union[set, frozenset]):
-        return self.H.bracketed(
-            "...", short=True, start="{", end="}", type=_tn(xs),
+        return self.make.bracketed(
+            self.make.short("..."), start="{", end="}", type=type(xs),
         )
 
     # Dictionaries
 
     def hrepr(self, obj: dict):
-        return self.H.bracketed(
-            self.transform_sequence(
-                obj.items(),
-                transform=lambda it: self.H.pair(
-                    self(it[0]), self(it[1]), delimiter=": "
-                ),
+        return self.make.bracketed(
+            self.make.table(
+                [[k, H.span["hrepr-delim"](": "), v] for k, v in obj.items()]
             ),
-            type="dict",
             start="{",
             end="}",
-            vertical=True,
+            type=type(obj),
         )
 
     def hrepr_short(self, xs: dict):
-        return self.H.bracketed(
-            "...", type="dict", start="{", end="}", short=True,
+        return self.make.bracketed(
+            self.make.short("..."), start="{", end="}", type=type(xs),
         )
 
     # Dataclasses
@@ -300,7 +300,7 @@ class StdHrepr(Hrepr):
     def hrepr(self, obj: meta(is_dataclass)):
         def mapping(field):
             return self.H.pair(
-                self.H.atom(field.name, type="symbol"),
+                self.make.atom(field.name, type="symbol"),
                 self(getattr(obj, field.name)),
                 delimiter="=",
             )
@@ -317,36 +317,33 @@ class StdHrepr(Hrepr):
     # Other structures
 
     def hrepr(self, dk: type({}.keys())):
-        return self.H.bracketed(
-            self.transform_sequence(dk),
-            start="dict_keys(",
-            end=")",
-            type=_tn(dk),
+        return self.make.bracketed(
+            self.make.flow(dk), start="dict_keys(", end=")", type=type(dk),
         )
 
     def hrepr_short(self, dk: type({}.keys())):
-        return self.H.bracketed(
-            "...", short=True, start="dict_keys(", end=")", type=_tn(dk),
+        return self.make.bracketed(
+            self.make.short("..."), start="dict_keys(", end=")", type=type(dk),
         )
 
     def hrepr(self, dv: type({}.values())):
-        return self.H.bracketed(
-            self.transform_sequence(dv),
-            start="dict_values(",
-            end=")",
-            type=_tn(dv),
+        return self.make.bracketed(
+            self.make.flow(dv), start="dict_values(", end=")", type=type(dv),
         )
 
     def hrepr_short(self, dv: type({}.values())):
-        return self.H.bracketed(
-            "...", short=True, start="dict_values(", end=")", type=_tn(dv),
+        return self.make.bracketed(
+            self.make.short("..."),
+            start="dict_values(",
+            end=")",
+            type=type(dv),
         )
 
     # Exceptions
 
     def hrepr(self, obj: Exception):
         return self.H.instance["hrepr-error"](
-            H.atom(str(obj.args[0])) if obj.args else "",
+            self.make.atom(str(obj.args[0])) if obj.args else "",
             *map(self, obj.args[1:]),
             type=_tn(obj),
             horizontal=True,
@@ -356,29 +353,29 @@ class StdHrepr(Hrepr):
 
     def hrepr_short(self, obj: types.FunctionType):
         # types.LambdaType is types.FunctionType
-        return self.H.defn("function", obj.__name__)
+        return self.make.defn("function", obj.__name__)
 
     def hrepr_short(self, obj: types.CoroutineType):
-        return self.H.defn("coroutine", obj.__name__)
+        return self.make.defn("coroutine", obj.__name__)
 
     def hrepr_short(self, obj: types.GeneratorType):
-        return self.H.defn("generator", obj.__name__)
+        return self.make.defn("generator", obj.__name__)
 
     def hrepr_short(self, obj: types.AsyncGeneratorType):
-        return self.H.defn("async_generator", obj.__name__)
+        return self.make.defn("async_generator", obj.__name__)
 
     def hrepr_short(self, obj: Union[types.MethodType, type([].__str__)]):
         # Second one is types.MethodWrapperType but it's not exposed
         # in the types module in 3.6
         slf = obj.__self__
         slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
-        return self.H.defn("method", f"{slf}.{obj.__name__}")
+        return self.make.defn("method", f"{slf}.{obj.__name__}")
 
     def hrepr_short(self, obj: Union[type(object.__str__), type(dict.update)]):
         # These are types.WrapperDescriptorType and types.MethodDescriptorType
         # but they are not exposed in the types module in 3.6
         objc = obj.__objclass__.__name__
-        return self.H.defn("descriptor", f"{objc}.{obj.__name__}")
+        return self.make.defn("descriptor", f"{objc}.{obj.__name__}")
 
     def hrepr_short(self, obj: types.BuiltinMethodType):
         # types.BuiltinFunctionType is types.BuiltinMethodType
@@ -386,16 +383,16 @@ class StdHrepr(Hrepr):
         slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
         if slf == "builtins":
             # Let's not be redundant
-            return self.H.defn("builtin", obj.__name__)
+            return self.make.defn("builtin", obj.__name__)
         else:
-            return self.H.defn("builtin", f"{slf}.{obj.__name__}")
+            return self.make.defn("builtin", f"{slf}.{obj.__name__}")
 
     def hrepr_short(self, obj: type):
         key = "metaclass" if issubclass(obj, type) else "class"
-        return self.H.defn(key, obj.__name__)
+        return self.make.defn(key, obj.__name__)
 
     def hrepr_short(self, obj: types.ModuleType):
-        return self.H.defn("module", obj.__name__)
+        return self.make.defn("module", obj.__name__)
 
     # Strings
 
@@ -406,13 +403,13 @@ class StdHrepr(Hrepr):
             # for multiple instances of the same string.
             return NotImplemented
         else:
-            return self.H.atom(_encode(x), type="str")
+            return self.make.atom(_encode(x), type="str")
 
     def hrepr_short(self, x: str):
         cutoff = self.config.string_cutoff or math.inf
         if len(x) > cutoff:
             x = x[: cutoff - 3] + "..."
-        return self.H.atom(_encode(x), type="str")
+        return self.make.atom(_encode(x), type="str")
 
     # Bytes
 
@@ -421,33 +418,36 @@ class StdHrepr(Hrepr):
         if len(x) <= cutoff:
             return NotImplemented
         else:
-            return self.H.atom(x.hex(), type="bytes")
+            return self.make.atom(x.hex(), type="bytes")
 
     def hrepr_short(self, x: bytes):
         cutoff = self.config.bytes_cutoff or math.inf
         hx = x.hex()
         if len(hx) > cutoff:
             hx = hx[: cutoff - 3] + "..."
-        return self.H.atom(hx, type="bytes")
+        return self.make.atom(hx, type="bytes")
 
     # Numbers
 
     def hrepr_short(self, x: Union[int, float]):
-        return self.H.atom(str(x), type=_tn(x))
+        return self.make.atom(str(x), type=_tn(x))
 
     # Booleans
 
     def hrepr_short(self, x: bool):
-        return self.H.atom(str(x), value=x)
+        return self.make.atom(str(x), value=x)
 
     # None
 
     def hrepr_short(self, x: type(None)):
-        return self.H.atom(str(x), value=x)
+        return self.make.atom(str(x), value=x)
 
     # Tags
 
     def hrepr(self, x: Tag):
+        return x
+
+    def hrepr_short(self, x: Tag):
         return x
 
 
@@ -459,7 +459,7 @@ def inject_reference_numbers(hcall, node, refmap):
         )
         refnum = refmap.get(id(node), None)
         if refnum is not None:
-            return hcall.H.ref(node, num=refnum)
+            return hcall.make.ref(content=node, num=refnum)
         else:
             return node
     else:

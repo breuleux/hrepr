@@ -8,66 +8,66 @@ from hrepr.std import standard_html as sht
 here = os.path.dirname(__file__)
 
 
-def gentest(f):
-    def _(file_regression):
-        file_regression.check(str(sht(f())), extension=".html")
+# def gentest(f):
+#     def _(file_regression):
+#         file_regression.check(str(sht(f())), extension=".html")
 
-    _.__name__ = f.__name__
-    return _
-
-
-@gentest
-def test_brack():
-    return H.bracketed["kls"](
-        H.pair("a", "b", delimiter=" -> "),
-        H.pair("c", "d", delimiter=" <- "),
-        "e",
-        start="START",
-        end="END",
-        stuff="xyz",
-    )
+#     _.__name__ = f.__name__
+#     return _
 
 
-def test_pair():
-    p = H.pair["kls"](
-        "red", "blue", delimiter=" -> ", stuff="xyz", type="color"
-    )
-    assert sht(p) == H.div["kls", "hreprt-color", "hrepr-pair"](
-        "red", " -> ", "blue", stuff="xyz"
-    )
+# @gentest
+# def test_brack():
+#     return H.bracketed["kls"](
+#         H.pair("a", "b", delimiter=" -> "),
+#         H.pair("c", "d", delimiter=" <- "),
+#         "e",
+#         start="START",
+#         end="END",
+#         stuff="xyz",
+#     )
 
 
-def test_bracketed():
-    brack = H.bracketed["kls"](
-        H.pair("a", "b", delimiter=" -> "),
-        H.pair("c", "d", delimiter=" <- "),
-        "e",
-        start="START",
-        end="END",
-        stuff="xyz",
-    )
+# def test_pair():
+#     p = H.pair["kls"](
+#         "red", "blue", delimiter=" -> ", stuff="xyz", type="color"
+#     )
+#     assert sht(p) == H.div["kls", "hreprt-color", "hrepr-pair"](
+#         "red", " -> ", "blue", stuff="xyz"
+#     )
 
-    assert sht(brack(vertical=True)) == H.div["kls", "hrepr-bracketed"](
-        H.div["hrepr-open"]("START"),
-        H.table["hrepr-body"](
-            H.tr(H.td("a"), H.td["hrepr-delim"](" -> "), H.td("b"),),
-            H.tr(H.td("c"), H.td["hrepr-delim"](" <- "), H.td("d"),),
-            H.tr(H.td("e", colspan="3"),),
-        ),
-        H.div["hrepr-close"]("END"),
-        stuff="xyz",
-    )
 
-    assert sht(brack(horizontal=True)) == H.div["kls", "hrepr-bracketed"](
-        H.div["hrepr-open"]("START"),
-        H.div["hreprl-h", "hrepr-body"](
-            H.div(H.div["hrepr-pair"]("a", " -> ", "b",)),
-            H.div(H.div["hrepr-pair"]("c", " <- ", "d",)),
-            H.div("e"),
-        ),
-        H.div["hrepr-close"]("END"),
-        stuff="xyz",
-    )
+# def test_bracketed():
+#     brack = H.bracketed["kls"](
+#         H.pair("a", "b", delimiter=" -> "),
+#         H.pair("c", "d", delimiter=" <- "),
+#         "e",
+#         start="START",
+#         end="END",
+#         stuff="xyz",
+#     )
+
+#     assert sht(brack(vertical=True)) == H.div["kls", "hrepr-bracketed"](
+#         H.div["hrepr-open"]("START"),
+#         H.table["hrepr-body"](
+#             H.tr(H.td("a"), H.td["hrepr-delim"](" -> "), H.td("b"),),
+#             H.tr(H.td("c"), H.td["hrepr-delim"](" <- "), H.td("d"),),
+#             H.tr(H.td("e", colspan="3"),),
+#         ),
+#         H.div["hrepr-close"]("END"),
+#         stuff="xyz",
+#     )
+
+#     assert sht(brack(horizontal=True)) == H.div["kls", "hrepr-bracketed"](
+#         H.div["hrepr-open"]("START"),
+#         H.div["hreprl-h", "hrepr-body"](
+#             H.div(H.div["hrepr-pair"]("a", " -> ", "b",)),
+#             H.div(H.div["hrepr-pair"]("c", " <- ", "d",)),
+#             H.div("e"),
+#         ),
+#         H.div["hrepr-close"]("END"),
+#         stuff="xyz",
+#     )
 
 
 _reqjs = sht.initial_state["requirejs_resources"]
@@ -175,26 +175,26 @@ def test_constructed_element_export():
     )
 
 
-def test_constructed_special_element():
-    assert sht(
-        H.atom(
-            id="melon",
-            type="cool",
-            constructor="fou",
-            options={"x": 1},
-            export="everywhere",
-        )
-    ) == H.inline(
-        H.span["hreprt-cool"](id="melon"),
-        sht(
-            H.javascript(
-                "let everywhere = new fou(document.getElementById('melon'), {\"x\": 1});",
-                require="fou",
-                export="everywhere",
-                lazy=False,
-            )
-        ),
-    )
+# def test_constructed_special_element():
+#     assert sht(
+#         H.atom(
+#             id="melon",
+#             type="cool",
+#             constructor="fou",
+#             options={"x": 1},
+#             export="everywhere",
+#         )
+#     ) == H.inline(
+#         H.span["hreprt-cool"](id="melon"),
+#         sht(
+#             H.javascript(
+#                 "let everywhere = new fou(document.getElementById('melon'), {\"x\": 1});",
+#                 require="fou",
+#                 export="everywhere",
+#                 lazy=False,
+#             )
+#         ),
+#     )
 
 
 def test_include_js():

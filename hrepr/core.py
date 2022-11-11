@@ -181,7 +181,11 @@ class Hrepr(metaclass=OvldMC):
         if self.state.stack[ido]:
             return runner.ref(obj, loop=True)
 
-        if self.state.registered(ido) and not runner.config.norefs:
+        if (
+            not isinstance(obj, Tag)
+            and self.state.registered(ido)
+            and not runner.config.norefs
+        ):
             return runner.ref(obj)
 
         # Push object on the stack to detect circular references
@@ -298,21 +302,23 @@ class StdHrepr(Hrepr):
     # Dataclasses
 
     def hrepr(self, obj: meta(is_dataclass)):
-        def mapping(field):
-            return self.H.pair(
-                self.make.atom(field.name, type="symbol"),
-                self(getattr(obj, field.name)),
-                delimiter="=",
-            )
-
-        return self.H.instance(
-            self.transform_sequence(dataclass_fields(obj), transform=mapping),
-            type=_tn(obj),
-            vertical=True,
+        return self.make.instance(
+            title=type(obj).__name__,
+            fields=[
+                [
+                    self.make.atom(field.name, type="symbol"),
+                    getattr(obj, field.name),
+                ]
+                for field in dataclass_fields(obj)
+            ],
+            delimiter="=",
+            type=type(obj),
         )
 
     def hrepr_short(self, obj: meta(is_dataclass)):
-        return self.H.instance("...", type=_tn(obj), short=True,)
+        return self.make.title_box(
+            title=type(obj).__name__, body="...", type=type(obj), layout="s"
+        )
 
     # Other structures
 
@@ -342,12 +348,15 @@ class StdHrepr(Hrepr):
     # Exceptions
 
     def hrepr(self, obj: Exception):
-        return self.H.instance["hrepr-error"](
-            self.make.atom(str(obj.args[0])) if obj.args else "",
-            *map(self, obj.args[1:]),
-            type=_tn(obj),
-            horizontal=True,
-        )
+        return self.make.title_box(
+            title=type(obj).__name__,
+            body=[
+                self.H.span(str(obj.args[0])) if obj.args else "",
+                *self.make.sequence(obj.args[1:]),
+            ],
+            type=type(obj),
+            layout="h",
+        )["hrepr-error"]
 
     # Functions and methods
 

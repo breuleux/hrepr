@@ -94,3 +94,19 @@ class StandardMaker:
             H.div["hrepr-open"](start), body, H.div["hrepr-close"](end),
         )
         return self.tag_type(node, type)["hrepr-bracketed"]
+
+    def title_box(self, title, body, type=None, layout="v", wrap_body=True):
+        if wrap_body:
+            body = H.div["hrepr-body", f"hreprl-{layout}"](body)
+        node = H.div["hrepr-instance", f"hreprl-{layout}"](
+            H.div["hrepr-title"](title), body
+        )
+        return self.tag_type(node, type)
+
+    def instance(self, title, fields, delimiter=None, type=None):
+        if isinstance(delimiter, str):
+            delimiter = H.span["hrepr-delim"](delimiter)
+        body = self.table([[k, delimiter, v] for k, v in fields])
+        return self.title_box(
+            title, body, type=type, layout="v", wrap_body=False
+        )

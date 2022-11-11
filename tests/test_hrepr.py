@@ -255,5 +255,5 @@ def test_preprocess():
 
 def test_postprocess():
     assert hrepr(1, postprocess=lambda x, obj, hrepr: x["newclass"]) == H.span[
-        "newclass", "hreprt-int"
+        "hreprt-int", "newclass"
     ]("1")

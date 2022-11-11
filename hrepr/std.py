@@ -125,15 +125,15 @@ def standard_html(self, node: Tag):
         )
 
 
-@ovld
-def standard_html(self, node: HType.ref):
-    _, children, data = _extract_as(self, node, "div", loop=False, num=-1)
-    sym = "⟳" if data.loop else "#"
-    ref = H.span["hrepr-ref"](sym, data.num)
-    if node.children:
-        return H.div["hrepr-refbox"](ref("="), *map(self, children))
-    else:
-        return ref
+# @ovld
+# def standard_html(self, node: HType.ref):
+#     _, children, data = _extract_as(self, node, "div", loop=False, num=-1)
+#     sym = "⟳" if data.loop else "#"
+#     ref = H.span["hrepr-ref"](sym, data.num)
+#     if node.children:
+#         return H.div["hrepr-refbox"](ref("="), *map(self, children))
+#     else:
+#         return ref
 
 
 @ovld
@@ -188,16 +188,16 @@ def standard_html(self, node: HType.atom):
     return self(rval(*children))
 
 
-@ovld
-def standard_html(self, node: HType.defn):
-    rval, children, _ = _extract_as(self, node, "span")
-    assert len(children) == 2
-    key, name = children
-    return self(
-        rval[f"hreprk-{key}"](
-            H.span["hrepr-defn-key"](key), " ", H.span["hrepr-defn-name"](name),
-        )
-    )
+# @ovld
+# def standard_html(self, node: HType.defn):
+#     rval, children, _ = _extract_as(self, node, "span")
+#     assert len(children) == 2
+#     key, name = children
+#     return self(
+#         rval[f"hreprk-{key}"](
+#             H.span["hrepr-defn-key"](key), " ", H.span["hrepr-defn-name"](name),
+#         )
+#     )
 
 
 @ovld

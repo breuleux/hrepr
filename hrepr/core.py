@@ -3,29 +3,17 @@ import types
 from collections import Counter
 from dataclasses import fields as dataclass_fields
 from dataclasses import is_dataclass
+from pathlib import Path
 from typing import Union
 
 from ovld import OvldMC, extend_super, has_attribute, meta, ovld
 
-from . import std
 from .h import H, Tag, styledir
 from .make import StandardMaker
-from .std import standard_html
 
 ABSENT = object()
 
-
-def _tn(x):
-    return type(x).__name__
-
-
-def _xtn(x):
-    tx = type(x)
-    mn = tx.__module__
-    if mn == "builtins":
-        return tx.__qualname__
-    else:
-        return f"{mn}.{tx.__qualname__}"
+_type = type
 
 
 class Config:
@@ -74,7 +62,6 @@ class HreprState:
 class Hrepr(metaclass=OvldMC):
     @classmethod
     def make_interface(cls, **kw):
-        kw = {"backend": standard_html, **kw}
         return Interface(cls, **kw)
 
     def __init__(
@@ -117,24 +104,6 @@ class Hrepr(metaclass=OvldMC):
                 loop=loop, num=num, content=self.hrepr_short(obj)
             )
 
-    def transform_sequence(
-        self,
-        seq,
-        transform=None,
-        ellipsis=H.span["hrepr-ellipsis"]("..."),
-        ntrail=2,
-    ):
-        cap = self.config.sequence_max
-        if transform is None:
-            transform = self
-        if not cap or cap < ntrail or len(seq) <= cap:
-            return [transform(x) for x in seq]
-        else:
-            seq = list(seq)
-            before = [transform(x) for x in seq[: cap - ntrail]]
-            after = [transform(x) for x in seq[-ntrail:]] if ntrail else []
-            return [*before, ellipsis, *after]
-
     def global_resources(self):  # pragma: no cover
         return ()
 
@@ -163,6 +132,14 @@ class Hrepr(metaclass=OvldMC):
 
     @ovld
     def hrepr_short(self, obj: object):
+        def _xtn(x):
+            tx = type(x)
+            mn = tx.__module__
+            if mn == "builtins":
+                return tx.__qualname__
+            else:
+                return f"{mn}.{tx.__qualname__}"
+
         rval = self.make.atom("<", _xtn(obj), ">", type=type(obj))
         self.state.register(id(obj), rval)
         return rval
@@ -237,12 +214,8 @@ def _encode(s):
 
 
 class StdHrepr(Hrepr):
-    def __init__(self, *, std=std, **kw):
-        super().__init__(**kw)
-        self.std = std
-
     def global_resources(self):
-        return (self.H.include(path=f"{styledir}/hrepr.css", type="text/css"),)
+        return (self.H.style((Path(styledir) / "hrepr.css").read_text()),)
 
     # Lists
 
@@ -322,22 +295,22 @@ class StdHrepr(Hrepr):
 
     # Other structures
 
-    def hrepr(self, dk: type({}.keys())):
+    def hrepr(self, dk: _type({}.keys())):
         return self.make.bracketed(
             self.make.flow(dk), start="dict_keys(", end=")", type=type(dk),
         )
 
-    def hrepr_short(self, dk: type({}.keys())):
+    def hrepr_short(self, dk: _type({}.keys())):
         return self.make.bracketed(
             self.make.short("..."), start="dict_keys(", end=")", type=type(dk),
         )
 
-    def hrepr(self, dv: type({}.values())):
+    def hrepr(self, dv: _type({}.values())):
         return self.make.bracketed(
             self.make.flow(dv), start="dict_values(", end=")", type=type(dv),
         )
 
-    def hrepr_short(self, dv: type({}.values())):
+    def hrepr_short(self, dv: _type({}.values())):
         return self.make.bracketed(
             self.make.short("..."),
             start="dict_values(",
@@ -373,14 +346,16 @@ class StdHrepr(Hrepr):
     def hrepr_short(self, obj: types.AsyncGeneratorType):
         return self.make.defn("async_generator", obj.__name__)
 
-    def hrepr_short(self, obj: Union[types.MethodType, type([].__str__)]):
+    def hrepr_short(self, obj: Union[types.MethodType, _type([].__str__)]):
         # Second one is types.MethodWrapperType but it's not exposed
         # in the types module in 3.6
         slf = obj.__self__
         slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
         return self.make.defn("method", f"{slf}.{obj.__name__}")
 
-    def hrepr_short(self, obj: Union[type(object.__str__), type(dict.update)]):
+    def hrepr_short(
+        self, obj: Union[_type(object.__str__), _type(dict.update)]
+    ):
         # These are types.WrapperDescriptorType and types.MethodDescriptorType
         # but they are not exposed in the types module in 3.6
         objc = obj.__objclass__.__name__
@@ -439,7 +414,7 @@ class StdHrepr(Hrepr):
     # Numbers
 
     def hrepr_short(self, x: Union[int, float]):
-        return self.make.atom(str(x), type=_tn(x))
+        return self.make.atom(str(x), type=type(x))
 
     # Booleans
 
@@ -448,7 +423,7 @@ class StdHrepr(Hrepr):
 
     # None
 
-    def hrepr_short(self, x: type(None)):
+    def hrepr_short(self, x: _type(None)):
         return self.make.atom(str(x), value=x)
 
     # Tags
@@ -488,30 +463,31 @@ class Interface:
         self,
         hclass,
         *,
-        backend,
         mixins=None,
-        preprocess=None,
-        postprocess=None,
+        preprocess=ABSENT,
+        postprocess=ABSENT,
         inject_references=True,
         fill_resources=True,
         **config_defaults,
     ):
-        self.hclass = _mix(hclass, mixins)
-        self.backend = backend
-        self.preprocess = preprocess
-        self.postprocess = postprocess
-        self.inject_references = inject_references
-        self.fill_resources = fill_resources
-        self.config_defaults = config_defaults
+        self.hrepr_options = {}
+        self.config_defaults = {}
+        self.configure(
+            hclass=hclass,
+            mixins=mixins,
+            preprocess=preprocess,
+            postprocess=postprocess,
+            inject_references=inject_references,
+            fill_resources=fill_resources,
+            **config_defaults,
+        )
 
     def copy(self):
         return type(self)(
             hclass=self.hclass,
-            backend=self.backend,
-            preprocess=self.preprocess,
-            postprocess=self.postprocess,
             inject_references=self.inject_references,
             fill_resources=self.fill_resources,
+            **self.hrepr_options,
             **self.config_defaults,
         )
 
@@ -523,7 +499,6 @@ class Interface:
         *,
         hclass=None,
         mixins=None,
-        backend=None,
         preprocess=ABSENT,
         postprocess=ABSENT,
         inject_references=ABSENT,
@@ -533,12 +508,10 @@ class Interface:
         if hclass is not None:
             self.hclass = hclass
         self.hclass = _mix(self.hclass, mixins)
-        if backend is not None:
-            self.backend = backend
         if preprocess is not ABSENT:
-            self.preprocess = preprocess
+            self.hrepr_options["preprocess"] = preprocess
         if postprocess is not ABSENT:
-            self.postprocess = postprocess
+            self.hrepr_options["postprocess"] = postprocess
         if inject_references is not ABSENT:
             self.inject_references = inject_references
         if fill_resources is not ABSENT:
@@ -561,10 +534,7 @@ class Interface:
             return self.variant(**config)(*objs)
         else:
             hcall = self.hclass(
-                H=H,
-                config=Config(self.config_defaults),
-                preprocess=self.preprocess,
-                postprocess=self.postprocess,
+                H=H, config=Config(self.config_defaults), **self.hrepr_options,
             )
             if len(objs) == 1:
                 rval = hcall(objs[0])
@@ -576,5 +546,4 @@ class Interface:
                 )
             if self.fill_resources:
                 rval = rval.fill(resources=hcall.global_resources())
-            rval = self.backend(rval)
             return rval

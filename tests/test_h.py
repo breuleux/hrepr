@@ -119,9 +119,7 @@ def test_incremental():
     )
 
     d = d(quack=False)
-    assert matches(
-        d, '<div id="paramount" sheep="bah" >crumpet<b>tea</b></div>'
-    )
+    assert matches(d, '<div id="paramount" sheep="bah">crumpet<b>tea</b></div>')
 
 
 @one_test_per_assert

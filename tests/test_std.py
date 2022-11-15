@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 from hrepr import H
 from hrepr.std import standard_html as sht
 
@@ -197,26 +195,26 @@ def test_constructed_element_export():
 #     )
 
 
-def test_include_js():
-    assert sht(
-        H.include(path=os.path.join(here, "x.js"), type="text/javascript")
-    ) == H.script("function hello(x) { return x * x; }\n")
+# def test_include_js():
+#     assert sht(
+#         H.include(path=os.path.join(here, "x.js"), type="text/javascript")
+#     ) == H.script("function hello(x) { return x * x; }\n")
 
 
-def test_include_css():
-    assert sht(
-        H.include(path=os.path.join(here, "x.css"), type="text/css")
-    ) == H.style(".hello { color: red; }\n")
+# def test_include_css():
+#     assert sht(
+#         H.include(path=os.path.join(here, "x.css"), type="text/css")
+#     ) == H.style(".hello { color: red; }\n")
 
 
-def test_include_notype():
-    with pytest.raises(TypeError):
-        sht(H.include(path=os.path.join(here, "x.css"),))
+# def test_include_notype():
+#     with pytest.raises(TypeError):
+#         sht(H.include(path=os.path.join(here, "x.css"),))
 
 
-def test_include_badtype():
-    with pytest.raises(TypeError):
-        sht(H.include(path=os.path.join(here, "x.css"), type="text/whatever"))
+# def test_include_badtype():
+#     with pytest.raises(TypeError):
+#         sht(H.include(path=os.path.join(here, "x.css"), type="text/whatever"))
 
 
 def test_variant():

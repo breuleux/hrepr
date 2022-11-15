@@ -33,36 +33,6 @@ def _extract_as(transform, node, new_tag, **extract):
     return new_node, node.children, ns
 
 
-# def _get_layout(ns, default="h"):
-#     if ns.short:
-#         return "s"
-#     elif ns.horizontal:
-#         return "h"
-#     elif ns.vertical:
-#         return "v"
-#     else:
-#         return default
-
-
-# def _format_sequence(seq, layout):
-#     if layout == "h" or layout == "s":
-#         container = H.div[f"hreprl-{layout}", "hrepr-body"]
-#         return container(*[H.div(x) for x in seq])
-#     elif layout == "v":
-#         table = H.table["hrepr-body"]()
-#         for x in seq:
-#             if isinstance(x, HType.pair):
-#                 delimiter = x.get_attribute("delimiter", "")
-#                 k, v = x.children
-#                 row = H.tr(H.td(k), H.td["hrepr-delim"](delimiter), H.td(v))
-#             else:
-#                 row = H.tr(H.td(x, colspan=3))
-#             table = table(row)
-#         return table
-#     else:  # pragma: no cover
-#         raise ValueError(f"layout should be 'h' or 'v', not '{layout}'")
-
-
 @ovld(
     initial_state={
         "requirejs_resources": [
@@ -125,81 +95,6 @@ def standard_html(self, node: Tag):
         )
 
 
-# @ovld
-# def standard_html(self, node: HType.ref):
-#     _, children, data = _extract_as(self, node, "div", loop=False, num=-1)
-#     sym = "⟳" if data.loop else "#"
-#     ref = H.span["hrepr-ref"](sym, data.num)
-#     if node.children:
-#         return H.div["hrepr-refbox"](ref("="), *map(self, children))
-#     else:
-#         return ref
-
-
-# @ovld
-# def standard_html(self, node: HType.bracketed):
-#     rval, children, data = _extract_as(
-#         self,
-#         node,
-#         "div",
-#         start="(",
-#         end=")",
-#         short=False,
-#         horizontal=False,
-#         vertical=False,
-#     )
-#     layout = _get_layout(data, "h")
-#     body = _format_sequence(children, layout)
-#     return self(
-#         rval["hrepr-bracketed"](
-#             H.div["hrepr-open"](data.start),
-#             body,
-#             H.div["hrepr-close"](data.end),
-#         )
-#     )
-
-
-# @ovld
-# def standard_html(self, node: HType.instance):
-#     rval, children, data = _extract_as(
-#         self, node, "div", short=False, horizontal=False, vertical=False,
-#     )
-#     layout = _get_layout(data, "h")
-#     body = _format_sequence(children, layout)
-#     return self(
-#         rval["hrepr-instance", f"hreprl-{layout}"](
-#             H.div["hrepr-title"](self(data.type)), body
-#         )
-#     )
-
-
-# @ovld
-# def standard_html(self, node: HType.pair):
-#     rval, children, data = _extract_as(self, node, "div", delimiter="")
-#     k, v = children
-#     return self(rval["hrepr-pair"](k, data.delimiter, v))
-
-
-# @ovld
-# def standard_html(self, node: HType.atom):
-#     rval, children, data = _extract_as(self, node, "span", value=ABSENT)
-#     if data.value is not ABSENT:
-#         rval = rval[f"hreprv-{data.value}"]
-#     return self(rval(*children))
-
-
-# @ovld
-# def standard_html(self, node: HType.defn):
-#     rval, children, _ = _extract_as(self, node, "span")
-#     assert len(children) == 2
-#     key, name = children
-#     return self(
-#         rval[f"hreprk-{key}"](
-#             H.span["hrepr-defn-key"](key), " ", H.span["hrepr-defn-name"](name),
-#         )
-#     )
-
-
 @ovld
 def _parse_reqs(reqs: dict):
     return tuple(zip(*reqs.items()))
@@ -253,20 +148,6 @@ def standard_html(self, node: HType.javascript):
                 "});",
             ]
         return rval(*children).fill(resources=self.requirejs_resources)
-
-
-@ovld
-def standard_html(self, node: HType.include):
-    _, children, data = _extract_as(self, node, "include", path=None, type=None)
-    if data.type is None or data.path is None:
-        raise TypeError("H.include must have a type and a path")
-
-    if data.type == "text/css":
-        return H.style(open(data.path).read())
-    elif data.type == "text/javascript":
-        return H.script(open(data.path).read())
-    else:
-        raise TypeError(f"Cannot include type '{data.type}'")
 
 
 @ovld

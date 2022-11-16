@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /><script>
+    class Counter {
+        constructor(node, options) {
+            this.node = node;
+            this.increment = options.increment;
+            this.current = 0;
+            this.node.innerText = "Click me!";
+            this.node.onclick = evt => {
+                this.current += this.increment;
+                this.node.innerText = this.current;
+            }
+        }
+    }
+    </script></head><body><div><h2>The button should show 3, 6, 9... when clicked.</h2><button style="width:100px;" id="$hrepr$0">ERROR!</button></div></body></html><script type="module">
+const self = document.getElementById('$hrepr$0');
+const arglist = [self, {"increment": 3}];
+const obj = new Counter(...arglist);
+window.$$hrepr$0 = obj;
+</script>

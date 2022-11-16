@@ -1,12 +1,13 @@
 import json
 import os.path
 from html import escape
-from types import GeneratorType, SimpleNamespace
-from typing import Union
+from itertools import count
+from types import FunctionType, GeneratorType, MethodType, SimpleNamespace
+from typing import Sequence, Union
 
 from ovld import OvldMC, ovld
 
-from .textgen import Breakable, Context, Text
+from .textgen import Breakable, Context, Sequence, Text, join
 
 # CSS for hrepr
 styledir = f"{os.path.dirname(__file__)}/style"
@@ -392,7 +393,7 @@ class HTMLGenerator(metaclass=OvldMC):
 
     def generate(self, node):
         ws = self.process(node)
-        to_process = [ws, *ws.extra]
+        to_process = [ws, *[self.process(x) for x in ws.extra]]
         parts = [self._text_parts(x) for x in to_process]
         if len(parts) == 1:
             return parts[0]
@@ -401,6 +402,64 @@ class HTMLGenerator(metaclass=OvldMC):
 
 
 standard_html = HTMLGenerator({})
+
+
+##########################
+# Special JSON generator #
+##########################
+
+
+_type = type
+
+
+@ovld
+def dump(self, d: dict):
+    return Breakable(
+        start="{",
+        body=join(
+            [Sequence(self(k), ": ", self(v)) for k, v in d.items()], sep=", "
+        ),
+        end="}",
+    )
+
+
+@ovld
+def dump(self, seq: Union[list, tuple]):
+    return Breakable(start="[", body=join(map(self, seq), sep=", "), end="]",)
+
+
+@ovld
+def dump(self, x: Union[int, float, str, bool, _type(None)]):
+    return Text(json.dumps(x))
+
+
+@ovld
+def dump(self, fn: Union[FunctionType, MethodType]):
+    return self(None)
+
+
+@ovld
+def dump(self, t: HType.self):
+    return f"self"
+
+
+@ovld
+def dump(self, t: Tag):
+    tag_id = t.get_attribute("id")
+    if not tag_id:
+        raise ValueError(f"Cannot embed <{t.name}> element without an id.")
+    return f"document.getElementById('{tag_id}')"
+
+
+@ovld
+def dump(self, d: object):
+    raise TypeError(
+        f"Objects of type {type(d).__name__} cannot be JSON-serialized."
+    )
+
+
+def dumps(obj, **fmt):
+    return dump(obj).to_string(**fmt)
 
 
 ######################################
@@ -471,3 +530,62 @@ _raw_virtual_tags = {"raw"}
 
 for t in _raw_virtual_tags:
     standard_html.register(f"tag:{t}", raw_virtual_tag)
+
+
+###################################
+# Handlers for special attributes #
+###################################
+
+
+constructor_template_script = """{imp}
+const self = document.getElementById('{node_id}');
+const arglist = {arguments};
+const obj = new {symbol}(...arglist);
+window.${node_id} = obj;
+"""
+
+
+id_counter = count()
+
+
+@standard_html.register("attr:constructor")
+def constructor_attribute(node, workspace, key, value, default):
+    if "id" in node.attributes:
+        node_id = node.attributes["id"]
+    else:
+        node_id = workspace.attributes["id"] = f"$hrepr${next(id_counter)}"
+
+    module = value.get("module", None)
+
+    if module:
+        symbol = value.get("symbol", None)
+        if symbol is None:
+            symbol = "constructor"
+            imp = f"import constructor from '{module}';"
+        else:
+            imp = f"import {{{symbol}}} from '{module}';"
+    else:
+        symbol = value["symbol"]
+        imp = ""
+
+    if "options" in value:
+        assert "arguments" not in value
+        arguments = [H.self(), value["options"]]
+    elif "arguments" in value:
+        arguments = value["arguments"]
+        if isinstance(arguments, dict):
+            arguments = [arguments]
+    else:
+        arguments = [H.self()]
+
+    sc = H.script(
+        constructor_template_script.format(
+            imp=imp,
+            symbol=symbol,
+            node_id=node_id,
+            arguments=dumps(arguments, tabsize=4, max_col=80),
+        ),
+        type="module",
+    )
+
+    workspace.extra.append(sc)

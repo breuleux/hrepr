@@ -7,8 +7,12 @@ from hrepr import hjson
 from .common import one_test_per_assert
 
 
+def dumps(obj, **fmt):
+    return hjson.dump(obj).to_string(**fmt)
+
+
 def same(x):
-    return json.dumps(x) == hjson.dumps(x)
+    return json.dumps(x) == dumps(x)
 
 
 @one_test_per_assert
@@ -29,7 +33,7 @@ def test_hjson():
 
 def test_bad():
     with pytest.raises(TypeError):
-        hjson.dumps(object())
+        dumps(object())
 
 
 class Catapult:
@@ -39,5 +43,5 @@ class Catapult:
 
 @one_test_per_assert
 def test_functions():
-    assert hjson.dumps(lambda x: x) == "null"
-    assert hjson.dumps(Catapult().power) == "null"
+    assert dumps(lambda x: x) == "null"
+    assert dumps(Catapult().power) == "null"

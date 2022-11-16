@@ -14,7 +14,11 @@ from typing import Union
 
 from ovld import ovld
 
+from .h import HType, Tag
+from .resource import Resource
 from .textgen import Breakable, Sequence, Text, join
+
+_type = type
 
 
 @ovld
@@ -34,7 +38,7 @@ def dump(self, seq: Union[list, tuple]):
 
 
 @ovld
-def dump(self, x: Union[int, float, str, bool, type(None)]):
+def dump(self, x: Union[int, float, str, bool, _type(None)]):
     return Text(json.dumps(x))
 
 
@@ -44,11 +48,25 @@ def dump(self, fn: Union[FunctionType, MethodType]):
 
 
 @ovld
-def dump(self, d: object):
+def dump(self, t: HType.self):
+    return f"self"
+
+
+@ovld
+def dump(self, t: Tag):
+    tag_id = t.get_attribute("id")
+    if not tag_id:
+        raise ValueError(f"Cannot embed <{t.name}> element without an id.")
+    return f"document.getElementById('{tag_id}')"
+
+
+@ovld
+def dump(self, res: Resource):
     raise TypeError(
-        f"Objects of type {type(d).__name__} cannot be JSON-serialized."
+        f"Resources of type {type(res.obj).__name__} cannot be serialized to JavaScript."
     )
 
 
-def dumps(obj, **fmt):
-    return dump(obj).to_string(**fmt)
+@ovld
+def dump(self, x: object):
+    return self(Resource(x))

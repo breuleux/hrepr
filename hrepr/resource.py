@@ -37,6 +37,25 @@ class Resource:
         return f"[{embed_key}:{self.variant}{self.id}]"
 
 
+class JSExpression:
+    def __init__(self, code):
+        self.code = code
+
+
+class JSFunction(JSExpression):
+    def __init__(self, argnames, code, expression=None):
+        if expression is None:
+            expression = ";" not in code
+        if not isinstance(argnames, (list, tuple)):
+            argnames = (argnames,)
+        argstring = "({})".format([", ".join(argnames)])
+        if expression:
+            complete_code = f"{argstring} => {code}"
+        else:
+            complete_code = f"{argstring} => {{ {code} }}"
+        super().__init__(code=complete_code)
+
+
 class Embedder(metaclass=OvldMC):
     def __init__(self, registry):
         self.registry = registry

@@ -1,21 +1,27 @@
+import re
 from html import escape
 from itertools import count
 from types import SimpleNamespace
 
 from ovld import OvldMC, ovld
 
+from . import resource
+from .embed import attr_embed, js_embed
 from .h import H, Tag, iterate_children
-from .hjson import dump as jdump
 from .textgen import Breakable, Text
 
 
 class HTMLGenerator(metaclass=OvldMC):
-    def __init__(self, rules, dump):
-        self.rules = rules
-        self._jdump = dump
+    def __init__(self, rules=None, *, attr_embed, js_embed):
+        self.rules = rules or {}
+        self.attr_embed = attr_embed
+        self._js_embed = js_embed
 
-    def json(self, obj, **fmt):
-        return self._jdump(obj).to_string(**fmt)
+    def js_embed(self, obj, **fmt):
+        x = self._js_embed(obj)
+        if not isinstance(x, str):
+            x = x.to_string(**fmt)
+        return x
 
     def register(self, rule, fn=None):
         def reg(fn):
@@ -40,17 +46,17 @@ class HTMLGenerator(metaclass=OvldMC):
         workspace.close = node.name
 
     def default_attr(self, node, workspace, attr, value):
-        if value is False:
-            return
-        elif value is True:
-            workspace.attributes[attr] = value
-        elif isinstance(value, (list, tuple, set, frozenset)):
-            workspace.attributes[attr] = " ".join(escape(cls) for cls in value)
-        elif isinstance(value, str):
-            workspace.attributes[attr] = escape(value)
-        else:
-            # workspace.attributes[attr] = escape(json.dumps(value))
-            workspace.attributes[attr] = escape(self.json(value))
+        new_value = self.attr_embed(attr, value)
+        if new_value is True:
+            workspace.attributes[attr] = new_value
+        elif isinstance(new_value, resource.JSExpression):
+            workspace.attributes[attr] = self.expand_resources(
+                new_value.code, self.js_embed
+            )
+        elif new_value is not None:
+            workspace.attributes[attr] = self.expand_resources(
+                new_value, self.attr_embed
+            )
 
     @ovld
     def process(self, node: str):
@@ -105,7 +111,7 @@ class HTMLGenerator(metaclass=OvldMC):
                 return self._text_parts(c)
 
         attr = "".join(
-            f" {k}" if v is True else f' {k}="{v}"'
+            f" {k}" if v is True else f' {k}="{escape(v)}"'
             for k, v in workspace.attributes.items()
         )
 
@@ -124,6 +130,17 @@ class HTMLGenerator(metaclass=OvldMC):
         else:
             return Breakable(start=None, body=children, end=None)
 
+    def expand_resources(self, value, embed):
+        def sub(m):
+            res = resource.registry.resolve(int(m.groups()[0]))
+            return embed(res.obj)
+
+        return re.sub(
+            pattern=rf"\[{resource.embed_key}:([0-9]+)\]",
+            string=value,
+            repl=sub,
+        )
+
     def generate(self, node):
         ws = self.process(node)
         to_process = [ws, *[self.process(x) for x in ws.extra]]
@@ -133,66 +150,13 @@ class HTMLGenerator(metaclass=OvldMC):
         else:
             return Breakable(start=None, body=parts, end=None)
 
-
-##########################
-# Special JSON generator #
-##########################
+    def __call__(self, node):
+        return str(self.generate(node))
 
 
-# _type = type
-
-
-# @ovld
-# def jdump(self, d: dict):
-#     return Breakable(
-#         start="{",
-#         body=join(
-#             [Sequence(self(k), ": ", self(v)) for k, v in d.items()], sep=", "
-#         ),
-#         end="}",
-#     )
-
-
-# @ovld
-# def jdump(self, seq: Union[list, tuple]):
-#     return Breakable(start="[", body=join(map(self, seq), sep=", "), end="]",)
-
-
-# @ovld
-# def jdump(self, x: Union[int, float, str, bool, _type(None)]):
-#     return Text(json.dumps(x))
-
-
-# @ovld
-# def jdump(self, fn: Union[FunctionType, MethodType]):
-#     return self(None)
-
-
-# @ovld
-# def jdump(self, t: HType.self):
-#     return f"self"
-
-
-# @ovld
-# def jdump(self, t: Tag):
-#     tag_id = t.get_attribute("id")
-#     if not tag_id:
-#         raise ValueError(f"Cannot embed <{t.name}> element without an id.")
-#     return f"document.getElementById('{tag_id}')"
-
-
-# @ovld
-# def jdump(self, d: object):
-#     raise TypeError(
-#         f"Objects of type {type(d).__name__} cannot be serialized to JavaScript."
-#     )
-
-
-# def dumps(obj, **fmt):
-#     return jdump(obj).to_string(**fmt)
-
-
-standard_html = HTMLGenerator({}, jdump)
+standard_html = HTMLGenerator(
+    rules={}, attr_embed=attr_embed, js_embed=js_embed
+)
 
 
 ######################################
@@ -244,7 +208,7 @@ for t in _void_tags:
 
 
 # We do not escape string children for these tags.
-_raw_tags = {"script", "style"}
+_raw_tags = {"style"}
 
 for t in _raw_tags:
     standard_html.register(f"tag:{t}", raw_tag)
@@ -268,6 +232,17 @@ for t in _raw_virtual_tags:
 ###################################
 # Handlers for special attributes #
 ###################################
+
+
+@standard_html.register("tag:script")
+def script_tag(self, node, workspace, default):
+    workspace.escape_children = False
+    new_children = []
+    for child in workspace.children:
+        assert isinstance(child, str)
+        new_children.append(self.expand_resources(child, self.js_embed))
+    workspace.children = new_children
+    return default(node, workspace)
 
 
 constructor_template_script = """{imp}
@@ -316,7 +291,7 @@ def constructor_attribute(self, node, workspace, key, value, default):
             imp=imp,
             symbol=symbol,
             node_id=node_id,
-            arguments=self.json(arguments, tabsize=4, max_col=80),
+            arguments=self.js_embed(arguments, tabsize=4, max_col=80),
         ),
         type="module",
     )

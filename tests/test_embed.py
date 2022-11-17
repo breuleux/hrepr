@@ -2,21 +2,21 @@ import json
 
 import pytest
 
-from hrepr import hjson
+from hrepr import embed
 
 from .common import one_test_per_assert
 
 
-def dumps(obj, **fmt):
-    return hjson.dump(obj).to_string(**fmt)
+def js_embed_s(obj, **fmt):
+    return embed.js_embed(obj).to_string(**fmt)
 
 
 def same(x):
-    return json.dumps(x) == dumps(x)
+    return json.dumps(x) == js_embed_s(x)
 
 
 @one_test_per_assert
-def test_hjson():
+def test_js_embed():
     assert same("hello")
     assert same(10)
     assert same(3.14)
@@ -33,15 +33,15 @@ def test_hjson():
 
 def test_bad():
     with pytest.raises(TypeError):
-        dumps(object())
+        js_embed_s(object())
 
 
-class Catapult:
-    def power(self):
-        return 1e99
+# class Catapult:
+#     def power(self):
+#         return 1e99
 
 
-@one_test_per_assert
-def test_functions():
-    assert dumps(lambda x: x) == "null"
-    assert dumps(Catapult().power) == "null"
+# @one_test_per_assert
+# def test_functions():
+#     assert js_embed_s(lambda x: x) == "null"
+#     assert js_embed_s(Catapult().power) == "null"

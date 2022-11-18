@@ -17,7 +17,7 @@ python = "^3.6"
 ovld = "^0.3.2"
 dataclasses = { version = "^0.8", python = "~3.6" }
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
 black = "^19.3b0"
 isort = "^5.4.2"
 pytest = "^6.0.1"

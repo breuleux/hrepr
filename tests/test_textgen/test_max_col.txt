@@ -1,0 +1,14 @@
+{
+    "module": "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js", 
+    "arguments": {
+        "elements": [
+            {"data": {"id": "A"}}, 
+            {"data": {"id": "B"}}, 
+            {"data": {"id": "C"}}, 
+            {"data": {"source": "A", "target": "B"}}, 
+            {"data": {"source": "B", "target": "C"}}, 
+            {"data": {"source": "C", "target": "A"}}
+        ], 
+        "layout": {"name": "cose"}
+    }
+}

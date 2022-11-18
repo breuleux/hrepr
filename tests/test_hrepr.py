@@ -1,7 +1,7 @@
 import dataclasses
 import re
-from dataclasses import dataclass
 import sys
+from dataclasses import dataclass
 
 import pytest
 

@@ -68,11 +68,17 @@ class Check:
 factory = Check(None)
 
 
+def _neuter(s):
+    s = re.sub(pattern=r"at 0x[0-9a-f]+", string=s, repl="XXX")
+    s = re.sub(pattern=r"from '[^']+'", string=s, repl="XXX")
+    return s
+
+
 def standard(obj, file_regression):
     check_hrepr(
         file_regression,
         description="hrepr(obj)",
-        obj=re.sub(pattern=r"at 0x[0-9a-f]+", string=repr(obj), repl="XXX"),
+        obj=_neuter(repr(obj)),
         result=hrepr(obj),
     )
 

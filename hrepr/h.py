@@ -165,8 +165,10 @@ class Tag:
         """
         Jupyter Notebook hook to print this element as HTML.
         """
-        body, resources = self.parts_and_resources()
-        elem = H.div(H.style(css_nbreset), resources, H.div["hrepr"](body),)
+        body, extra, resources = self.parts_and_resources()
+        elem = H.div(
+            H.style(css_nbreset), resources, H.div["hrepr"](body, extra)
+        )
         return str(elem)
 
     def as_page(self, pretty=False, **format_options):
@@ -189,14 +191,14 @@ class Tag:
               </body>
             </html>
         """
-        body, resources = self.parts_and_resources()
+        body, extra, resources = self.parts_and_resources()
         H = HTML()
         utf8 = H.meta(
             {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
         )
         node = H.inline(
             H.raw("<!DOCTYPE html>"),
-            H.html(H.head(utf8, resources), H.body(body)),
+            H.html(H.head(utf8, resources), H.body(body, extra)),
         )
         if not pretty:
             format_options["max_col"] = None

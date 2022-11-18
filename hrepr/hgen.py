@@ -2,6 +2,7 @@ import re
 from html import escape
 from itertools import count
 from types import SimpleNamespace
+from typing import Sequence
 
 from ovld import OvldMC, ovld
 
@@ -87,7 +88,9 @@ class HTMLGenerator(metaclass=OvldMC):
                 child.extra = []
 
         tag_rule = self.rules.get(f"tag:{node.name}", self._default_tag)
-        if tag_rule(self, node, workspace, self.default_tag) is False:
+        if (
+            tag_rule(self, node, workspace, self.default_tag) is False
+        ):  # pragma: no cover
             pass
         else:
             for k, v in node.attributes.items():
@@ -95,7 +98,7 @@ class HTMLGenerator(metaclass=OvldMC):
                 if (
                     rule(self, node, workspace, k, v, self.default_attr)
                     is False
-                ):
+                ):  # pragma: no cover
                     break
 
         return workspace
@@ -281,7 +284,7 @@ def constructor_attribute(self, node, workspace, key, value, default):
         arguments = [H.self(), value["options"]]
     elif "arguments" in value:
         arguments = value["arguments"]
-        if isinstance(arguments, dict):
+        if not isinstance(arguments, (list, tuple)):
             arguments = [arguments]
     else:
         arguments = [H.self()]

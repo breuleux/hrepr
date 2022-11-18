@@ -1,10 +1,10 @@
-from types import FunctionType
-
 import pytest
-from ovld import ovld
 
-from hrepr import H, resource
-from hrepr.resource import Embedder, Resource, registry
+from hrepr import resource
+from hrepr.resource import JSFunction as JSF
+from hrepr.resource import Resource
+
+from .common import one_test_per_assert
 
 embed_key = "0123456789abcdeffedcba9876543210"
 
@@ -15,24 +15,6 @@ def reset_registry():
     resource.registry.reset()
 
 
-@pytest.fixture
-def embedder():
-    return MyEmbedder(registry)
-
-
-class MyEmbedder(Embedder):
-    @ovld
-    def embed(self, obj: int, resource, tag, attr):
-        return f"2 * {obj//2} + {obj%2}"
-
-    @ovld
-    def embed(self, obj: FunctionType, resource, tag, attr):
-        if attr == "onclick":
-            return f"{obj.__name__}()"
-        else:
-            return f"{obj.__name__}"
-
-
 def test_Resource_str():
     assert str(Resource(123)) == f"[{embed_key}:0]"
 
@@ -41,7 +23,13 @@ def test_Resource_str_variant():
     assert str(Resource("hello world", variant="x")) == f"[{embed_key}:x0]"
 
 
-def test_embed(embedder):
-    resource = Resource(101)
-    text = f"x = {resource}"
-    assert embedder(H.div(), None, text) == "x = 2 * 50 + 1"
+@one_test_per_assert
+def test_JSFunction():
+    assert JSF("foo", "foo + 1").code == "((foo) => foo + 1)"
+    assert JSF(("foo", "bar"), "foo + bar").code == "((foo, bar) => foo + bar)"
+    assert JSF(["foo", "bar"], "foo + bar").code == "((foo, bar) => foo + bar)"
+    assert JSF("foo", "return foo + 1").code == "((foo) => { return foo + 1 })"
+    assert JSF("foo", "foo + 1;").code == "((foo) => { foo + 1; })"
+    assert (
+        JSF("foo", "foo + 1", expression=False).code == "((foo) => { foo + 1 })"
+    )

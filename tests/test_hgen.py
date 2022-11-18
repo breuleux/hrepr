@@ -144,3 +144,6 @@ def test_resource_embed_tag(customgen, file_regression):
     )
 
     file_regression.check(customgen(node), extension=".html")
+
+
+# def test_resource_module_extraction

@@ -86,7 +86,7 @@ def js_embed(self, expr: JSExpression):
 
 @ovld
 def js_embed(self, t: HType.self):
-    return f"self"
+    return "self"
 
 
 @ovld

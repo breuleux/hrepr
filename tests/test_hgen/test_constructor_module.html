@@ -1,0 +1,13 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /></head><body><div><h2>The buttons should increment by 2 and 3 respectively.</h2><h4>Note: this will NOT work when browsing the file directly, view using a server e.g. with `python -m http.server`.</h4><button style="width:100px;" id="$hrepr$0">ERROR!</button><button style="width:100px;" id="$hrepr$1">ERROR!</button></div><script type="module">import {bytwo} from './counter.esm.js';
+const self = document.getElementById('$hrepr$0');
+const arglist = [self];
+let hasprop = prop => Object.getOwnPropertyNames(bytwo).includes(prop);
+let obj = (hasprop("arguments") || !hasprop("prototype")) ? bytwo(...arglist) : new bytwo(...arglist);
+window.$$hrepr$0 = obj;
+</script><script type="module">import {by} from './counter.esm.js';
+const self = document.getElementById('$hrepr$1');
+const arglist = [self];
+let hasprop = prop => Object.getOwnPropertyNames(by.three).includes(prop);
+let obj = (hasprop("arguments") || !hasprop("prototype")) ? by.three(...arglist) : new by.three(...arglist);
+window.$$hrepr$1 = obj;
+</script></body></html>

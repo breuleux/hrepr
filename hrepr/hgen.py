@@ -74,7 +74,7 @@ class HTMLGenerator(metaclass=OvldMC):
             close=None,
             attributes={},
             children=[],
-            resources=node.resources,
+            resources=list(node.resources),
             extra=[],
             escape_children=True,
         )
@@ -158,12 +158,16 @@ class HTMLGenerator(metaclass=OvldMC):
         else:
             tp = Breakable(start=None, body=parts, end=None)
 
-        resources = []
+        resources = {}
         for r in ws.resources if process_resources else []:
+            if r in resources:
+                continue
             entry, more_resources = self.generate(r)
-            resources.append(entry)
-            resources.append(more_resources)
-        resources = Breakable(start=None, body=resources, end=None)
+            assert not more_resources
+            resources[r] = entry
+        resources = Breakable(
+            start=None, body=list(resources.values()), end=None
+        )
 
         return tp, resources
 
@@ -265,7 +269,8 @@ def script_tag(self, node, workspace, default):
 constructor_template_script = """{imp}
 const self = document.getElementById('{node_id}');
 const arglist = {arguments};
-const obj = new {symbol}(...arglist);
+let hasprop = prop => Object.getOwnPropertyNames({symbol}).includes(prop);
+let obj = (hasprop("arguments") || !hasprop("prototype")) ? {symbol}(...arglist) : new {symbol}(...arglist);
 window.${node_id} = obj;
 """
 
@@ -273,7 +278,7 @@ window.${node_id} = obj;
 id_counter = count()
 
 
-@standard_html.register("attr:constructor")
+@standard_html.register("attr:--constructor")
 def constructor_attribute(self, node, workspace, key, value, default):
     if "id" in node.attributes:
         node_id = node.attributes["id"]
@@ -281,15 +286,29 @@ def constructor_attribute(self, node, workspace, key, value, default):
         node_id = workspace.attributes["id"] = f"$hrepr${next(id_counter)}"
 
     module = value.get("module", None)
+    script = value.get("script", None)
 
     if module:
+        assert not isinstance(module, (list, tuple))
+        assert script is None
         symbol = value.get("symbol", None)
         if symbol is None:
             symbol = "constructor"
             imp = f"import constructor from '{module}';"
         else:
-            imp = f"import {{{symbol}}} from '{module}';"
+            rootsym, sep, props = symbol.partition(".")
+            imp = f"import {{{rootsym}}} from '{module}';"
     else:
+        if script:
+            script = [
+                src
+                if isinstance(src, Tag)
+                else H.script(src=src, type="text/javascript")
+                for src in (
+                    script if isinstance(script, (list, tuple)) else [script]
+                )
+            ]
+            workspace.resources.extend(script)
         symbol = value["symbol"]
         imp = ""
 
@@ -316,9 +335,9 @@ def constructor_attribute(self, node, workspace, key, value, default):
     workspace.extra.append(sc)
 
 
-# @standard_html.register("attr:--resources")
-# def constructor_resources(node, workspace, key, value, default):
-#     if not isinstance(value, Sequence):
-#         workspace.resources.append(value)
-#     else:
-#         workspace.resources.extend(value)
+@standard_html.register("attr:--resources")
+def attr_resources(self, node, workspace, key, value, default):
+    if not isinstance(value, Sequence):
+        workspace.resources.append(value)
+    else:
+        workspace.resources.extend(value)

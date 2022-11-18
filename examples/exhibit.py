@@ -62,10 +62,7 @@ class Person:
         )
 
     def __hrepr_short__(self, H, hrepr):
-        # H.atom is really mostly like H.span, but the textual representation
-        # of H.atom(x) through pprint is "x" whereas H.span(x) would be
-        # "<span>x</span>".
-        return H.atom["person-short"](self.name)
+        return H.span["person-short"](self.name)
 
 
 class MyMixin(metaclass=OvldMC):

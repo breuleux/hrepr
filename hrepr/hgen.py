@@ -299,12 +299,13 @@ def constructor_attribute(self, node, workspace, key, value, default):
         assert not isinstance(module, (list, tuple))
         assert script is None
         symbol = value.get("symbol", None)
+        module = self.js_embed(module)
         if symbol is None:
             symbol = "constructor"
-            imp = f"import constructor from '{module}';"
+            imp = f"import constructor from {module};"
         else:
             rootsym, sep, props = symbol.partition(".")
-            imp = f"import {{{rootsym}}} from '{module}';"
+            imp = f"import {{{rootsym}}} from {module};"
     else:
         if script:
             script = [

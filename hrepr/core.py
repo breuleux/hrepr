@@ -278,10 +278,7 @@ class StdHrepr(Hrepr):
         return self.make.instance(
             title=type(obj).__name__,
             fields=[
-                [
-                    self.make.atom(field.name, type="symbol"),
-                    getattr(obj, field.name),
-                ]
+                [field.name, getattr(obj, field.name)]
                 for field in dataclass_fields(obj)
             ],
             delimiter="=",

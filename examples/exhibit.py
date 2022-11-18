@@ -3,9 +3,9 @@
 import math
 from dataclasses import dataclass
 
-from ovld import has_attribute
+from ovld import extend_super, has_attribute, OvldMC
 
-from hrepr import H, Hrepr, hrepr
+from hrepr import H, hrepr
 
 
 @dataclass
@@ -52,18 +52,13 @@ class Person:
         )
 
     def __hrepr__(self, H, hrepr):
-        # H.instance is a special kind of tag to format data like an instance.
-        # Notice how we call the hrepr parameter on self.age and self.job to
-        # format them.
-        return H.instance["person"](
-            H.pair("age", hrepr(self.age), delimiter=" ↦ "),
-            H.pair("job", hrepr(self.job), delimiter=" ↦ "),
-            # The "type" represents the header for the "instance"
-            type=self.name,
-            # "vertical=True" means we'll display the pairs as a table with
-            # the delimiters aligned, instead of sticking them horizontally
-            # next to each other
-            vertical=True,
+        # hrepr.make.instance is a helper to show a table with a header that
+        # describes some kind of object
+        return hrepr.make.instance(
+            title=self.name,
+            fields=[["age", self.age], ["job", self.job]],
+            delimiter=" ↦ ",
+            type="person",
         )
 
     def __hrepr_short__(self, H, hrepr):
@@ -73,16 +68,19 @@ class Person:
         return H.atom["person-short"](self.name)
 
 
-class MyMixin(Hrepr):
+class MyMixin(metaclass=OvldMC):
     # Change the representation of integers
 
+    @extend_super
     def hrepr_resources(self, cls: int):
         # Note: in hrepr_resources, cls is the int type, not an integer
         return self.H.style(".my-integer { color: fuchsia; }")
 
+    @extend_super
     def hrepr(self, n: int):
         return self.H.span["my-integer"]("The number ", str(n))
 
+    @extend_super
     def hrepr_short(self, n: int):
         return self.H.span["my-integer"](str(n))
 
@@ -112,34 +110,6 @@ class Farfetchd:
         return "DUX"
 
 
-class Plot:
-    def __init__(self, data):
-        self.data = data
-
-    @classmethod
-    def __hrepr_resources__(cls, H):
-        return [
-            H.javascript(
-                export="plotly", src="https://cdn.plot.ly/plotly-latest.min.js",
-            ),
-            H.javascript(
-                """
-                function make_plot(element, data) {
-                    return plotly.newPlot(element, data);
-                }
-                """,
-                require="plotly",
-                export="make_plot",
-            ),
-        ]
-
-    def __hrepr__(self, H, hrepr):
-        return H.div(
-            constructor="make_plot",
-            options=[{"x": list(range(len(self.data))), "y": list(self.data)}],
-        )
-
-
 cystyle = [
     {
         "selector": "node",
@@ -158,47 +128,22 @@ cystyle = [
 ]
 
 
-class Graph:
-    def __init__(self, *edges):
-        self.edges = edges
-        self.nodes = {src for src, _ in edges} | {tgt for _, tgt in edges}
-
-    @classmethod
-    def __hrepr_resources__(cls, H):
-        return [
-            H.javascript(
-                src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.17.0/cytoscape.min.js",
-                export="cytoscape",
-            ),
-            H.javascript(
-                """
-                function make_graph(element, options) {
-                    cytoscape({
-                        container: element,
-                        elements: options.data,
-                        style: options.style,
-                        layout: {name: options.layout}
-                    });
-                }
-                """,
-                require="cytoscape",
-                export="make_graph",
-            ),
-        ]
-
-    def __hrepr__(self, H, hrepr):
-        width = hrepr.config.graph_width or 500
-        height = hrepr.config.graph_height or 500
-        style = hrepr.config.graph_style or cystyle
-        data = [{"data": {"id": node}} for node in self.nodes]
-        data += [
-            {"data": {"source": src, "target": tgt}} for src, tgt in self.edges
-        ]
-        return H.div(
-            style=f"width:{width}px;height:{height}px;",
-            constructor="make_graph",
-            options={"data": data, "style": style, "layout": "cose"},
-        )
+def cytoscape_graph(*edges):
+    nodes = {src for src, _ in edges} | {tgt for _, tgt in edges}
+    data = [{"data": {"id": node}} for node in nodes]
+    data += [{"data": {"source": src, "target": tgt}} for src, tgt in edges]
+    return H.div(
+        style="width:300px;height:300px;border:1px solid black;",
+        __constructor={
+            "module": "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js",
+            "arguments": {
+                "container": H.self(),
+                "elements": data,
+                "style": cystyle,
+                "layout": {"name": "cose"},
+            },
+        },
+    )
 
 
 if __name__ == "__main__":
@@ -265,14 +210,25 @@ if __name__ == "__main__":
     title("Cool stuff")
 
     subtitle("Plot with plotly")
-    hprint(Plot([math.sin(x / 10) for x in range(100)]))
+    data = [math.sin(x / 10) for x in range(100)]
+    hprint(
+        H.div(
+            __constructor={
+                "script": "https://cdn.plot.ly/plotly-latest.min.js",
+                "symbol": "Plotly.newPlot",
+                "options": [{"x": list(range(len(data))), "y": list(data)}],
+            }
+        )
+    )
 
     subtitle("Graph with cytoscape")
-    g1 = Graph(("A", "B"), ("B", "A"), ("A", "C"), ("C", "D"), ("D", "E"))
-    g2 = Graph(("Rock", "Scissors"), ("Scissors", "Paper"), ("Paper", "Rock"))
-    hprint(
-        [g1, g2], graph_width=300, graph_height=300,
+    g1 = cytoscape_graph(
+        ("A", "B"), ("B", "A"), ("A", "C"), ("C", "D"), ("D", "E")
     )
+    g2 = cytoscape_graph(
+        ("Rock", "Scissors"), ("Scissors", "Paper"), ("Paper", "Rock")
+    )
+    hprint([g1, g2])
 
     pg = hrepr.page(*entries)
     print(pg)

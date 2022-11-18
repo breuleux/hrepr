@@ -1,5 +1,5 @@
-<!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /></head><body><div><h2>This should show an interactive graph.</h2><div style="width:500px;height:500px;border:1px solid black;" id="$hrepr$3"></div></div><script type="module">import constructor from 'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js';
-const self = document.getElementById('$hrepr$3');
+<!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /></head><body><div><h2>This should show an interactive graph.</h2><div style="width:500px;height:500px;border:1px solid black;" id="$hrepr$0"></div></div><script type="module">import constructor from 'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js';
+const self = document.getElementById('$hrepr$0');
 const arglist = [
     {
         "container": self, 
@@ -15,6 +15,7 @@ const arglist = [
         "layout": {"name": "cose"}
     }
 ];
-const obj = new constructor(...arglist);
-window.$$hrepr$3 = obj;
+let hasprop = prop => Object.getOwnPropertyNames(constructor).includes(prop);
+let obj = (hasprop("arguments") || !hasprop("prototype")) ? constructor(...arglist) : new constructor(...arglist);
+window.$$hrepr$0 = obj;
 </script></body></html>

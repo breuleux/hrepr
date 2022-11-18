@@ -11,9 +11,10 @@
             }
         }
     }
-    </script></head><body><div><h2>The button should show 3, 6, 9... when clicked.</h2><button style="width:100px;" id="$hrepr$0">ERROR!</button></div><script type="module">
-const self = document.getElementById('$hrepr$0');
+    </script></head><body><div><h2>The button should show 3, 6, 9... when clicked.</h2><button style="width:100px;" id="butt">ERROR!</button></div><script type="module">
+const self = document.getElementById('butt');
 const arglist = [self, {"increment": 3}];
-const obj = new Counter(...arglist);
-window.$$hrepr$0 = obj;
+let hasprop = prop => Object.getOwnPropertyNames(Counter).includes(prop);
+let obj = (hasprop("arguments") || !hasprop("prototype")) ? Counter(...arglist) : new Counter(...arglist);
+window.$butt = obj;
 </script></body></html>

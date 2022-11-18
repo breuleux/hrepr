@@ -158,28 +158,31 @@ class HTMLGenerator(metaclass=OvldMC):
 
     def generate(self, node, process_resources=True):
         ws = self.process(node)
-        to_process = [ws, *[self.process(x) for x in ws.extra]]
-        parts = [self._text_parts(x) for x in to_process]
-        if len(parts) == 1:
-            tp = parts[0]
-        else:
-            tp = Breakable(start=None, body=parts, end=None)
+        body = self._text_parts(ws)
+
+        extra = Breakable(
+            start=None,
+            body=[self._text_parts(self.process(x)) for x in ws.extra],
+            end=None,
+        )
 
         resources = {}
         for r in ws.resources if process_resources else []:
             if r in resources:
                 continue
-            entry, more_resources = self.generate(r)
+            entry, more_extra, more_resources = self.generate(r)
+            assert not more_extra
             assert not more_resources
             resources[r] = entry
         resources = Breakable(
             start=None, body=list(resources.values()), end=None
         )
 
-        return tp, resources
+        return body, extra, resources
 
     def __call__(self, node):
-        return str(self.generate(node)[0])
+        body, extra, _ = self.generate(node)
+        return f"{body}{extra}"
 
 
 standard_html = HTMLGenerator(

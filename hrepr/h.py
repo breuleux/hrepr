@@ -99,24 +99,14 @@ class Tag:
             resources=resources,
         )
 
-    def collect_resources(self, coll=None, exclude=None):
-        coll = [] if coll is None else coll
-        exclude = set() if exclude is None else exclude
-        for res in self.resources:
-            if res not in exclude:
-                res.collect_resources(coll=coll, exclude=exclude)
-                coll.append(res)
-        exclude.update(self.resources)
-        for child in iterate_children(self.children):
-            if isinstance(child, Tag):
-                child.collect_resources(coll=coll, exclude=exclude)
-        return coll
-
     def get_attribute(self, attr, dflt):
         return self.attributes.get(attr, dflt)
 
-    def text_parts(self):
+    def parts_and_resources(self):
         return standard_html.generate(self)
+
+    def text_parts(self):
+        return self.parts_and_resources()[0]
 
     def pretty(self, **config):
         rval, _ = self.text_parts().format(
@@ -175,14 +165,11 @@ class Tag:
         """
         Jupyter Notebook hook to print this element as HTML.
         """
-        elem = H.div(
-            H.style(css_nbreset),
-            *self.collect_resources(),
-            H.div["hrepr"](self),
-        )
+        body, resources = self.parts_and_resources()
+        elem = H.div(H.style(css_nbreset), resources, H.div["hrepr"](body),)
         return str(elem)
 
-    def as_page(self):
+    def as_page(self, pretty=False, **format_options):
         """
         Wrap this Tag as a self-contained webpage. Create a page with
         the following structure:
@@ -202,14 +189,18 @@ class Tag:
               </body>
             </html>
         """
+        body, resources = self.parts_and_resources()
         H = HTML()
         utf8 = H.meta(
             {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
         )
-        return H.inline(
+        node = H.inline(
             H.raw("<!DOCTYPE html>"),
-            H.html(H.head(utf8, *self.collect_resources()), H.body(self)),
+            H.html(H.head(utf8, resources), H.body(body)),
         )
+        if not pretty:
+            format_options["max_col"] = None
+        return node.pretty(**format_options)
 
 
 @ovld

@@ -2,14 +2,14 @@ import re
 from html import escape
 from itertools import count
 from types import SimpleNamespace
-from typing import Sequence
+from typing import Sequence, Union
 
 from ovld import OvldMC, ovld
 
 from . import resource
 from .embed import attr_embed, js_embed
 from .h import H, Tag, iterate_children
-from .textgen import Breakable, Text
+from .textgen import Breakable, Text, TextFormatter
 
 
 class HTMLGenerator(metaclass=OvldMC):
@@ -60,7 +60,7 @@ class HTMLGenerator(metaclass=OvldMC):
             )
 
     @ovld
-    def process(self, node: str):
+    def process(self, node: Union[str, TextFormatter]):
         return node
 
     @ovld
@@ -74,7 +74,7 @@ class HTMLGenerator(metaclass=OvldMC):
             close=None,
             attributes={},
             children=[],
-            resources=[],
+            resources=node.resources,
             extra=[],
             escape_children=True,
         )
@@ -86,6 +86,9 @@ class HTMLGenerator(metaclass=OvldMC):
             if getattr(child, "extra", None):
                 workspace.extra += child.extra
                 child.extra = []
+            if getattr(child, "resources", None):
+                workspace.resources += child.resources
+                child.resources = []
 
         tag_rule = self.rules.get(f"tag:{node.name}", self._default_tag)
         if (
@@ -105,7 +108,9 @@ class HTMLGenerator(metaclass=OvldMC):
 
     def _text_parts(self, workspace):
         def convert_child(c):
-            if isinstance(c, str):
+            if isinstance(c, TextFormatter):
+                return c
+            elif isinstance(c, str):
                 if workspace.escape_children:
                     return escape(str(c))
                 else:
@@ -144,17 +149,26 @@ class HTMLGenerator(metaclass=OvldMC):
             repl=sub,
         )
 
-    def generate(self, node):
+    def generate(self, node, process_resources=True):
         ws = self.process(node)
         to_process = [ws, *[self.process(x) for x in ws.extra]]
         parts = [self._text_parts(x) for x in to_process]
         if len(parts) == 1:
-            return parts[0]
+            tp = parts[0]
         else:
-            return Breakable(start=None, body=parts, end=None)
+            tp = Breakable(start=None, body=parts, end=None)
+
+        resources = []
+        for r in ws.resources if process_resources else []:
+            entry, more_resources = self.generate(r)
+            resources.append(entry)
+            resources.append(more_resources)
+        resources = Breakable(start=None, body=resources, end=None)
+
+        return tp, resources
 
     def __call__(self, node):
-        return str(self.generate(node))
+        return str(self.generate(node)[0])
 
 
 standard_html = HTMLGenerator(

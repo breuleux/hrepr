@@ -146,9 +146,7 @@ def customgen():
     def js_embed(self, value: Union[FunctionType, MethodType]):
         return f"'{value.__name__}_function'"
 
-    return HTMLGenerator(
-        rules=standard_html.rules, attr_embed=attr_embed, js_embed=js_embed
-    )
+    return standard_html.fork(attr_embed=attr_embed, js_embed=js_embed)
 
 
 def test_resource_embed_function(customgen, file_regression):

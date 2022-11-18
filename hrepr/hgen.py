@@ -18,6 +18,13 @@ class HTMLGenerator(metaclass=OvldMC):
         self.attr_embed = attr_embed
         self._js_embed = js_embed
 
+    def fork(self, *, attr_embed=None, js_embed=None):
+        return type(self)(
+            dict(self.rules),
+            attr_embed=attr_embed or self.attr_embed,
+            js_embed=js_embed or self.js_embed,
+        )
+
     def js_embed(self, obj, **fmt):
         x = self._js_embed(obj)
         if not isinstance(x, str):

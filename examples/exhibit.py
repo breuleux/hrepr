@@ -3,7 +3,7 @@
 import math
 from dataclasses import dataclass
 
-from ovld import extend_super, has_attribute, OvldMC
+from ovld import OvldMC, extend_super, has_attribute
 
 from hrepr import H, hrepr
 

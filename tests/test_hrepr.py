@@ -51,21 +51,23 @@ class Check:
     def __init__(self, test_name):
         self.test_name = test_name
 
-    def create_single_test(self, obj, test):
+    def create_single_test(self, obj, test, marks):
         def _(file_regression):
             test(obj, file_regression)
 
         name = _.__name__ = f"{self.test_name}[{test.__name__}]"
+        for mark in marks:
+            _ = mark(_)
         globals()[name] = _
 
     def __getattr__(self, attr):
         return Check(test_name=f"test_{attr}")
 
-    def __call__(self, obj, *tests):
+    def __call__(self, obj, *tests, marks=[]):
         assert self.test_name
 
         for t in tests:
-            self.create_single_test(obj, t)
+            self.create_single_test(obj, t, marks)
 
 
 factory = Check(None)
@@ -175,10 +177,16 @@ factory.list10(
 factory.set10(set(range(10)), maxlen(5))
 factory.dict10(dict((i, i * i) for i in range(10)), maxlen(5))
 
-pytest.mark.xfail(
-    sys.version_info < (3, 7),
-    reason="Some repr difference in Python 3.6, it doesn't matter",
-)(factory.exception(TypeError("oh no!"), standard))
+factory.exception(
+    TypeError("oh no!"),
+    standard,
+    marks=[
+        pytest.mark.xfail(
+            sys.version_info < (3, 7),
+            reason="Some repr difference in Python 3.6, it doesn't matter",
+        )
+    ],
+)
 
 
 def _gen(x):

@@ -9,10 +9,9 @@
 
 <img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr1.png" width="400px"><img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr2.png" width="400px">
 
-I suggest studying the two example files to learn `hrepr`:
+I suggest studying the example file to learn `hrepr`:
 
 * `python examples/exhibit.py > exhibit.html` (and then view the HTML file)
-* `python examples/pretty.py`
 
 Also see the Jupyter notebook at `examples/Basics.ipynb`, but keep in mind that GitHub can't display it properly because of the injected styles/scripts.
 
@@ -80,23 +79,17 @@ class Person:
         """)
 
     def __hrepr__(self, H, hrepr):
-        # H.instance is a special kind of tag to format data like an instance.
-        # Notice how we call the hrepr parameter on self.age and self.job to
-        # format them.
-        return H.instance["person"](
-            H.pair("age", hrepr(self.age), delimiter=" ↦ "),
-            H.pair("job", hrepr(self.job), delimiter=" ↦ "),
-            # The "type" represents the header for the "instance"
-            type=self.name,
-            # "vertical=True" means we'll display the pairs as a table with
-            # the delimiters aligned, instead of sticking them horizontally
-            # next to each other
-            vertical=True,
+        # hrepr.make.instance is a helper to show a table with a header that
+        # describes some kind of object
+        return hrepr.make.instance(
+            title=self.name,
+            fields=[["age", self.age], ["job", self.job]],
+            delimiter=" ↦ ",
+            type="person",
         )
 
     def __hrepr_short__(self, H, hrepr):
-        # H.atom is really mostly like H.span.
-        return H.atom["person-short"](self.name)
+        return H.span["person-short"](self.name)
 ```
 
 <img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr3.png" width="600px">
@@ -144,81 +137,76 @@ print(html)
 This can be handy if you want to tweak generated HTML a little. For example, `hrepr(obj)["fox"]` will tack on the class `fox` to the representation of the object.
 
 
-### Special tags
+### Helpers
 
-Standard tags like `H.span`, `H.div`, `H.strong`, etc. are handled according to standards. But there are some special tags which are postprocessed by the hrepr "backend":
-
-* `H.instance(*children, type=<str>, delimiter=<str>, short=<bool>, horizontal=<bool>, vertical=<bool>)`
-    * Represents some kind of object
-    * `type`: the name of the object (or class name)
-        * It is not *necessarily* a string, it can also be a tag.
-    * `delimiter`: the delimiter between elements, defaults to a comma. The HTML formatter ignores this.
-    * `short/horizontal/vertical`: the layout/style
-* `H.bracketed(*children, type=<str>, open=<str>, close=<str>, delimiter=<str>, short=<bool>, horizontal=<bool>, vertical=<bool>)`
-    * `type`: the name of the object (or class name), which is NOT displayed. Instead, the class `hreprt-<name>` is given to the element.
-    * `open/close`: the opening and closing brackets.
-    * `delimiter`: the delimiter between elements, defaults to a comma. The HTML formatter ignores this.
-    * `short/horizontal/vertical`: the layout/style. Lists use horizontal, dicts use vertical, and the short representations use short.
-* `H.pair(x, y, delimiter=<str>)`: a key -> value mapping. They are handled specially inside of `bracketed` and `instance` so that the delimiters are aligned.
-* `H.atom(element, type=<str>)`: essentially equivalent to `H.span["hreprt-<type>"](element)`.
-
-
-### Including JavaScript libraries
-
-To make it a bit easier to include and use JavaScript libraries, there is a new tag called `H.javascript` that uses RequireJS under the hood:
-
-* `H.javascript(export=<name>, src=<path>)` declares an import of the script at the given path (you can use a CDN link) and exports it under the given name.
-* `H.javascript(<code>, require=<name/list>, export=<name>)` will wait for the required modules (the names in the require list are the ones given in the export field of other javascript tags) and will provide them to your script.
-
-Optionally you can name a variable as the export, so that it can be required by other scripts.
+* `hrepr.make.instance(title, fields, delimiter=None, type=None)`: formats the fields like a dataclass, with title on top.
+* `hrepr.make.bracketed(body, start, end, type=None)`: formats the body with the specified start/end bracket.
 
 
 ### Constructed elements
 
-Each element gains a new attribute, `constructor`, which must name a function exported using a `javascript` tag. If provided, the function is called with the element as the first argument, and the `options` attribute as the second element.
+To make it a bit easier to include and use JavaScript libraries, you can use the special `__constructor` attribute.
 
-To illustrate, here's an example of requiring and using Plotly:
+For example, you can load Plotly and create a plot like this:
 
 ```python
-class Plot:
-    def __init__(self, data):
-        self.data = data
-
-    @classmethod
-    def __hrepr_resources__(cls, H):
-        return [
-            H.javascript(
-                export="plotly",
-                src="https://cdn.plot.ly/plotly-latest.min.js",
-            ),
-            H.javascript(
-                """
-                function PlotlyPlot(element, data) {
-                    plotly.newPlot(element, data);
-                }
-                """,
-                require="plotly",
-                export="PlotlyPlot",
-            ),
-        ]
-
-    def __hrepr__(self, H, hrepr):
-        return H.div(
-            constructor="PlotlyPlot",
-            options=[{"x": list(range(len(self.data))), "y": list(self.data)}],
-        )
+def Plot(data):
+    return H.div(
+        __constructor={
+            "script": "https://cdn.plot.ly/plotly-latest.min.js",
+            "symbol": "Plotly.newPlot",
+            "options": [{"x": list(range(len(data))), "y": list(data)}],
+        }
+    )
+print(Plot([math.sin(x / 10) for x in range(100)]))
 ```
 
-* `__hrepr_resources__` declares two resources:
-  * The plotly library, loaded from a CDN, and exported as `plotly`.
-  * A small snippet of code that requires `plotly` and declares a `PlotlyPlot` function that takes an element and some data.
-* `__hrepr__` returns a div that has `PlotlyPlot` as the constructor. It will be called as `new PlotlyPlot(element, options)` (this is so it may equally be defined as an ES6 class if you wish). The options serialized as JSON and dumped into the call -- they are the "data" argument in make_plot.
+The above will:
 
-We can then test it:
+* Load the specified script.
+* Get the `Plotly.newPlot` function in the global namespace.
+* Call it with the `div` element as the first argument, and the `options` as the second argument.
+
+It will look like this:
 
 <img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr6.png" width="600px">
 
-Alternatively, you can define custom elements using the [custom element API](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements). You can put the definition in a `<javascript>` tag that requires the library you want to use, and then simply use `H.my_element(...)` to instantiate it. The underscore in the Python attribute will become a dash, so hrepr will generate `<my-element>...</my-element>`.
+
+### Modules
+
+Another example, this time using ESM (modules):
+
+```python
+node = H.div(
+    style="width:500px;height:500px;border:1px solid black;",
+    __constructor={
+        "module": "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js",
+        "arguments": {
+            "container": H.self(),
+            "elements": [
+                {"data": {"id": "A"}},
+                {"data": {"id": "B"}},
+                {"data": {"id": "C"}},
+                {"data": {"source": "A", "target": "B"}},
+                {"data": {"source": "B", "target": "C"}},
+                {"data": {"source": "C", "target": "A"}},
+            ],
+            "style": cystyle,
+            "layout": {"name": "cose"},
+        },
+    },
+)
+print(node)
+```
+
+The above will:
+
+* Import the specified module.
+* Call the module's default export with `arguments`.
+  * Note the use of `H.self()` to refer to the target `div` in the arguments.
+
+If you wish to use a non-default export, set the `symbol` key in the `__constructor` attribute to the name of the export you want.
+
 
 ## Customize hrepr
 
@@ -228,10 +216,10 @@ If you want to *really* customize hrepr, you can use mixins. They look like a bi
 
 ```python
 # ovld is one of the dependencies of hrepr
-from ovld import ovld, extend_super, has_attribute
-from hrepr import hrepr, Hrepr
+from ovld import ovld, extend_super, has_attribute, OvldMC
+from hrepr import hrepr
 
-class MyMixin(Hrepr):
+class MyMixin(metaclass=OvldMC):
     # Change the representation of integers
 
     @extend_super

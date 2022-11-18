@@ -106,7 +106,9 @@ class StandardMaker:
     def instance(self, title, fields, delimiter=None, type=None):
         if isinstance(delimiter, str):
             delimiter = H.span["hrepr-delim"](delimiter)
-        body = self.table([[k, delimiter, v] for k, v in fields])
+        body = self.table(
+            [[self.atom(k, type="symbol"), delimiter, v] for k, v in fields]
+        )
         return self.title_box(
             title, body, type=type, layout="v", wrap_body=False
         )

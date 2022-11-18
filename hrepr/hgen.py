@@ -334,7 +334,7 @@ def constructor_attribute(self, node, workspace, key, value, default):
             imp=imp,
             symbol=symbol,
             node_id=node_id,
-            arguments=self.js_embed(arguments, tabsize=4, max_col=80),
+            arguments=self.js_embed(arguments),
         ),
         type="module",
     )

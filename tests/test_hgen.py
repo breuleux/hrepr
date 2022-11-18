@@ -7,7 +7,6 @@ import pytest
 from hrepr import H, embed
 from hrepr import hgen as hmodule
 from hrepr import standard_html
-from hrepr.hgen import HTMLGenerator
 from hrepr.resource import JSExpression, Resource
 
 

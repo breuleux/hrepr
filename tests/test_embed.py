@@ -3,16 +3,29 @@ import json
 import pytest
 
 from hrepr import embed
+from hrepr.h import H
+from hrepr.resource import JSExpression, JSFunction, Resource
 
 from .common import one_test_per_assert
 
 
-def js_embed_s(obj, **fmt):
-    return embed.js_embed(obj).to_string(**fmt)
+def js_embed(obj, **fmt):
+    x = embed.js_embed(obj)
+    if not isinstance(x, str):
+        x = x.to_string(**fmt)
+    return x
+
+
+def attr_embed(obj):
+    return embed.attr_embed("k", obj)
 
 
 def same(x):
-    return json.dumps(x) == js_embed_s(x)
+    return json.dumps(x) == js_embed(x)
+
+
+jscode = JSExpression("x = 3")
+jsfn = JSFunction("foo", "foo + 1")
 
 
 @one_test_per_assert
@@ -29,19 +42,31 @@ def test_js_embed():
     assert same({})
     assert same([])
     assert same([[[[]]]])
+    assert js_embed(H.div(id="what")) == "document.getElementById('what')"
+    assert js_embed([jscode]) == f"[{jscode.code}]"
+    assert js_embed(jsfn) == "((foo) => foo + 1)"
+    assert js_embed(Resource(list(range(10)))) == js_embed(list(range(10)))
 
 
-def test_bad():
+def test_js_embed_bad():
     with pytest.raises(TypeError):
-        js_embed_s(object())
+        js_embed(object())
+
+    with pytest.raises(ValueError):
+        js_embed(H.div())
 
 
-# class Catapult:
-#     def power(self):
-#         return 1e99
+@one_test_per_assert
+def test_attr_embed():
+    assert attr_embed("hello") == "hello"
+    assert attr_embed(1234) == "1234"
+    assert attr_embed(H.div(id="what")) == "#what"
+    assert attr_embed(jscode) is jscode
 
 
-# @one_test_per_assert
-# def test_functions():
-#     assert js_embed_s(lambda x: x) == "null"
-#     assert js_embed_s(Catapult().power) == "null"
+def test_attr_embed_bad():
+    with pytest.raises(TypeError):
+        attr_embed(object())
+
+    with pytest.raises(ValueError):
+        attr_embed(H.div())

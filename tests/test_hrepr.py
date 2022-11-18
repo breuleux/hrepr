@@ -191,6 +191,7 @@ factory.misc(
         "wrappers": [dict.update, list.__str__],
         "methods": [Point(1, 2).some_method, [].__str__],
         "modules": [dataclasses],
+        "ellipsis": ...,
     },
     standard,
 )

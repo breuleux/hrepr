@@ -1,8 +1,5 @@
-import re
 from itertools import count
 from uuid import uuid4
-
-from ovld import OvldMC
 
 embed_key = uuid4().hex
 

@@ -153,7 +153,7 @@ def test_as_page():
     page = H.inline(
         H.raw("<!DOCTYPE html>"), H.html(H.head(utf8), H.body(tag)),
     )
-    assert tag.as_page() == page
+    assert tag.as_page() == str(page)
 
 
 def test_as_page_with_resources():
@@ -168,7 +168,7 @@ def test_as_page_with_resources():
     page = H.inline(
         H.raw("<!DOCTYPE html>"), H.html(H.head(utf8, *resources), H.body(tag)),
     )
-    assert tag.as_page() == page
+    assert tag.as_page() == str(page)
 
 
 def test_subclasses():

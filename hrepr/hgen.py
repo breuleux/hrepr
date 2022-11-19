@@ -12,6 +12,22 @@ from .h import H, Tag, iterate_children
 from .textgen import Breakable, Text, TextFormatter
 
 
+class ResourceDeduplicator:
+    def __init__(self):
+        self.seen_resources = set()
+
+    def __call__(self, resource):
+        if resource in self.seen_resources:
+            return False
+        else:
+            self.seen_resources.add(resource)
+            return True
+
+
+def no_resources(resource):  # pragma: no cover
+    return False
+
+
 class HTMLGenerator(metaclass=OvldMC):
     def __init__(self, rules=None, *, attr_embed, js_embed):
         self.rules = rules or {}
@@ -156,7 +172,7 @@ class HTMLGenerator(metaclass=OvldMC):
             repl=sub,
         )
 
-    def generate(self, node, process_resources=True):
+    def generate(self, node, filter_resources=True):
         ws = self.process(node)
         body = self._text_parts(ws)
 
@@ -166,17 +182,21 @@ class HTMLGenerator(metaclass=OvldMC):
             end=None,
         )
 
-        resources = {}
-        for r in ws.resources if process_resources else []:
-            if r in resources:
+        if filter_resources is True:
+            filter_resources = ResourceDeduplicator()
+        elif filter_resources is None:  # pragma: no cover
+            filter_resources = no_resources
+
+        resources = []
+        for r in ws.resources:
+            if not filter_resources(r):
                 continue
             entry, more_extra, more_resources = self.generate(r)
             assert not more_extra
             assert not more_resources
-            resources[r] = entry
-        resources = Breakable(
-            start=None, body=list(resources.values()), end=None
-        )
+            resources.append(entry)
+
+        resources = Breakable(start=None, body=resources, end=None)
 
         return body, extra, resources
 

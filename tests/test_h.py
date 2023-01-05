@@ -40,6 +40,10 @@ def test_div():
         H.div['qu"ote'](id='qu"ite'),
         '<div class="qu&quot;ote" id="qu&quot;ite"></div>',
     )
+    assert matches(
+        H.div["classy", "#eyedee"](thing="thang"),
+        '<div class="classy" id="eyedee" thing="thang"></div>',
+    )
 
 
 @one_test_per_assert
@@ -143,6 +147,15 @@ def test_misc():
 
 def test_dash():
     assert matches(H.some_tag("xyz"), "<some-tag>xyz</some-tag>")
+
+
+def test_autoid():
+    # First time
+    assert matches(H.div("wow").autoid(), '<div id="AID_0">wow</div>')
+    # Second time
+    assert matches(H.div("wow").autoid(), '<div id="AID_1">wow</div>')
+    # Shorthand
+    assert matches(H.div["#"]("wow"), '<div id="AID_2">wow</div>')
 
 
 def test_as_page():

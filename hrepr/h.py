@@ -1,4 +1,5 @@
 import os.path
+from itertools import count
 from types import GeneratorType
 from typing import Union
 
@@ -12,6 +13,8 @@ css_nbreset = open(f"{styledir}/nbreset.css", encoding="utf-8").read()
 
 # Used by __str__, set by __init__ to avoid a circular dependency
 standard_html = None
+
+current_autoid = count()
 
 
 def flatten(seq):
@@ -120,12 +123,24 @@ class Tag:
         )
         return rval
 
+    def autoid(self):
+        return self(id=f"AID_{next(current_autoid)}")
+
     def __getitem__(self, items):
         if not isinstance(items, tuple):
             items = (items,)
         assert all(isinstance(item, str) for item in items)
-        classes = self.attributes.get("class", ()) + items
-        return self.fill(attributes={"class": classes})
+        attributes = {}
+        classes = [it for it in items if not it.startswith("#")]
+        if classes:
+            attributes["class"] = [*self.attributes.get("class", ()), *classes]
+        ids = [it for it in items if it.startswith("#")]
+        if ids:
+            the_id = ids[-1][1:]
+            if the_id == "":
+                the_id = f"AID_{next(current_autoid)}"
+            attributes["id"] = the_id
+        return self.fill(attributes=attributes)
 
     def __call__(self, *children, **attributes):
         attributes = {

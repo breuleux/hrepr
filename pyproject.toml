@@ -21,7 +21,7 @@ black = "^19.3b0"
 isort = "^5.4.2"
 pytest = "^7.2.0"
 pytest-cov = "^4.0.0"
-flake8 = "^3.8.3"
+flake8 = "^5.0.0"
 pytest-regressions = "^2.4.1"
 
 [tool.black]

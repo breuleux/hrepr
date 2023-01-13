@@ -5,14 +5,14 @@ from typing import Union
 import pytest
 
 from hrepr import H, embed
-from hrepr import hgen as hmodule
+from hrepr import h as hmodule
 from hrepr import standard_html
 from hrepr.resource import JSExpression, Resource
 
 
 @pytest.fixture(autouse=True)
 def reset_id_counter():
-    hmodule.id_counter = count()
+    hmodule.current_autoid = count()
 
 
 incrementer_script = H.script(

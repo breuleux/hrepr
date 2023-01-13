@@ -17,6 +17,10 @@ standard_html = None
 current_autoid = count()
 
 
+def _nextid():
+    return f"AID_{next(current_autoid)}"
+
+
 def flatten(seq):
     results = []
     for element in seq:
@@ -124,7 +128,7 @@ class Tag:
         return rval
 
     def autoid(self):
-        return self(id=f"AID_{next(current_autoid)}")
+        return self(id=_nextid())
 
     def __getitem__(self, items):
         if not isinstance(items, tuple):
@@ -143,6 +147,9 @@ class Tag:
         return self.fill(attributes=attributes)
 
     def __call__(self, *children, **attributes):
+        if "__constructor" in attributes:
+            if "id" not in attributes and "id" not in self.attributes:
+                attributes["id"] = _nextid()
         attributes = {
             attr.replace("_", "-"): value for attr, value in attributes.items()
         }

@@ -16,5 +16,5 @@ const self = document.getElementById('butt');
 const arglist = [self, {"increment": 3}];
 let hasprop = prop => Object.getOwnPropertyNames(Counter).includes(prop);
 let obj = (hasprop("arguments") || !hasprop("prototype")) ? Counter(...arglist) : new Counter(...arglist);
-window.$butt = obj;
+self.__object = obj;
 </script></body></html>

@@ -1,11 +1,11 @@
 import re
 from html import escape
-from itertools import count
 from types import SimpleNamespace
 from typing import Sequence, Union
 
 from ovld import OvldMC, ovld
 
+from . import h as hmodule
 from . import resource
 from .embed import attr_embed, js_embed
 from .h import H, Tag, iterate_children
@@ -301,19 +301,18 @@ const self = document.getElementById('{node_id}');
 const arglist = {arguments};
 let hasprop = prop => Object.getOwnPropertyNames({symbol}).includes(prop);
 let obj = (hasprop("arguments") || !hasprop("prototype")) ? {symbol}(...arglist) : new {symbol}(...arglist);
-window.${node_id} = obj;
+self.__object = obj;
 """
-
-
-id_counter = count()
 
 
 @standard_html.register("attr:--constructor")
 def constructor_attribute(self, node, workspace, key, value, default):
     if "id" in node.attributes:
         node_id = node.attributes["id"]
-    else:
-        node_id = workspace.attributes["id"] = f"$hrepr${next(id_counter)}"
+    else:  # pragma: no cover
+        # Setting __constructor should normally set an id, so this may not trigger
+        autoid = f"$hrepr${next(hmodule.current_autoid)}"
+        node_id = workspace.attributes["id"] = autoid
 
     module = value.get("module", None)
     script = value.get("script", None)

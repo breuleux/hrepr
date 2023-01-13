@@ -1,4 +1,17 @@
 <!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /><script>
+$$HREPR = {
+    prepare(node_id) {
+        const self = document.getElementById(node_id);
+        let resolve = null;
+        self.__object = new Promise((rs, rj) => { resolve = rs });
+        self.__object.__resolve = resolve;
+    },
+    isFunc(x) {
+        let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
+        return (hasprop("arguments") || !hasprop("prototype"));
+    }
+}
+</script><script>
     class Counter {
         constructor(node, options) {
             this.node = node;
@@ -11,10 +24,9 @@
             }
         }
     }
-    </script></head><body><div><h2>The button should show 3, 6, 9... when clicked.</h2><button style="width:100px;" id="butt">ERROR!</button></div><script type="module">
+    </script></head><body><div><h2>The button should show 3, 6, 9... when clicked.</h2><button style="width:100px;" id="butt">ERROR!</button></div><script>$$HREPR.prepare('butt')</script><script type="module">
 const self = document.getElementById('butt');
 const arglist = [self, {"increment": 3}];
-let hasprop = prop => Object.getOwnPropertyNames(Counter).includes(prop);
-let obj = (hasprop("arguments") || !hasprop("prototype")) ? Counter(...arglist) : new Counter(...arglist);
-self.__object = obj;
+let obj = $$HREPR.isFunc(Counter) ? Counter(...arglist) : new Counter(...arglist);
+self.__object.__resolve(obj);
 </script></body></html>

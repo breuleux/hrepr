@@ -164,7 +164,7 @@ class HTMLGenerator(metaclass=OvldMC):
     def expand_resources(self, value, embed):
         def sub(m):
             res = resource.registry.resolve(int(m.groups()[0]))
-            return embed(res.obj)
+            return self.expand_resources(embed(res.obj), embed)
 
         return re.sub(
             pattern=rf"\[{resource.embed_key}:([0-9]+)\]",
@@ -296,12 +296,32 @@ def script_tag(self, node, workspace, default):
     return default(node, workspace)
 
 
+constructor_lib = H.script(
+    """
+$$HREPR = {
+    prepare(node_id) {
+        const self = document.getElementById(node_id);
+        let resolve = null;
+        self.__object = new Promise((rs, rj) => { resolve = rs });
+        self.__object.__resolve = resolve;
+    },
+    isFunc(x) {
+        let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
+        return (hasprop("arguments") || !hasprop("prototype"));
+    }
+}
+"""
+)
+
+
+constructor_promise_script = "$$HREPR.prepare('{node_id}')"
+
+
 constructor_template_script = """{imp}
 const self = document.getElementById('{node_id}');
 const arglist = {arguments};
-let hasprop = prop => Object.getOwnPropertyNames({symbol}).includes(prop);
-let obj = (hasprop("arguments") || !hasprop("prototype")) ? {symbol}(...arglist) : new {symbol}(...arglist);
-self.__object = obj;
+let obj = $$HREPR.isFunc({symbol}) ? {symbol}(...arglist) : new {symbol}(...arglist);
+self.__object.__resolve(obj);
 """
 
 
@@ -317,6 +337,7 @@ def constructor_attribute(self, node, workspace, key, value, default):
     module = value.get("module", None)
     script = value.get("script", None)
 
+    workspace.resources.append(constructor_lib)
     if module:
         assert not isinstance(module, (list, tuple))
         assert script is None
@@ -351,6 +372,9 @@ def constructor_attribute(self, node, workspace, key, value, default):
             arguments = [arguments]
     else:
         arguments = [H.self()]
+
+    sc_promise = H.script(constructor_promise_script.format(node_id=node_id))
+    workspace.extra.append(sc_promise)
 
     sc = H.script(
         constructor_template_script.format(

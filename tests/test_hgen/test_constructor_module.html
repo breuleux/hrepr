@@ -1,13 +1,24 @@
-<!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /></head><body><div><h2>The buttons should increment by 2 and 3 respectively.</h2><h4>Note: this will NOT work when browsing the file directly, view using a server e.g. with `python -m http.server`.</h4><button style="width:100px;" id="AID_0">ERROR!</button><button style="width:100px;" id="AID_1">ERROR!</button></div><script type="module">import {bytwo} from "./counter.esm.js";
+<!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /><script>
+$$HREPR = {
+    prepare(node_id) {
+        const self = document.getElementById(node_id);
+        let resolve = null;
+        self.__object = new Promise((rs, rj) => { resolve = rs });
+        self.__object.__resolve = resolve;
+    },
+    isFunc(x) {
+        let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
+        return (hasprop("arguments") || !hasprop("prototype"));
+    }
+}
+</script></head><body><div><h2>The buttons should increment by 2 and 3 respectively.</h2><h4>Note: this will NOT work when browsing the file directly, view using a server e.g. with `python -m http.server`.</h4><button style="width:100px;" id="AID_0">ERROR!</button><button style="width:100px;" id="AID_1">ERROR!</button></div><script>$$HREPR.prepare('AID_0')</script><script type="module">import {bytwo} from "./counter.esm.js";
 const self = document.getElementById('AID_0');
 const arglist = [self];
-let hasprop = prop => Object.getOwnPropertyNames(bytwo).includes(prop);
-let obj = (hasprop("arguments") || !hasprop("prototype")) ? bytwo(...arglist) : new bytwo(...arglist);
-self.__object = obj;
-</script><script type="module">import {by} from "./counter.esm.js";
+let obj = $$HREPR.isFunc(bytwo) ? bytwo(...arglist) : new bytwo(...arglist);
+self.__object.__resolve(obj);
+</script><script>$$HREPR.prepare('AID_1')</script><script type="module">import {by} from "./counter.esm.js";
 const self = document.getElementById('AID_1');
 const arglist = [self];
-let hasprop = prop => Object.getOwnPropertyNames(by.three).includes(prop);
-let obj = (hasprop("arguments") || !hasprop("prototype")) ? by.three(...arglist) : new by.three(...arglist);
-self.__object = obj;
+let obj = $$HREPR.isFunc(by.three) ? by.three(...arglist) : new by.three(...arglist);
+self.__object.__resolve(obj);
 </script></body></html>

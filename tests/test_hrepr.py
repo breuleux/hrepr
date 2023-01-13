@@ -39,7 +39,10 @@ def check_hrepr(file_regression, **sections):
         H.html(
             H.head(utf8, H.style(css_hrepr)),
             H.body(
-                H.inline(H.h2(k), H.pre(v) if isinstance(v, str) else v,)
+                H.inline(
+                    H.h2(k),
+                    H.pre(v) if isinstance(v, str) else v,
+                )
                 for k, v in sections.items()
             ),
         ),
@@ -259,14 +262,18 @@ def test_as_page():
     assert real_hrepr.page(1) == str(
         H.inline(
             H.raw("<!DOCTYPE html>"),
-            H.html(H.head(utf8, H.style(css_hrepr)), H.body(real_hrepr(1)),),
+            H.html(
+                H.head(utf8, H.style(css_hrepr)),
+                H.body(real_hrepr(1)),
+            ),
         )
     )
 
 
 def test_hrepr_multiarg():
     assert hrepr(1, 2) == H.inline(
-        H.span["hreprt-int"]("1"), H.span["hreprt-int"]("2"),
+        H.span["hreprt-int"]("1"),
+        H.span["hreprt-int"]("2"),
     )
 
 

@@ -164,7 +164,8 @@ def test_as_page():
         {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
     )
     page = H.inline(
-        H.raw("<!DOCTYPE html>"), H.html(H.head(utf8), H.body(tag)),
+        H.raw("<!DOCTYPE html>"),
+        H.html(H.head(utf8), H.body(tag)),
     )
     assert tag.as_page() == str(page)
 
@@ -179,7 +180,8 @@ def test_as_page_with_resources():
         {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
     )
     page = H.inline(
-        H.raw("<!DOCTYPE html>"), H.html(H.head(utf8, *resources), H.body(tag)),
+        H.raw("<!DOCTYPE html>"),
+        H.html(H.head(utf8, *resources), H.body(tag)),
     )
     assert tag.as_page() == str(page)
 

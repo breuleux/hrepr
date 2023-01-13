@@ -25,7 +25,9 @@ class StandardMaker:
 
     def defn(self, key, name, type=None):
         node = H.span[f"hreprk-{key}"](
-            H.span["hrepr-defn-key"](key), " ", H.span["hrepr-defn-name"](name),
+            H.span["hrepr-defn-key"](key),
+            " ",
+            H.span["hrepr-defn-name"](name),
         )
         return self.tag_type(node, type)
 
@@ -91,7 +93,9 @@ class StandardMaker:
 
     def bracketed(self, body, start, end, type=None):
         node = H.div(
-            H.div["hrepr-open"](start), body, H.div["hrepr-close"](end),
+            H.div["hrepr-open"](start),
+            body,
+            H.div["hrepr-close"](end),
         )
         return self.tag_type(node, type)["hrepr-bracketed"]
 

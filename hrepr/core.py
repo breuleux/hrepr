@@ -222,37 +222,37 @@ class StdHrepr(Hrepr):
     @extend_super
     def hrepr(self, xs: list):
         return self.make.bracketed(
-            self.make.flow(xs), start="[", end="]", type=type(xs),
+            self.make.flow(xs), start="[", end="]", type=type(xs)
         )
 
     @extend_super
     def hrepr_short(self, xs: list):
         return self.make.bracketed(
-            self.make.short("..."), start="[", end="]", type=type(xs),
+            self.make.short("..."), start="[", end="]", type=type(xs)
         )
 
     # Tuples
 
     def hrepr(self, xs: tuple):
         return self.make.bracketed(
-            self.make.flow(xs), start="(", end=")", type=type(xs),
+            self.make.flow(xs), start="(", end=")", type=type(xs)
         )
 
     def hrepr_short(self, xs: tuple):
         return self.make.bracketed(
-            self.make.short("..."), start="(", end=")", type=type(xs),
+            self.make.short("..."), start="(", end=")", type=type(xs)
         )
 
     # Sets
 
     def hrepr(self, xs: Union[set, frozenset]):
         return self.make.bracketed(
-            self.make.flow(xs), start="{", end="}", type=type(xs),
+            self.make.flow(xs), start="{", end="}", type=type(xs)
         )
 
     def hrepr_short(self, xs: Union[set, frozenset]):
         return self.make.bracketed(
-            self.make.short("..."), start="{", end="}", type=type(xs),
+            self.make.short("..."), start="{", end="}", type=type(xs)
         )
 
     # Dictionaries
@@ -269,7 +269,7 @@ class StdHrepr(Hrepr):
 
     def hrepr_short(self, xs: dict):
         return self.make.bracketed(
-            self.make.short("..."), start="{", end="}", type=type(xs),
+            self.make.short("..."), start="{", end="}", type=type(xs)
         )
 
     # Dataclasses
@@ -294,25 +294,22 @@ class StdHrepr(Hrepr):
 
     def hrepr(self, dk: _type({}.keys())):
         return self.make.bracketed(
-            self.make.flow(dk), start="dict_keys(", end=")", type=type(dk),
+            self.make.flow(dk), start="dict_keys(", end=")", type=type(dk)
         )
 
     def hrepr_short(self, dk: _type({}.keys())):
         return self.make.bracketed(
-            self.make.short("..."), start="dict_keys(", end=")", type=type(dk),
+            self.make.short("..."), start="dict_keys(", end=")", type=type(dk)
         )
 
     def hrepr(self, dv: _type({}.values())):
         return self.make.bracketed(
-            self.make.flow(dv), start="dict_values(", end=")", type=type(dv),
+            self.make.flow(dv), start="dict_values(", end=")", type=type(dv)
         )
 
     def hrepr_short(self, dv: _type({}.values())):
         return self.make.bracketed(
-            self.make.short("..."),
-            start="dict_values(",
-            end=")",
-            type=type(dv),
+            self.make.short("..."), start="dict_values(", end=")", type=type(dv)
         )
 
     # Exceptions
@@ -531,7 +528,7 @@ class Interface:
             return self.variant(**config)(*objs)
         else:
             hcall = self.hclass(
-                H=H, config=Config(self.config_defaults), **self.hrepr_options,
+                H=H, config=Config(self.config_defaults), **self.hrepr_options
             )
             if len(objs) == 1:
                 rval = hcall(objs[0])

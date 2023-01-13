@@ -71,7 +71,11 @@ def js_embed(self, d: dict):
 
 @ovld
 def js_embed(self, seq: Union[list, tuple]):
-    return Breakable(start="[", body=join(map(self, seq), sep=", "), end="]",)
+    return Breakable(
+        start="[",
+        body=join(map(self, seq), sep=", "),
+        end="]",
+    )
 
 
 @ovld

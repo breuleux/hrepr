@@ -51,6 +51,27 @@ def test_constructor_global_symbol(file_regression):
     file_regression.check(str(node.as_page()), extension=".html")
 
 
+def test_constructor_stylesheet(file_regression):
+    node = H.div(
+        H.h2(
+            "The page should look purple. Also, the button should show 3, 6, 9... when clicked."
+        ),
+        H.button(
+            "ERROR!",  # Will only show if the button's text is not set by the script
+            style="width:100px;",
+            id="butt",
+            __constructor={
+                "script": incrementer_script,
+                "symbol": "Counter",
+                "options": {"increment": 3},
+                "stylesheet": "./stylish.css",
+            },
+        ),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
 def test_constructor_multiple(file_regression):
     node = H.div(
         H.h2("The buttons should increment by 2 and 3 respectively."),

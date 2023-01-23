@@ -373,6 +373,14 @@ def constructor_attribute(self, node, workspace, key, value, default):
     else:
         arguments = [H.self()]
 
+    if "stylesheet" in value:
+        sheet = value["stylesheet"]
+        sheet = [
+            src if isinstance(src, Tag) else H.link(rel="stylesheet", href=src)
+            for src in (sheet if isinstance(sheet, (list, tuple)) else [sheet])
+        ]
+        workspace.resources.extend(sheet)
+
     sc_promise = H.script(constructor_promise_script.format(node_id=node_id))
     workspace.extra.append(sc_promise)
 

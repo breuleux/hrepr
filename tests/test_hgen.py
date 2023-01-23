@@ -134,6 +134,21 @@ def test_constructor_cytoscape(file_regression):
     file_regression.check(str(node.as_page()), extension=".html")
 
 
+def test_constructor_katex(file_regression):
+    node = H.div(
+        H.h2("This should show a well-formatted mathematical formula."),
+        H.div(
+            __constructor={
+                "module": "https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.mjs",
+                "symbol": "default.render",
+                "arguments": ["c = \\pm\\sqrt{a^2 + b^2}", H.self()],
+                "stylesheet": "https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.css",
+            }
+        ),
+    )
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
 def test_constructor_module(file_regression):
     node = H.div(
         H.h2("The buttons should increment by 2 and 3 respectively."),

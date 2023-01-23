@@ -346,6 +346,9 @@ def constructor_attribute(self, node, workspace, key, value, default):
         if symbol is None:
             symbol = "constructor"
             imp = f"import constructor from {module};"
+        elif symbol.startswith("default."):
+            imp = f"import dflt from {module};"
+            symbol = symbol.replace("default.", "dflt.")
         else:
             rootsym, sep, props = symbol.partition(".")
             imp = f"import {{{rootsym}}} from {module};"

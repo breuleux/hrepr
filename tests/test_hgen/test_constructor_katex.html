@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /><script>
+$$HREPR = {
+    prepare(node_id) {
+        const self = document.getElementById(node_id);
+        let resolve = null;
+        self.__object = new Promise((rs, rj) => { resolve = rs });
+        self.__object.__resolve = resolve;
+    },
+    isFunc(x) {
+        let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
+        return (hasprop("arguments") || !hasprop("prototype"));
+    }
+}
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.css" /></head><body><div><h2>This should show a well-formatted mathematical formula.</h2><div id="AID_0"></div></div><script>$$HREPR.prepare('AID_0')</script><script type="module">import dflt from "https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.mjs";
+const self = document.getElementById('AID_0');
+const arglist = ["c = \\pm\\sqrt{a^2 + b^2}", self];
+let obj = $$HREPR.isFunc(dflt.render) ? dflt.render(...arglist) : new dflt.render(...arglist);
+self.__object.__resolve(obj);
+</script></body></html>

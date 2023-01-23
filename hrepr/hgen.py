@@ -406,3 +406,10 @@ def attr_resources(self, node, workspace, key, value, default):
         workspace.resources.append(value)
     else:
         workspace.resources.extend(value)
+
+
+@standard_html.register("attr:style")
+def attr_style(self, node, workspace, key, value, default):
+    if isinstance(value, dict):
+        value = "".join(f"{k}:{v};" for k, v in value.items())
+    workspace.attributes["style"] = value

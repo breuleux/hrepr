@@ -111,7 +111,11 @@ def test_constructor_cytoscape(file_regression):
     node = H.div(
         H.h2("This should show an interactive graph."),
         H.div(
-            style="width:500px;height:500px;border:1px solid black;",
+            style={
+                "width": "500px",
+                "height": "500px",
+                "border": "1px solid black",
+            },
             __constructor={
                 "module": "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js",
                 "arguments": {

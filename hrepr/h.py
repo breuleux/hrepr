@@ -24,7 +24,7 @@ def _nextid():
 def flatten(seq):
     results = []
     for element in seq:
-        if isinstance(element, (list, tuple)):
+        if isinstance(element, (list, tuple, GeneratorType)):
             results.extend(flatten(element))
         else:
             results.append(element)
@@ -282,17 +282,6 @@ class Tag:
         if not pretty:
             format_options["max_col"] = None
         return node.pretty(**format_options)
-
-
-@ovld
-def iterate_children(self, children: Union[list, tuple, GeneratorType]):
-    for child in children:
-        yield from self(child)
-
-
-@ovld
-def iterate_children(self, child: object):
-    yield child
 
 
 class HTML:

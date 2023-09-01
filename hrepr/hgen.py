@@ -8,7 +8,7 @@ from ovld import OvldMC, ovld
 from . import h as hmodule
 from . import resource
 from .embed import attr_embed, js_embed
-from .h import H, Tag, iterate_children
+from .h import H, Tag
 from .textgen import Breakable, Text, TextFormatter
 
 
@@ -102,9 +102,7 @@ class HTMLGenerator(metaclass=OvldMC):
             escape_children=True,
         )
 
-        workspace.children = [
-            self.process(child) for child in iterate_children(node.children)
-        ]
+        workspace.children = [self.process(child) for child in node.children]
         for child in workspace.children:
             if getattr(child, "extra", None):
                 workspace.extra += child.extra

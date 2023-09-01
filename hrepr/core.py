@@ -431,17 +431,27 @@ class StdHrepr(Hrepr):
 
 def inject_reference_numbers(hcall, node, refmap):
     if isinstance(node, Tag):
-        node.children = tuple(
+        new_children = tuple(
             inject_reference_numbers(hcall, child, refmap)
             for child in node.children
         )
+        if any(change for change, _ in new_children):
+            new_node = type(node)(
+                name=node.name,
+                attributes=node.attributes,
+                children=tuple(child for _, child in new_children),
+                resources=node.resources,
+            )
+        else:
+            new_node = node
+
         refnum = refmap.get(id(node), None)
         if refnum is not None:
-            return hcall.make.ref(content=node, num=refnum)
+            return True, hcall.make.ref(content=node, num=refnum)
         else:
-            return node
+            return True, new_node
     else:
-        return node
+        return False, node
 
 
 def _mix(hclass, mixins):
@@ -535,7 +545,7 @@ class Interface:
             else:
                 rval = H.inline(*map(hcall, objs))
             if self.inject_references:
-                rval = inject_reference_numbers(
+                _, rval = inject_reference_numbers(
                     hcall, rval, hcall.state.make_refmap()
                 )
             if self.fill_resources:

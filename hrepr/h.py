@@ -69,6 +69,17 @@ class Tag:
             children.
     """
 
+    __slots__ = (
+        "__name",
+        "__attributes",
+        "__children",
+        "__resources",
+        "_parent",
+        "_partial_attributes",
+        "_partial_children",
+        "_partial_resources",
+    )
+
     specialized_tags = {}
 
     @classmethod
@@ -76,31 +87,77 @@ class Tag:
         """Return a new subclass specialized for the given tag name."""
         assert cls is Tag
         if name not in cls.specialized_tags:
-            cls.specialized_tags[name] = type(f"Tag::{name}", (Tag,), {})
+            cls.specialized_tags[name] = type(
+                f"Tag::{name}", (Tag,), {"__slots__": ()}
+            )
         return cls.specialized_tags[name]
 
     def __init__(self, name, attributes=None, children=None, resources=None):
-        self.name = name
-        self.attributes = attributes or {}
-        self.children = tuple(flatten(children or ()))
-        self.resources = () if resources is None else tuple(resources)
+        self.__name = None
+        self.__attributes = None
+        self.__children = None
+        self.__resources = None
+
+        self._parent = name
+        self._partial_attributes = attributes
+        self._partial_children = children
+        self._partial_resources = resources
+
+    def _do_cache(self):
+        sequence = [self]
+        current = self
+        while not isinstance(current._parent, str):
+            sequence.append(current._parent)
+            current = current._parent
+        self.__name = current._parent
+
+        attributes = {}
+        children = []
+        resources = []
+
+        for part in reversed(sequence):
+            if part._partial_attributes:
+                attributes.update(part._partial_attributes)
+            if part._partial_children:
+                children.extend(part._partial_children)
+            if part._partial_resources:
+                resources.extend(part._partial_resources)
+
+        self.__attributes = attributes
+        self.__children = tuple(flatten(children))
+        self.__resources = tuple(resources)
+
+    @property
+    def name(self):
+        if self.__name is None:
+            self._do_cache()
+        return self.__name
+
+    @property
+    def attributes(self):
+        if self.__attributes is None:
+            self._do_cache()
+        return self.__attributes
+
+    @property
+    def children(self):
+        if self.__children is None:
+            self._do_cache()
+        return self.__children
+
+    @property
+    def resources(self):
+        if self.__resources is None:
+            self._do_cache()
+        return self.__resources
 
     def fill(self, children=None, attributes=None, resources=None):
         if not children and not attributes and not resources:
             return self
-        children = (*self.children, *children) if children else self.children
-        attributes = (
-            {**self.attributes, **attributes} if attributes else self.attributes
-        )
         if isinstance(resources, Tag):
             resources = (resources,)
-        resources = (
-            tuple([*self.resources, *resources])
-            if resources
-            else self.resources
-        )
         return type(self)(
-            name=self.name,
+            name=self,
             attributes=attributes,
             children=children,
             resources=resources,

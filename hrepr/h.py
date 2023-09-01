@@ -252,18 +252,20 @@ class HTML:
     """
 
     def __init__(self, tag_class=Tag, instantiate=True):
-        self.tag_class = tag_class
-        self.instantiate = instantiate
+        self._tag_class = tag_class
+        self._instantiate = instantiate
 
     def __getattr__(self, tag_name):
         tag_name = tag_name.replace("_", "-")
-        tag_class = self.tag_class
+        tag_class = self._tag_class
         if hasattr(tag_class, "specialize"):
             tag_class = tag_class.specialize(tag_name)
-        if self.instantiate:
-            return tag_class(tag_name)
+        if self._instantiate:
+            rval = tag_class(tag_name)
         else:
-            return tag_class
+            rval = tag_class
+        setattr(self, tag_name, rval)
+        return rval
 
 
 H = HTML(tag_class=Tag, instantiate=True)

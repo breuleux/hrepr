@@ -182,7 +182,7 @@ class Hrepr(metaclass=OvldMC):
             self.state.reregister(id(obj), rval)
 
         # Check that it's the right type
-        htype = self.H.tag_class
+        htype = self.H._tag_class
         if not isinstance(rval, htype):
             raise TypeError(
                 f"Return value of hrepr({type(obj)}) must be an "

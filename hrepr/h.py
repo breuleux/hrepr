@@ -167,9 +167,6 @@ class Tag:
     def text_parts(self):
         return self.parts_and_resources()[0]
 
-    def pretty(self, **config):
-        return str(self.text_parts())
-
     def autoid(self):
         return self(id=_nextid())
 
@@ -224,7 +221,7 @@ class Tag:
         return str(self)
 
     def __str__(self):
-        return self.pretty(max_col=None)
+        return str(self.text_parts())
 
     def _repr_html_(self):  # pragma: no cover
         """
@@ -236,7 +233,7 @@ class Tag:
         )
         return str(elem)
 
-    def as_page(self, pretty=False, **format_options):
+    def as_page(self):
         """
         Wrap this Tag as a self-contained webpage. Create a page with
         the following structure:
@@ -265,9 +262,7 @@ class Tag:
             H.raw("<!DOCTYPE html>"),
             H.html(H.head(utf8, resources), H.body(body, extra)),
         )
-        if not pretty:
-            format_options["max_col"] = None
-        return node.pretty(**format_options)
+        return str(node)
 
 
 class HTML:

@@ -1,11 +1,6 @@
 import os.path
 from itertools import count
 from types import GeneratorType
-from typing import Union
-
-from ovld import ovld
-
-from .textgen import Context
 
 # CSS for hrepr
 styledir = f"{os.path.dirname(__file__)}/style"
@@ -173,16 +168,7 @@ class Tag:
         return self.parts_and_resources()[0]
 
     def pretty(self, **config):
-        rval, _ = self.text_parts().format(
-            Context(
-                tabsize=4,
-                max_col=80,
-                offset=0,
-                line_offset=0,
-                overflow="allow",
-            ).replace(**config)
-        )
-        return rval
+        return str(self.text_parts())
 
     def autoid(self):
         return self(id=_nextid())

@@ -9,7 +9,7 @@ from . import h as hmodule
 from . import resource
 from .embed import attr_embed, js_embed
 from .h import H, Tag
-from .textgen import Breakable, Text, TextFormatter
+from .textgen_simple import Breakable, Text, TextFormatter
 
 
 class ResourceDeduplicator:
@@ -190,8 +190,8 @@ class HTMLGenerator(metaclass=OvldMC):
             if not filter_resources(r):
                 continue
             entry, more_extra, more_resources = self.generate(r)
-            assert not more_extra
-            assert not more_resources
+            assert not str(more_extra)
+            assert not str(more_resources)
             resources.append(entry)
 
         resources = Breakable(start=None, body=resources, end=None)

@@ -32,6 +32,11 @@ filterwarnings = [
     "ignore:coroutine '_coro' was never awaited",
 ]
 
+[tool.coverage.run]
+omit = [
+    "hrepr/textgen.py"
+]
+
 [build-system]
 requires = ["poetry-core>=1.3.2"]
 build-backend = "poetry.core.masonry.api"

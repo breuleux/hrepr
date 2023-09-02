@@ -5,7 +5,7 @@ from ovld import ovld
 
 from .h import HType, Tag
 from .resource import JSExpression, Resource
-from .textgen import Breakable, Sequence, Text, join
+from .textgen_simple import Breakable, Sequence, Text, join
 
 _type = type
 

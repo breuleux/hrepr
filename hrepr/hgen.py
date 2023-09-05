@@ -1,6 +1,6 @@
 import re
+from dataclasses import dataclass
 from html import escape
-from types import SimpleNamespace
 from typing import Sequence, Union
 
 from ovld import OvldMC, ovld
@@ -26,6 +26,27 @@ class ResourceDeduplicator:
 
 def no_resources(resource):  # pragma: no cover
     return False
+
+
+@dataclass
+class Workspace:
+    __slots__ = (
+        "open",
+        "close",
+        "attributes",
+        "children",
+        "resources",
+        "extra",
+        "escape_children",
+    )
+
+    open: str
+    close: str
+    attributes: dict
+    children: list
+    resources: list
+    extra: list
+    escape_children: bool
 
 
 class HTMLGenerator(metaclass=OvldMC):
@@ -92,7 +113,7 @@ class HTMLGenerator(metaclass=OvldMC):
 
     @ovld
     def process(self, node: Tag):
-        workspace = SimpleNamespace(
+        workspace = Workspace(
             open=None,
             close=None,
             attributes={},

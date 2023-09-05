@@ -67,6 +67,8 @@ def join(seq, sep):
 
 
 class TextFormatter:
+    __slots__ = ()
+
     def to_string(self, **config):
         value, offset = self.format(
             Context(
@@ -87,6 +89,8 @@ class TextFormatter:
 
 
 class Breakable(TextFormatter):
+    __slots__ = ("start", "body", "end", "len")
+
     def __init__(self, start, body, end):
         self.start = ensure_text(start)
         self.body = list(map(ensure_text, body))
@@ -130,6 +134,8 @@ class Breakable(TextFormatter):
 
 
 class Sequence(TextFormatter):
+    __slots__ = ("elements", "len")
+
     def __init__(self, *elements):
         self.elements = [Text(e) if isinstance(e, str) else e for e in elements]
         self.len = sum(map(len, self.elements))
@@ -144,6 +150,8 @@ class Sequence(TextFormatter):
 
 
 class Text(TextFormatter):
+    __slots__ = ("value", "len")
+
     def __init__(self, value):
         self.value = value
         self.len = len(self.value)

@@ -50,14 +50,18 @@ class Workspace:
 
 
 class HTMLGenerator(metaclass=OvldMC):
-    def __init__(self, rules=None, *, attr_embed, js_embed):
-        self.rules = rules or {}
+    def __init__(
+        self, tag_rules=None, attr_rules=None, *, attr_embed, js_embed
+    ):
+        self.tag_rules = tag_rules or {}
+        self.attr_rules = attr_rules or {}
         self.attr_embed = attr_embed
         self._js_embed = js_embed
 
     def fork(self, *, attr_embed=None, js_embed=None):
         return type(self)(
-            dict(self.rules),
+            dict(self.tag_rules),
+            dict(self.attr_rules),
             attr_embed=attr_embed or self.attr_embed,
             js_embed=js_embed or self.js_embed,
         )
@@ -70,7 +74,12 @@ class HTMLGenerator(metaclass=OvldMC):
 
     def register(self, rule, fn=None):
         def reg(fn):
-            self.rules[rule] = fn
+            if rule.startswith("tag:"):
+                self.tag_rules[rule[4:]] = fn
+            elif rule.startswith("attr:"):
+                self.attr_rules[rule[5:]] = fn
+            else:  # pragma: no cover
+                raise ValueError(f"Unknown rule type: {rule}")
             return fn
 
         if fn is None:
@@ -132,14 +141,14 @@ class HTMLGenerator(metaclass=OvldMC):
                 workspace.resources += child.resources
                 child.resources = []
 
-        tag_rule = self.rules.get(f"tag:{node.name}", self._default_tag)
+        tag_rule = self.tag_rules.get(node.name, self._default_tag)
         if (
             tag_rule(self, node, workspace, self.default_tag) is False
         ):  # pragma: no cover
             pass
         else:
             for k, v in node.attributes.items():
-                rule = self.rules.get(f"attr:{k}", self._default_attr)
+                rule = self.attr_rules.get(k, self._default_attr)
                 if (
                     rule(self, node, workspace, k, v, self.default_attr)
                     is False
@@ -225,7 +234,7 @@ class HTMLGenerator(metaclass=OvldMC):
 
 
 standard_html = HTMLGenerator(
-    rules={}, attr_embed=attr_embed, js_embed=js_embed
+    tag_rules={}, attr_rules={}, attr_embed=attr_embed, js_embed=js_embed
 )
 
 

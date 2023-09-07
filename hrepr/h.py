@@ -65,14 +65,13 @@ class Tag:
     """
 
     __slots__ = (
-        "__name",
-        "__attributes",
-        "__children",
-        "__resources",
+        "_constructed",
         "_parent",
-        "_partial_attributes",
-        "_partial_children",
-        "_partial_resources",
+        "_name",
+        "_attributes",
+        "_children",
+        "_resources",
+        "_require_id",
     )
 
     specialized_tags = {}
@@ -87,64 +86,75 @@ class Tag:
             )
         return cls.specialized_tags[name]
 
-    def __init__(self, name, attributes=None, children=None, resources=None):
-        self.__name = None
-        self.__attributes = None
-        self.__children = None
-        self.__resources = None
-
-        self._parent = name
-        self._partial_attributes = attributes
-        self._partial_children = children
-        self._partial_resources = resources
+    def __init__(
+        self,
+        name=None,
+        parent=None,
+        attributes=None,
+        children=None,
+        resources=None,
+    ):
+        self._constructed = False
+        self._parent = parent
+        self._name = name
+        self._attributes = attributes
+        self._children = children
+        self._resources = resources
+        self._require_id = False
 
     def _do_cache(self):
+        self._constructed = True
+
         sequence = [self]
         current = self
-        while not isinstance(current._parent, str):
+        while current._parent is not None:
             sequence.append(current._parent)
             current = current._parent
-        self.__name = current._parent
+        self._name = current._name
 
         attributes = {}
         children = []
         resources = []
 
         for part in reversed(sequence):
-            if part._partial_attributes:
-                attributes.update(part._partial_attributes)
-            if part._partial_children:
-                children.extend(part._partial_children)
-            if part._partial_resources:
-                resources.extend(part._partial_resources)
+            if part._attributes:
+                attributes.update(part._attributes)
+            if part._children:
+                children.extend(part._children)
+            if part._resources:
+                resources.extend(part._resources)
 
-        self.__attributes = attributes
-        self.__children = tuple(flatten(children))
-        self.__resources = tuple(resources)
+        if self._require_id and "id" not in attributes:
+            attributes["id"] = _nextid()
+
+        self._parent = None
+        self._attributes = attributes
+        self._children = tuple(flatten(children))
+        self._resources = tuple(resources)
 
     @property
     def name(self):
-        if self.__name is None:
+        if not self._constructed:
             self._do_cache()
-        return self.__name
+        return self._name
 
     @property
     def attributes(self):
-        if self.__attributes is None:
+        if not self._constructed:
             self._do_cache()
-        return self.__attributes
+        return self._attributes
 
     @property
     def children(self):
-        if self.__children is None:
+        if not self._constructed:
             self._do_cache()
-        return self.__children
+        return self._children
 
     @property
     def resources(self):
-        if self.__resources is None:
+        if not self._constructed:
             self._do_cache()
-        return self.__resources
+        return self._resources
 
     def fill(self, children=None, attributes=None, resources=None):
         if not children and not attributes and not resources:
@@ -152,7 +162,7 @@ class Tag:
         if isinstance(resources, Tag):
             resources = (resources,)
         return type(self)(
-            name=self,
+            parent=self,
             attributes=attributes,
             children=children,
             resources=resources,
@@ -177,7 +187,7 @@ class Tag:
         attributes = {}
         classes = [it for it in items if not it.startswith("#")]
         if classes:
-            attributes["class"] = [*self.attributes.get("class", ()), *classes]
+            attributes["class"] = (*self.attributes.get("class", ()), *classes)
         ids = [it for it in items if it.startswith("#")]
         if ids:
             the_id = ids[-1][1:]
@@ -288,7 +298,7 @@ class HTML:
         if hasattr(tag_class, "specialize"):
             tag_class = tag_class.specialize(tag_name)
         if self._instantiate:
-            rval = tag_class(tag_name)
+            rval = tag_class(name=tag_name)
         else:
             rval = tag_class
         setattr(self, tag_name, rval)

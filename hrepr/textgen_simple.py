@@ -16,6 +16,9 @@ class TextFormatter:
     def to_string(self):
         return str(self)
 
+    def empty(self):  # pragma: no cover
+        return False
+
 
 class Breakable(TextFormatter):
     __slots__ = ("start", "body", "end")
@@ -31,6 +34,9 @@ class Breakable(TextFormatter):
         end = str(self.end) if self.end is not None else ""
         return f"{start}{body}{end}"
 
+    def empty(self):
+        return not (self.start or self.end or self.body)
+
 
 class Sequence(TextFormatter):
     __slots__ = ("elements",)
@@ -41,6 +47,9 @@ class Sequence(TextFormatter):
     def __str__(self):
         return "".join(map(str, self.elements))
 
+    def empty(self):
+        return not self.elements
+
 
 class Text(TextFormatter):
     __slots__ = ("value",)
@@ -50,3 +59,6 @@ class Text(TextFormatter):
 
     def __str__(self):
         return self.value
+
+    def empty(self):
+        return not self.value

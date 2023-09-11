@@ -1,5 +1,7 @@
 # from hrepr.embed import js_embed
-from hrepr.textgen import Context, Text
+from hrepr.textgen import Context, Text as OldText
+from hrepr.textgen_simple import Breakable, Sequence, Text
+from tests.common import one_test_per_assert
 
 # def test_max_col(file_regression):
 #     dct = {
@@ -29,7 +31,7 @@ def test_overflow_whitespace():
     ctx = Context(
         max_col=10, overflow="break", tabsize=0, offset=0, line_offset=0
     )
-    t = Text("hello                        ")
+    t = OldText("hello                        ")
     val, offset = ctx.format(t)
     assert val == "hello     "
 
@@ -38,6 +40,19 @@ def test_overflow_backslash():
     ctx = Context(
         max_col=10, overflow="backslash", tabsize=0, offset=0, line_offset=0
     )
-    t = Text("woop dee doo woop")
+    t = OldText("woop dee doo woop")
     val, offset = ctx.format(t)
     assert val == "woop dee d\n\\ oo woop"
+
+
+@one_test_per_assert
+def test_empty():
+    assert Text("").empty()
+    assert not Text(" ").empty()
+    assert not Text("x").empty()
+
+    assert Breakable(start="", end="", body=[]).empty()
+    assert not Breakable(start="(", end=")", body=[]).empty()
+
+    assert Sequence().empty()
+    assert not Sequence("x").empty()

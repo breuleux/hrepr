@@ -220,8 +220,8 @@ class HTMLGenerator(metaclass=OvldMC):
             if not filter_resources(r):
                 continue
             entry, more_extra, more_resources = self.generate(r)
-            assert not str(more_extra)
-            assert not str(more_resources)
+            assert more_extra.empty()
+            assert more_resources.empty()
             resources.append(entry)
 
         resources = Breakable(start=None, body=resources, end=None)

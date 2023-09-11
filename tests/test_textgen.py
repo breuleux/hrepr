@@ -1,5 +1,6 @@
 # from hrepr.embed import js_embed
-from hrepr.textgen import Context, Text as OldText
+from hrepr.textgen import Context
+from hrepr.textgen import Text as OldText
 from hrepr.textgen_simple import Breakable, Sequence, Text
 from tests.common import one_test_per_assert
 

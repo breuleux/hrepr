@@ -196,7 +196,7 @@ class HTMLGenerator(metaclass=OvldMC):
 
         return re.sub(
             pattern=rf"\[{resource.embed_key}:([0-9]+)\]",
-            string=value,
+            string=str(value),
             repl=sub,
         )
 

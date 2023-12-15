@@ -280,6 +280,7 @@ _void_tags = {
     "source",
     "track",
     "wbr",
+    "!DOCTYPE",
 }
 
 for t in _void_tags:

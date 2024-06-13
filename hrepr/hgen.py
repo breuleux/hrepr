@@ -118,7 +118,10 @@ class HTMLGenerator(metaclass=OvldMC):
 
     @ovld
     def process(self, node: object):
-        return str(node)
+        if hasattr(node, "__h__"):
+            return self.process(node.__h__())
+        else:
+            return str(node)
 
     @ovld
     def process(self, node: Tag):

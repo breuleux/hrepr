@@ -93,6 +93,15 @@ def test_style():
     )
 
 
+class Hobbit:
+    def __h__(self):
+        return H.b("preciouss")
+
+
+def test_dunder_h():
+    assert matches(H.div(Hobbit()), "<div><b>preciouss</b></div>")
+
+
 @one_test_per_assert
 def test_voids():
     assert matches(H.area(), "<area />")

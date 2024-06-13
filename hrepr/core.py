@@ -109,10 +109,10 @@ class Hrepr(metaclass=OvldMC):
 
     @ovld
     def hrepr_resources(self, cls: object):
-        return []
-
-    def hrepr_resources(self, cls: has_attribute("__hrepr_resources__")):
-        return cls.__hrepr_resources__(self.H)
+        if hasattr(cls, "__hrepr_resources__"):
+            return cls.__hrepr_resources__(self.H)
+        else:
+            return []
 
     @ovld.dispatch
     def hrepr(ovldcall, obj):
@@ -125,13 +125,30 @@ class Hrepr(metaclass=OvldMC):
             return rval
 
     def hrepr(self, obj: object):
-        return NotImplemented
-
-    def hrepr(self, obj: has_attribute("__hrepr__")):
-        return obj.__hrepr__(self.H, self)
+        if hasattr(obj, "__hrepr__"):
+            return obj.__hrepr__(self.H, self)
+        elif is_dataclass(type(obj)):
+            return self.make.instance(
+                title=type(obj).__name__,
+                fields=[
+                    [field.name, getattr(obj, field.name)]
+                    for field in dataclass_fields(obj)
+                ],
+                delimiter="=",
+                type=type(obj),
+            )
+        else:
+            return NotImplemented
 
     @ovld
     def hrepr_short(self, obj: object):
+        if hasattr(obj, "__hrepr_short__"):
+            return obj.__hrepr_short__(self.H, self)
+        elif is_dataclass(type(obj)):
+            return self.make.title_box(
+                title=type(obj).__name__, body="...", type=type(obj), layout="s"
+            )
+
         def _xtn(x):
             tx = type(x)
             mn = tx.__module__
@@ -143,10 +160,6 @@ class Hrepr(metaclass=OvldMC):
         rval = self.make.atom("<", _xtn(obj), ">", type=type(obj))
         self.state.register(id(obj), rval)
         return rval
-
-    @ovld
-    def hrepr_short(self, obj: has_attribute("__hrepr_short__")):
-        return obj.__hrepr_short__(self.H, self)
 
     def __call__(self, obj, **config):
         if self.preprocess is not None:
@@ -270,24 +283,6 @@ class StdHrepr(Hrepr):
     def hrepr_short(self, xs: dict):
         return self.make.bracketed(
             self.make.short("..."), start="{", end="}", type=type(xs)
-        )
-
-    # Dataclasses
-
-    def hrepr(self, obj: meta(is_dataclass)):
-        return self.make.instance(
-            title=type(obj).__name__,
-            fields=[
-                [field.name, getattr(obj, field.name)]
-                for field in dataclass_fields(obj)
-            ],
-            delimiter="=",
-            type=type(obj),
-        )
-
-    def hrepr_short(self, obj: meta(is_dataclass)):
-        return self.make.title_box(
-            title=type(obj).__name__, body="...", type=type(obj), layout="s"
         )
 
     # Other structures

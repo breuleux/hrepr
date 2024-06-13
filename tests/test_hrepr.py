@@ -210,7 +210,7 @@ factory.misc(
         "generators": [_gen(3)],
         "coroutines": [_coro(3), _corogen(3)],
         "classes": [Point, Exception, type],
-        "builtins": [pow, open, [].append],
+        "builtins": [pow, print, [].append],
         "wrappers": [dict.update, list.__str__],
         "methods": [Point(1, 2).some_method, [].__str__],
         "modules": [dataclasses],

@@ -144,7 +144,6 @@ def cytoscape_graph(*edges):
 
 
 if __name__ == "__main__":
-
     entries = []
 
     def hprint(*objs, **kwargs):

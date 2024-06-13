@@ -6,7 +6,7 @@ from dataclasses import is_dataclass
 from pathlib import Path
 from typing import Union
 
-from ovld import OvldMC, extend_super, has_attribute, meta, ovld
+from ovld import OvldMC, extend_super, ovld
 
 from .h import H, Tag, styledir
 from .make import StandardMaker

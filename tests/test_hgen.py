@@ -4,9 +4,8 @@ from typing import Union
 
 import pytest
 
-from hrepr import H, embed
+from hrepr import H, embed, standard_html
 from hrepr import h as hmodule
-from hrepr import standard_html
 from hrepr.resource import JSExpression, Resource
 
 

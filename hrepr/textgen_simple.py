@@ -1,3 +1,8 @@
+from typing import Union
+
+from ovld import ovld
+
+
 def join(seq, sep):
     seq = list(seq)
     if not seq:
@@ -8,7 +13,10 @@ def join(seq, sep):
 
 
 class TextFormatter:
-    __slots__ = ()
+    __slots__ = ("resources",)
+
+    def __init__(self, resources=None):
+        self.resources = resources or ()
 
     def __str__(self):  # pragma: no cover
         raise Exception("Override this")
@@ -23,7 +31,8 @@ class TextFormatter:
 class Breakable(TextFormatter):
     __slots__ = ("start", "body", "end")
 
-    def __init__(self, start, body, end):
+    def __init__(self, start, body, end, resources=None):
+        super().__init__(resources)
         self.start = start
         self.body = body
         self.end = end
@@ -41,7 +50,8 @@ class Breakable(TextFormatter):
 class Sequence(TextFormatter):
     __slots__ = ("elements",)
 
-    def __init__(self, *elements):
+    def __init__(self, *elements, resources=None):
+        super().__init__(resources)
         self.elements = elements
 
     def __str__(self):
@@ -54,7 +64,8 @@ class Sequence(TextFormatter):
 class Text(TextFormatter):
     __slots__ = ("value",)
 
-    def __init__(self, value):
+    def __init__(self, value, resources=None):
+        super().__init__(resources)
         self.value = value
 
     def __str__(self):
@@ -62,3 +73,23 @@ class Text(TextFormatter):
 
     def empty(self):
         return not self.value
+
+
+@ovld
+def collect_resources(root: TextFormatter, results: list):
+    results.extend(root.resources)
+    for field in root.__slots__:
+        collect_resources(getattr(root, field), results)
+    return results
+
+
+@ovld
+def collect_resources(li: Union[list, tuple], results: list):
+    for x in li:
+        collect_resources(x, results)
+    return results
+
+
+@ovld
+def collect_resources(s: Union[str, type(None)], results: list):
+    return results

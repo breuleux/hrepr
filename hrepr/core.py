@@ -9,6 +9,7 @@ from typing import Union
 from ovld import OvldMC, extend_super, ovld
 
 from .h import H, Tag, styledir
+from .j import J
 from .make import StandardMaker
 
 ABSENT = object()
@@ -422,6 +423,14 @@ class StdHrepr(Hrepr):
 
     def hrepr_short(self, x: Tag):
         return x
+
+    # JavaScript
+
+    def hrepr(self, x: J):
+        return H.raw(x)
+
+    def hrepr_short(self, x: J):
+        return H.raw(x)
 
 
 def inject_reference_numbers(hcall, node, refmap):

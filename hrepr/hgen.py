@@ -9,7 +9,8 @@ from . import h as hmodule
 from . import resource
 from .embed import attr_embed, js_embed
 from .h import H, Tag
-from .textgen_simple import Breakable, Text, TextFormatter
+from .j import Code, Into, J, Module, Script
+from .textgen_simple import Breakable, Text, TextFormatter, collect_resources
 
 
 class ResourceDeduplicator:
@@ -122,6 +123,63 @@ class HTMLGenerator(metaclass=OvldMC):
             return self.process(node.__h__())
         else:
             return str(node)
+
+    @ovld
+    def process(self, node: J):
+        embedded = self._js_embed(node)
+        resources = collect_resources(embedded, [])
+
+        lines = [
+            f"const obj = {embedded};",
+            "$$INTO.__object.__resolve(obj);",
+        ]
+
+        element = None
+
+        for r in [r for r in resources if isinstance(r, Into)]:
+            assert element is None
+            element = r.element.autoid()
+            replace_line = ""
+
+        if element is None:
+            element = H.placeholder().autoid()
+            replace_line = "$$INTO.replaceWith(obj);"
+
+        workspace = self.process(element)
+        wid = element.attributes["id"]
+
+        lines = [*lines, replace_line]
+
+        scripts = {r.src for r in resources if isinstance(r, Script)}
+        lines = [
+            f"$$HREPR.loadScripts({self.js_embed(list(scripts))},()=>{{",
+            *lines,
+            "});",
+        ]
+
+        into_line = f"const $$INTO = $$HREPR.prepare({self.js_embed(wid)});"
+        lines = [into_line, *lines]
+
+        for r in [r for r in resources if isinstance(r, Module)]:
+            if r.namespace:
+                line = (
+                    f"import * as {r.varname} from {self.js_embed(r.module)};"
+                )
+            elif r.symbol:
+                line = f"import {{ {r.symbol} as {r.varname} }} from {self.js_embed(r.module)};"
+            else:
+                line = f"import {r.varname} from {self.js_embed(r.module)};"
+            lines = [line, *lines]
+
+        script = H.script("\n".join(lines), type="module")
+
+        for co in [r for r in resources if isinstance(r, Code)]:
+            assert co.code
+            workspace.resources.append(H.script(co.code))
+
+        workspace.resources.append(constructor_lib)
+        workspace.extra.append(script)
+        return workspace
 
     @ovld
     def process(self, node: Tag):
@@ -331,16 +389,55 @@ def script_tag(self, node, workspace, default):
 constructor_lib = H.script(
     """
 $$HREPR = {
+    loaded: {},
     prepare(node_id) {
         const self = document.getElementById(node_id);
         let resolve = null;
         self.__object = new Promise((rs, rj) => { resolve = rs });
         self.__object.__resolve = resolve;
+        return self;
     },
     isFunc(x) {
         let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
         return (hasprop("arguments") || !hasprop("prototype"));
-    }
+    },
+    allLoaded(scripts) {
+        for (let script of scripts) {
+            if (!$$HREPR.loaded[script]) {
+                return false;
+            }
+        }
+        return true;
+    },
+    loadScripts(scripts, cb) {
+        if ($$HREPR.allLoaded(scripts)) {
+            cb();
+            return;
+        }
+        for (let script of scripts) {
+            if ($$HREPR.loaded[script]) {
+                continue;
+            }
+            function onLoad() {
+                $$HREPR.loaded[script] = true;
+                if ($$HREPR.allLoaded(scripts)) {
+                    cb();
+                }
+            }
+            let scriptTag = document.createElement("script");
+            scriptTag.src = script;
+            scriptTag.onload = onLoad;
+            document.head.appendChild(scriptTag);
+        }
+    },
+    ucall(obj, sym, ...arglist) {
+        if (sym) {
+            return $$HREPR.isFunc(obj[sym]) ? obj[sym](...arglist) : new obj[sym](...arglist);
+        }
+        else {
+            return $$HREPR.isFunc(obj) ? obj(...arglist) : new obj(...arglist);
+        }
+    },
 }
 """
 )

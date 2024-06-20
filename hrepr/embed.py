@@ -1,9 +1,11 @@
 import json
+from itertools import count
 from typing import Union
 
 from ovld import ovld
 
 from .h import HType, Tag
+from .j import Code, Into, J, Module, Script
 from .resource import JSExpression, Resource
 from .textgen_simple import Breakable, Sequence, Text, join
 
@@ -99,6 +101,73 @@ def js_embed(self, t: Tag):
     if not tag_id:
         raise ValueError(f"Cannot embed <{t.name}> element without an id.")
     return f"document.getElementById('{tag_id}')"
+
+
+_c = count()
+
+
+def gensym(symbol):
+    return f"{symbol}__{next(_c)}"
+
+
+@ovld
+def js_embed(self, j: J):
+    resources = []
+    if j.namespace is not None:
+        varname = gensym(j.symbol or "default")
+        resources.append(
+            Module(module=j.namespace, varname=varname, namespace=True)
+        )
+    elif j.module is not None:
+        varname = gensym(j.symbol or "default")
+        resources.append(
+            Module(
+                module=j.module,
+                symbol=j.symbol,
+                varname=varname,
+                namespace=False,
+            )
+        )
+    elif j.src is not None:
+        varname = j.symbol
+        resources.append(Script(src=j.src, symbol=j.symbol))
+    elif j.code is not None:
+        varname = j.symbol
+        resources.append(Code(code=j.code, symbol=j.symbol))
+
+    result = varname
+    prev_result = varname
+    last_symbol = None
+
+    for entry in j.path:
+        if varname is None:
+            assert isinstance(entry, str)
+            result = prev_result = varname = entry
+            continue
+        if isinstance(entry, str):
+            prev_result = result
+            last_symbol = entry
+            result = Sequence(result, ".", entry)
+        elif isinstance(entry, (list, tuple)):
+            result = Breakable(
+                start="$$HREPR.ucall(",
+                body=join(
+                    [prev_result, self(last_symbol), *[self(x) for x in entry]],
+                    sep=",",
+                ),
+                end=")",
+            )
+        else:  # pragma: no cover
+            raise TypeError()
+
+    if resources:
+        result = Sequence(result, resources=resources)
+    return result
+
+
+@ovld
+def js_embed(self, i: Into):
+    return Text("$$INTO", resources=[i])
 
 
 @ovld

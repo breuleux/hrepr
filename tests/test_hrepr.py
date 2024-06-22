@@ -8,6 +8,7 @@ import pytest
 from hrepr import H
 from hrepr import hrepr as real_hrepr
 from hrepr.h import styledir
+from hrepr.j import J
 
 css_hrepr = open(f"{styledir}/hrepr.css", encoding="utf-8").read()
 hrepr = real_hrepr.variant(fill_resources=False)
@@ -247,6 +248,12 @@ factory.recursive2([_recursive()] * 2, standard, shortrefs)
 def test_tag():
     tg = H.span["hello"](1, 2, H.b("there"))
     assert hrepr(tg) == tg
+
+
+def test_hrepr_of_j():
+    js = J(src="x.js").fufu(7813)
+    assert "$$HREPR.ucall(fufu,null,7813)" in str(hrepr(js).as_page())
+    assert "$$HREPR.ucall(fufu,null,7813)" in str(hshort(js).as_page())
 
 
 def test_unsupported():

@@ -51,19 +51,19 @@ $$HREPR = {
     },
 }
 </script><script>
-    class Counter {
-        constructor(node, options) {
-            this.node = node;
-            this.increment = options.increment;
-            this.current = 0;
-            this.node.innerText = "Click me!";
-            this.node.onclick = evt => {
-                this.current += this.increment;
-                this.node.innerText = this.current;
-            }
+class Counter {
+    constructor(node, options) {
+        this.node = node;
+        this.increment = options.increment;
+        this.current = 0;
+        this.node.innerText = "Click me!";
+        this.node.onclick = evt => {
+            this.current += this.increment;
+            this.node.innerText = this.current;
         }
     }
-    </script></head><body><div><h2>The buttons should increment by 2 and 3 respectively.</h2><button style="width:100px;" id="AID_0">ERROR!</button><button style="width:100px;" id="AID_1">ERROR!</button></div><script>$$HREPR.prepare('AID_0')</script><script type="module">
+}
+</script></head><body><div><h2>The buttons should increment by 2 and 3 respectively.</h2><button style="width:100px;" id="AID_0">ERROR!</button><button style="width:100px;" id="AID_1">ERROR!</button></div><script>$$HREPR.prepare('AID_0')</script><script type="module">
 const self = document.getElementById('AID_0');
 const arglist = [self, {"increment": 2}];
 let obj = $$HREPR.isFunc(Counter) ? Counter(...arglist) : new Counter(...arglist);

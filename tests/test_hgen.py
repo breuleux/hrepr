@@ -14,22 +14,23 @@ def reset_id_counter():
     hmodule.current_autoid = count()
 
 
-incrementer_script = H.script(
-    """
-    class Counter {
-        constructor(node, options) {
-            this.node = node;
-            this.increment = options.increment;
-            this.current = 0;
-            this.node.innerText = "Click me!";
-            this.node.onclick = evt => {
-                this.current += this.increment;
-                this.node.innerText = this.current;
-            }
+incrementer_code = """
+class Counter {
+    constructor(node, options) {
+        this.node = node;
+        this.increment = options.increment;
+        this.current = 0;
+        this.node.innerText = "Click me!";
+        this.node.onclick = evt => {
+            this.current += this.increment;
+            this.node.innerText = this.current;
         }
     }
-    """
-)
+}
+"""
+
+
+incrementer_script = H.script(incrementer_code)
 
 
 def test_constructor_global_symbol(file_regression):

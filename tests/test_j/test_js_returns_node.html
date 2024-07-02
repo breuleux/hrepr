@@ -1,0 +1,70 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /><script>
+function make_counter(increment) {
+    let node = document.createElement("button");
+    let current = 0;
+    node.innerText = "Click me!";
+    node.style.width = "100px";
+    node.onclick = evt => {
+        current += increment;
+        node.innerText = current;
+    };
+    return node;
+}
+</script><script>
+$$HREPR = {
+    loaded: {},
+    prepare(node_id) {
+        const self = document.getElementById(node_id);
+        let resolve = null;
+        self.__object = new Promise((rs, rj) => { resolve = rs });
+        self.__object.__resolve = resolve;
+        return self;
+    },
+    isFunc(x) {
+        let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
+        return (hasprop("arguments") || !hasprop("prototype"));
+    },
+    allLoaded(scripts) {
+        for (let script of scripts) {
+            if (!$$HREPR.loaded[script]) {
+                return false;
+            }
+        }
+        return true;
+    },
+    loadScripts(scripts, cb) {
+        if ($$HREPR.allLoaded(scripts)) {
+            cb();
+            return;
+        }
+        for (let script of scripts) {
+            if ($$HREPR.loaded[script]) {
+                continue;
+            }
+            function onLoad() {
+                $$HREPR.loaded[script] = true;
+                if ($$HREPR.allLoaded(scripts)) {
+                    cb();
+                }
+            }
+            let scriptTag = document.createElement("script");
+            scriptTag.src = script;
+            scriptTag.onload = onLoad;
+            document.head.appendChild(scriptTag);
+        }
+    },
+    ucall(obj, sym, ...arglist) {
+        if (sym) {
+            return $$HREPR.isFunc(obj[sym]) ? obj[sym](...arglist) : new obj[sym](...arglist);
+        }
+        else {
+            return $$HREPR.isFunc(obj) ? obj(...arglist) : new obj(...arglist);
+        }
+    },
+}
+</script></head><body><div><h2>The button should increment by 7.</h2><placeholder id="AID_0"></placeholder></div><script type="module">const $$INTO = $$HREPR.prepare("AID_0");
+$$HREPR.loadScripts([],()=>{
+const obj = $$HREPR.ucall(make_counter,null,7);
+$$INTO.__object.__resolve(obj);
+$$INTO.replaceWith(obj);
+});</script></body></html>

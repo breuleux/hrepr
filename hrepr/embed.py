@@ -97,10 +97,8 @@ def js_embed(self, t: HType.self):
 
 @ovld
 def js_embed(self, t: Tag):
-    tag_id = t.get_attribute("id", None)
-    if not tag_id:
-        raise ValueError(f"Cannot embed <{t.name}> element without an id.")
-    return f"document.getElementById('{tag_id}')"
+    innerhtml = str(t)
+    return f"$$HREPR.fromHTML({self(innerhtml)})"
 
 
 _c = count()
@@ -134,6 +132,8 @@ def js_embed(self, j: J):
     elif j.code is not None:
         varname = j.symbol
         resources.append(Code(code=j.code, symbol=j.symbol))
+    else:
+        varname = "window"
 
     result = varname
     prev_result = varname

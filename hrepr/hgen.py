@@ -143,7 +143,7 @@ class HTMLGenerator(metaclass=OvldMC):
 
         if element is None:
             element = H.placeholder().autoid()
-            replace_line = "$$INTO.replaceWith(obj);"
+            replace_line = "obj && $$INTO.replaceWith(obj);"
 
         workspace = self.process(element)
         wid = element.attributes["id"]
@@ -390,6 +390,11 @@ constructor_lib = H.script(
     """
 $$HREPR = {
     loaded: {},
+    fromHTML(html) {
+        const node = document.createElement("div");
+        node.innerHTML = html;
+        return node.childNodes[0];
+    },
     prepare(node_id) {
         const self = document.getElementById(node_id);
         let resolve = null;

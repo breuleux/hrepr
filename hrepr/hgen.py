@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass
 from html import escape
+from pathlib import Path
 from typing import Sequence, Union
 
 from ovld import OvldMC, ovld
@@ -386,66 +387,7 @@ def script_tag(self, node, workspace, default):
     return default(node, workspace)
 
 
-constructor_lib = H.script(
-    """
-$$HREPR = {
-    loaded: {},
-    fromHTML(html) {
-        const node = document.createElement("div");
-        node.innerHTML = html;
-        return node.childNodes[0];
-    },
-    prepare(node_id) {
-        const self = document.getElementById(node_id);
-        let resolve = null;
-        self.__object = new Promise((rs, rj) => { resolve = rs });
-        self.__object.__resolve = resolve;
-        return self;
-    },
-    isFunc(x) {
-        let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
-        return (hasprop("arguments") || !hasprop("prototype"));
-    },
-    allLoaded(scripts) {
-        for (let script of scripts) {
-            if (!$$HREPR.loaded[script]) {
-                return false;
-            }
-        }
-        return true;
-    },
-    loadScripts(scripts, cb) {
-        if ($$HREPR.allLoaded(scripts)) {
-            cb();
-            return;
-        }
-        for (let script of scripts) {
-            if ($$HREPR.loaded[script]) {
-                continue;
-            }
-            function onLoad() {
-                $$HREPR.loaded[script] = true;
-                if ($$HREPR.allLoaded(scripts)) {
-                    cb();
-                }
-            }
-            let scriptTag = document.createElement("script");
-            scriptTag.src = script;
-            scriptTag.onload = onLoad;
-            document.head.appendChild(scriptTag);
-        }
-    },
-    ucall(obj, sym, ...arglist) {
-        if (sym) {
-            return $$HREPR.isFunc(obj[sym]) ? obj[sym](...arglist) : new obj[sym](...arglist);
-        }
-        else {
-            return $$HREPR.isFunc(obj) ? obj(...arglist) : new obj(...arglist);
-        }
-    },
-}
-"""
-)
+constructor_lib = H.script((Path(__file__).parent / "hlib.js").read_text())
 
 
 constructor_promise_script = "$$HREPR.prepare('{node_id}')"

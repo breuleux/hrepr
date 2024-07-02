@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from ovld import OvldMC, extend_super, has_attribute
 
-from hrepr import H, hrepr
+from hrepr import H, J, hrepr, into
 
 
 @dataclass
@@ -129,17 +129,16 @@ def cytoscape_graph(*edges):
     nodes = {src for src, _ in edges} | {tgt for _, tgt in edges}
     data = [{"data": {"id": node}} for node in nodes]
     data += [{"data": {"source": src, "target": tgt}} for src, tgt in edges]
-    return H.div(
-        style="width:300px;height:300px;border:1px solid black;",
-        __constructor={
-            "module": "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js",
-            "arguments": {
-                "container": H.self(),
-                "elements": data,
-                "style": cystyle,
-                "layout": {"name": "cose"},
-            },
-        },
+    cy = J(
+        module="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js"
+    )
+    return cy(
+        container=into(
+            H.div(style="width:300px;height:300px;border:1px solid black;")
+        ),
+        elements=data,
+        style=cystyle,
+        layout={"name": "cose"},
     )
 
 
@@ -207,13 +206,11 @@ if __name__ == "__main__":
 
     subtitle("Plot with plotly")
     data = [math.sin(x / 10) for x in range(100)]
+    Plotly = J(src="https://cdn.plot.ly/plotly-latest.min.js", symbol="Plotly")
     hprint(
-        H.div(
-            __constructor={
-                "script": "https://cdn.plot.ly/plotly-latest.min.js",
-                "symbol": "Plotly.newPlot",
-                "options": [{"x": list(range(len(data))), "y": list(data)}],
-            }
+        Plotly.newPlot(
+            into(H.div()),
+            [{"x": list(range(len(data))), "y": list(data)}],
         )
     )
 

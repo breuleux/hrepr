@@ -2,16 +2,17 @@ import re
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Union
 
 from ovld import OvldMC, ovld
 
-from . import h as hmodule
 from . import resource
 from .embed import attr_embed, js_embed
 from .h import H, Tag
 from .j import Code, Into, J, Module, Script
 from .textgen_simple import Breakable, Text, TextFormatter, collect_resources
+
+constructor_lib = H.script((Path(__file__).parent / "hlib.js").read_text())
 
 
 class ResourceDeduplicator:
@@ -388,103 +389,6 @@ def script_tag(self, node, workspace, default):
         new_children.append(self.expand_resources(child, self.js_embed))
     workspace.children = new_children
     return default(node, workspace)
-
-
-constructor_lib = H.script((Path(__file__).parent / "hlib.js").read_text())
-
-
-constructor_promise_script = "$$HREPR.prepare('{node_id}')"
-
-
-constructor_template_script = """{imp}
-const self = document.getElementById('{node_id}');
-const arglist = {arguments};
-let obj = $$HREPR.isFunc({symbol}) ? {symbol}(...arglist) : new {symbol}(...arglist);
-self.__object.__resolve(obj);
-"""
-
-
-@standard_html.register("attr:--constructor")
-def constructor_attribute(self, node, workspace, key, value, default):
-    if "id" in node.attributes:
-        node_id = node.attributes["id"]
-    else:  # pragma: no cover
-        # Setting __constructor should normally set an id, so this may not trigger
-        autoid = f"$hrepr${next(hmodule.current_autoid)}"
-        node_id = workspace.attributes["id"] = autoid
-
-    module = value.get("module", None)
-    script = value.get("script", None)
-
-    workspace.resources.append(constructor_lib)
-    if module:
-        assert not isinstance(module, (list, tuple))
-        assert script is None
-        symbol = value.get("symbol", None)
-        module = self.js_embed(module)
-        if symbol is None:
-            symbol = "constructor"
-            imp = f"import constructor from {module};"
-        elif symbol.startswith("default."):
-            imp = f"import dflt from {module};"
-            symbol = symbol.replace("default.", "dflt.")
-        else:
-            rootsym, sep, props = symbol.partition(".")
-            imp = f"import {{{rootsym}}} from {module};"
-    else:
-        if script:
-            script = [
-                src
-                if isinstance(src, Tag)
-                else H.script(src=src, type="text/javascript")
-                for src in (
-                    script if isinstance(script, (list, tuple)) else [script]
-                )
-            ]
-            workspace.resources.extend(script)
-        symbol = value["symbol"]
-        imp = ""
-
-    if "options" in value:
-        assert "arguments" not in value
-        arguments = [H.self(), value["options"]]
-    elif "arguments" in value:
-        arguments = value["arguments"]
-        if not isinstance(arguments, (list, tuple)):
-            arguments = [arguments]
-    else:
-        arguments = [H.self()]
-
-    if "stylesheet" in value:
-        sheet = value["stylesheet"]
-        sheet = [
-            src if isinstance(src, Tag) else H.link(rel="stylesheet", href=src)
-            for src in (sheet if isinstance(sheet, (list, tuple)) else [sheet])
-        ]
-        workspace.resources.extend(sheet)
-
-    sc_promise = H.script(constructor_promise_script.format(node_id=node_id))
-    workspace.extra.append(sc_promise)
-
-    sc = H.script(
-        constructor_template_script.format(
-            imp=imp,
-            symbol=symbol,
-            node_id=node_id,
-            arguments=self.js_embed(arguments),
-        ),
-        type="module",
-    )
-
-    workspace.extra.append(sc)
-
-
-@standard_html.register("attr:--resources")
-def attr_resources(self, node, workspace, key, value, default):
-    if not isinstance(value, Sequence):
-        workspace.resources.append(value)
-    else:
-        workspace.resources.extend(value)
 
 
 @standard_html.register("attr:style")

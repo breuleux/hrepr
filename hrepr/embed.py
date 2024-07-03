@@ -4,7 +4,7 @@ from typing import Union
 
 from ovld import ovld
 
-from .h import H, HType, Tag
+from .h import H, Tag
 from .j import Code, Into, J, Module, Script
 from .resource import JSExpression, Resource
 from .textgen_simple import Breakable, Sequence, Text, join
@@ -88,11 +88,6 @@ def js_embed(self, x: Union[int, float, str, bool, _type(None)]):
 @ovld
 def js_embed(self, expr: JSExpression):
     return expr.code
-
-
-@ovld
-def js_embed(self, t: HType.self):
-    return "self"
 
 
 @ovld

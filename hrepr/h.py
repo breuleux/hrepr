@@ -1,6 +1,7 @@
 import os.path
 from itertools import count
 from types import GeneratorType
+from typing import Sequence
 
 # CSS for hrepr
 styledir = f"{os.path.dirname(__file__)}/style"
@@ -99,7 +100,9 @@ class Tag:
         self._name = name
         self._attributes = attributes
         self._children = children
-        self._resources = resources
+        self._resources = resources or (
+            attributes and attributes.pop("--resources", None)
+        )
         self._require_id = False
 
     def _do_cache(self):
@@ -122,7 +125,10 @@ class Tag:
             if part._children:
                 children.extend(part._children)
             if part._resources:
-                resources.extend(part._resources)
+                if isinstance(part._resources, Sequence):
+                    resources.extend(part._resources)
+                else:
+                    resources.append(part._resources)
 
         if self._require_id and "id" not in attributes:
             attributes["id"] = _nextid()
@@ -197,9 +203,6 @@ class Tag:
         return self.fill(attributes=attributes)
 
     def __call__(self, *children, **attributes):
-        if "__constructor" in attributes:
-            if "id" not in attributes and "id" not in self.attributes:
-                attributes["id"] = _nextid()
         attributes = {
             attr.replace("_", "-"): value for attr, value in attributes.items()
         }
@@ -300,7 +303,7 @@ class HTML:
         if self._instantiate:
             rval = tag_class(name=tag_name)
         else:
-            rval = tag_class
+            rval = tag_class  # pragma: no cover
         setattr(self, tag_name, rval)
         return rval
 

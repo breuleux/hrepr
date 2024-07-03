@@ -7,7 +7,20 @@ from hrepr import into
 from hrepr.h import H
 from hrepr.j import J
 
-from .test_hgen import incrementer_code
+incrementer_code = """
+class Counter {
+    constructor(node, options) {
+        this.node = node;
+        this.increment = options.increment;
+        this.current = 0;
+        this.node.innerText = "Click me!";
+        this.node.onclick = evt => {
+            this.current += this.increment;
+            this.node.innerText = this.current;
+        }
+    }
+}
+"""
 
 
 @pytest.fixture(autouse=True)
@@ -117,4 +130,61 @@ def test_alert(file_regression):
         J().alert("hello"),
     )
 
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
+cystyle = """
+node {
+    background-color: #080;
+    label: data(id);
+}
+edge {
+    width: 5;
+    line-color: #ccc;
+    target-arrow-color: #ccc;
+    target-arrow-shape: triangle;
+    curve-style: bezier;
+}
+"""
+
+
+def test_external_cytoscape(file_regression):
+    node = H.div(
+        H.h2("This should show an interactive graph."),
+        J(
+            module="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js"
+        )(
+            container=into(
+                H.div(
+                    style={
+                        "width": "500px",
+                        "height": "500px",
+                        "border": "1px solid cyan",
+                    },
+                )
+            ),
+            elements=[
+                {"data": {"id": "A"}},
+                {"data": {"id": "B"}},
+                {"data": {"id": "C"}},
+                {"data": {"source": "A", "target": "B"}},
+                {"data": {"source": "B", "target": "C"}},
+                {"data": {"source": "C", "target": "A"}},
+            ],
+            style=cystyle,
+            layout={"name": "cose"},
+        ),
+    )
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_external_katex(file_regression):
+    katex = J(
+        module="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.mjs",
+        stylesheet="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.css",
+    )
+    node = H.div(
+        H.h2("This should show a well-formatted mathematical formula."),
+        katex.render("c = \\pm\\sqrt{a^2 + b^2}", into(H.div())),
+    )
     file_regression.check(str(node.as_page()), extension=".html")

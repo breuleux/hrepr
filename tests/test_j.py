@@ -96,3 +96,12 @@ def test_js_returns_node(file_regression):
     )
 
     file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_alert(file_regression):
+    node = H.div(
+        H.h2("There should be an alert."),
+        J().alert("hello"),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")

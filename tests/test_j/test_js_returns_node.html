@@ -10,9 +10,14 @@ function make_counter(increment) {
     };
     return node;
 }
-</script><script>
-$$HREPR = {
-    loaded: {},
+</script><script>$$HREPR = {
+    scriptStatus: {},
+    counters: {},
+    fromHTML(html) {
+        const node = document.createElement("div");
+        node.innerHTML = html;
+        return node.childNodes[0];
+    },
     prepare(node_id) {
         const self = document.getElementById(node_id);
         let resolve = null;
@@ -24,33 +29,37 @@ $$HREPR = {
         let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
         return (hasprop("arguments") || !hasprop("prototype"));
     },
-    allLoaded(scripts) {
-        for (let script of scripts) {
-            if (!$$HREPR.loaded[script]) {
-                return false;
-            }
-        }
-        return true;
-    },
     loadScripts(scripts, cb) {
-        if ($$HREPR.allLoaded(scripts)) {
+        if (scripts.length == 0) {
             cb();
             return;
         }
+        const counter = {count: scripts.length, callback: cb};
         for (let script of scripts) {
-            if ($$HREPR.loaded[script]) {
-                continue;
-            }
-            function onLoad() {
-                $$HREPR.loaded[script] = true;
-                if ($$HREPR.allLoaded(scripts)) {
-                    cb();
+            let counters = (this.counters[script] ||= []);
+            counters.push(counter);
+            if (this.scriptStatus[script] === undefined) {
+                this.scriptStatus[script] = false;
+                function onLoad() {
+                    $$HREPR.scriptStatus[script] = true;
+                    $$HREPR.triggerScript(script);
                 }
+                let scriptTag = document.createElement("script");
+                scriptTag.src = script;
+                scriptTag.onload = onLoad;
+                document.head.appendChild(scriptTag);    
             }
-            let scriptTag = document.createElement("script");
-            scriptTag.src = script;
-            scriptTag.onload = onLoad;
-            document.head.appendChild(scriptTag);
+            else if (this.scriptStatus[script]) {
+                $$HREPR.triggerScript(script);
+            }
+        }
+    },
+    triggerScript(script) {
+        for (let counter of this.counters[script] || []) {
+            counter.count--;
+            if (!counter.count) {
+                counter.callback();
+            }
         }
     },
     ucall(obj, sym, ...arglist) {
@@ -62,9 +71,10 @@ $$HREPR = {
         }
     },
 }
+
 </script></head><body><div><h2>The button should increment by 7.</h2><placeholder id="AID_0"></placeholder></div><script type="module">const $$INTO = $$HREPR.prepare("AID_0");
 $$HREPR.loadScripts([],()=>{
 const obj = $$HREPR.ucall(make_counter,null,7);
 $$INTO.__object.__resolve(obj);
-$$INTO.replaceWith(obj);
+obj && $$INTO.replaceWith(obj);
 });</script></body></html>

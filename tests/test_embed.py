@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from hrepr import embed
+from hrepr import standard_html
 from hrepr.h import H
 from hrepr.resource import JSExpression, JSFunction, Resource
 
@@ -10,14 +10,14 @@ from .common import one_test_per_assert
 
 
 def js_embed(obj, **fmt):
-    x = embed.js_embed(obj)
+    x = standard_html.js_embed(obj)
     if not isinstance(x, str):
         x = x.to_string(**fmt)
     return x
 
 
 def attr_embed(obj):
-    return embed.attr_embed("k", obj)
+    return standard_html.attr_embed(obj)
 
 
 def same(x):

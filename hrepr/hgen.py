@@ -1,16 +1,23 @@
+import json
 import re
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
 from typing import Union
 
-from ovld import OvldMC, ovld
+from ovld import OvldMC
 
 from . import resource
-from .embed import attr_embed, js_embed
-from .h import H, Tag
+from .h import H, Tag, gensym
 from .j import Code, Into, J, Module, Script
-from .textgen_simple import Breakable, Text, TextFormatter, collect_resources
+from .textgen_simple import (
+    Breakable,
+    Sequence,
+    Text,
+    TextFormatter,
+    collect_resources,
+    join,
+)
 
 constructor_lib = H.script((Path(__file__).parent / "hlib.js").read_text())
 
@@ -53,27 +60,9 @@ class Workspace:
 
 
 class HTMLGenerator(metaclass=OvldMC):
-    def __init__(
-        self, tag_rules=None, attr_rules=None, *, attr_embed, js_embed
-    ):
+    def __init__(self, tag_rules=None, attr_rules=None):
         self.tag_rules = tag_rules or {}
         self.attr_rules = attr_rules or {}
-        self.attr_embed = attr_embed
-        self._js_embed = js_embed
-
-    def fork(self, *, attr_embed=None, js_embed=None):
-        return type(self)(
-            dict(self.tag_rules),
-            dict(self.attr_rules),
-            attr_embed=attr_embed or self.attr_embed,
-            js_embed=js_embed or self.js_embed,
-        )
-
-    def js_embed(self, obj, **fmt):
-        x = self._js_embed(obj)
-        if not isinstance(x, str):
-            x = x.to_string(**fmt)
-        return x
 
     def register(self, rule, fn=None):
         def reg(fn):
@@ -90,6 +79,10 @@ class HTMLGenerator(metaclass=OvldMC):
         else:
             return reg(fn)
 
+    ############
+    # Defaults #
+    ############
+
     @staticmethod
     def _default_tag(self, node, workspace, default):
         return default(node, workspace)
@@ -103,7 +96,7 @@ class HTMLGenerator(metaclass=OvldMC):
         workspace.close = node.name
 
     def default_attr(self, node, workspace, attr, value):
-        new_value = self.attr_embed(attr, value)
+        new_value = self.attr_embed(value)
         if new_value is True:
             workspace.attributes[attr] = new_value
         elif isinstance(new_value, resource.JSExpression):
@@ -115,20 +108,68 @@ class HTMLGenerator(metaclass=OvldMC):
                 new_value, self.attr_embed
             )
 
-    @ovld
+    #############
+    # Utilities #
+    #############
+
+    def _text_parts(self, workspace):
+        def convert_child(c):
+            if isinstance(c, TextFormatter):
+                return c
+            elif isinstance(c, str):
+                if workspace.escape_children:
+                    return escape(str(c))
+                else:
+                    return c
+            else:
+                return self._text_parts(c)
+
+        attr = "".join(
+            f" {k}" if v is True else f' {k}="{escape(v)}"'
+            for k, v in workspace.attributes.items()
+        )
+
+        children = list(map(convert_child, workspace.children))
+
+        if workspace.open:
+            if workspace.close:
+                return Breakable(
+                    start=f"<{workspace.open}{attr}>",
+                    body=children,
+                    end=f"</{workspace.open}>",
+                )
+            else:
+                assert not children
+                return Text(f"<{workspace.open}{attr} />")
+        else:
+            return Breakable(start=None, body=children, end=None)
+
+    def expand_resources(self, value, embed):
+        def sub(m):
+            res = resource.registry.resolve(int(m.groups()[0]))
+            return self.expand_resources(embed(res.obj), embed)
+
+        return re.sub(
+            pattern=rf"\[{resource.embed_key}:([0-9]+)\]",
+            string=str(value),
+            repl=sub,
+        )
+
+    ##################
+    # process method #
+    ##################
+
     def process(self, node: Union[str, TextFormatter]):
         return node
 
-    @ovld
     def process(self, node: object):
         if hasattr(node, "__h__"):
             return self.process(node.__h__())
         else:
             return str(node)
 
-    @ovld
     def process(self, node: J):
-        embedded = self._js_embed(node)
+        embedded = self.js_embed(node)
         resources = collect_resources(embedded, [])
 
         lines = [
@@ -182,7 +223,6 @@ class HTMLGenerator(metaclass=OvldMC):
         workspace.extra.append(script)
         return workspace
 
-    @ovld
     def process(self, node: Tag):
         workspace = Workspace(
             open=None,
@@ -219,48 +259,164 @@ class HTMLGenerator(metaclass=OvldMC):
 
         return workspace
 
-    def _text_parts(self, workspace):
-        def convert_child(c):
-            if isinstance(c, TextFormatter):
-                return c
-            elif isinstance(c, str):
-                if workspace.escape_children:
-                    return escape(str(c))
-                else:
-                    return c
-            else:
-                return self._text_parts(c)
+    ###################
+    # js_embed method #
+    ###################
 
-        attr = "".join(
-            f" {k}" if v is True else f' {k}="{escape(v)}"'
-            for k, v in workspace.attributes.items()
+    def js_embed(self, d: dict):
+        return Breakable(
+            start="{",
+            body=join(
+                [
+                    Sequence(self.js_embed(k), ": ", self.js_embed(v))
+                    for k, v in d.items()
+                ],
+                sep=", ",
+            ),
+            end="}",
         )
 
-        children = list(map(convert_child, workspace.children))
+    def js_embed(self, seq: Union[list, tuple]):
+        return Breakable(
+            start="[",
+            body=join(map(self.js_embed, seq), sep=", "),
+            end="]",
+        )
 
-        if workspace.open:
-            if workspace.close:
-                return Breakable(
-                    start=f"<{workspace.open}{attr}>",
-                    body=children,
-                    end=f"</{workspace.open}>",
+    def js_embed(self, x: Union[int, float, str, bool, type(None)]):
+        return Text(json.dumps(x))
+
+    def js_embed(self, expr: resource.JSExpression):
+        return expr.code
+
+    def js_embed(self, t: Tag):
+        innerhtml = str(t)
+        return f"$$HREPR.fromHTML({self.js_embed(innerhtml)})"
+
+    def js_embed(self, j: J):
+        resources = []
+        jd = j._data
+
+        if not j._path or not isinstance(j._path[0], str):
+            raise Exception(
+                "The J constructor should first be invoked with a string."
+            )
+
+        symbol, *path = j._path
+
+        if jd.stylesheet is not None:
+            styles = (
+                jd.stylesheet
+                if isinstance(jd.stylesheet, Sequence)
+                else [jd.stylesheet]
+            )
+            resources.extend(
+                [
+                    src
+                    if isinstance(src, Tag)
+                    else H.link(rel="stylesheet", href=src)
+                    for src in styles
+                ]
+            )
+        if jd.namespace is not None:
+            varname = gensym(symbol)
+            resources.append(
+                Module(
+                    module=jd.namespace,
+                    symbol=None if symbol == "default" else symbol,
+                    varname=varname,
                 )
-            else:
-                assert not children
-                return Text(f"<{workspace.open}{attr} />")
+            )
+        elif jd.src is not None:
+            varname = symbol
+            resources.append(Script(src=jd.src))
+        elif jd.code is not None:
+            varname = symbol
+            resources.append(Code(code=jd.code))
         else:
-            return Breakable(start=None, body=children, end=None)
+            varname = symbol
 
-    def expand_resources(self, value, embed):
-        def sub(m):
-            res = resource.registry.resolve(int(m.groups()[0]))
-            return self.expand_resources(embed(res.obj), embed)
+        assert varname is not None
 
-        return re.sub(
-            pattern=rf"\[{resource.embed_key}:([0-9]+)\]",
-            string=str(value),
-            repl=sub,
-        )
+        result = varname
+        prev_result = varname
+        last_symbol = None
+
+        for entry in path:
+            if isinstance(entry, str):
+                prev_result = result
+                last_symbol = entry
+                result = Sequence(result, ".", entry)
+            elif isinstance(entry, (list, tuple)):
+                result = Breakable(
+                    start="$$HREPR.ucall(",
+                    body=join(
+                        [
+                            prev_result,
+                            self.js_embed(last_symbol),
+                            *[self.js_embed(x) for x in entry],
+                        ],
+                        sep=",",
+                    ),
+                    end=")",
+                )
+            else:  # pragma: no cover
+                raise TypeError()
+
+        if resources:
+            result = Sequence(result, resources=resources)
+        return result
+
+    def js_embed(self, i: Into):
+        return Text("$$INTO", resources=[i])
+
+    def js_embed(self, res: resource.Resource):
+        return self.js_embed(res.obj)
+
+    def js_embed(self, x: object):
+        if hasattr(x, "__js_embed__"):
+            return x.__js_embed__(self)
+        else:
+            raise TypeError(
+                f"Resources of type {type(x).__name__} cannot be serialized to JavaScript."
+            )
+
+    #####################
+    # attr_embed method #
+    #####################
+
+    def attr_embed(self, value: bool):
+        if value is False:
+            return None
+        elif value is True:
+            return value
+
+    def attr_embed(self, value: Union[str, int, float]):
+        return str(value)
+
+    def attr_embed(self, elements: Union[list, tuple, set, frozenset]):
+        return " ".join(self.attr_embed(elem) for elem in elements)
+
+    def attr_embed(self, expr: resource.JSExpression):
+        return expr
+
+    def attr_embed(self, t: Tag):
+        tag_id = t.get_attribute("id", None)
+        if not tag_id:
+            raise ValueError(f"Cannot embed <{t.name}> element without an id.")
+        return f"#{tag_id}"
+
+    def attr_embed(self, x: object):
+        if hasattr(x, "__attr_embed__"):
+            return x.__attr_embed__(self)
+        else:
+            raise TypeError(
+                f"Resources of type {type(x).__name__} cannot be serialized as an attribute."
+            )
+
+    #############
+    # Interface #
+    #############
 
     def generate(self, node, filter_resources=True):
         ws = self.process(node)
@@ -295,9 +451,7 @@ class HTMLGenerator(metaclass=OvldMC):
         return f"{body}{extra}"
 
 
-standard_html = HTMLGenerator(
-    tag_rules={}, attr_rules={}, attr_embed=attr_embed, js_embed=js_embed
-)
+standard_html = HTMLGenerator(tag_rules={}, attr_rules={})
 
 
 ######################################

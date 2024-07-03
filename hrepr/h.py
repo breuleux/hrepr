@@ -13,6 +13,10 @@ standard_html = None
 current_autoid = count()
 
 
+def gensym(symbol):
+    return f"{symbol}__{next(current_autoid)}"
+
+
 def _nextid():
     return f"AID_{next(current_autoid)}"
 

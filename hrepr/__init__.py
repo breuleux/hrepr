@@ -2,7 +2,6 @@
 
 from . import h
 from .core import Config, Hrepr, HreprState, Interface, StdHrepr  # noqa: F401
-from .embed import attr_embed, js_embed  # noqa: F401
 from .h import HTML, H, HType, Tag  # noqa: F401
 from .hgen import standard_html
 from .j import Into, J  # noqa: F401

@@ -2,22 +2,29 @@ from types import FunctionType, MethodType
 from typing import Union
 
 import pytest
+from ovld import extend_super
 
-from hrepr import H, embed, standard_html
+from hrepr import H, standard_html
+from hrepr.hgen import HTMLGenerator
 from hrepr.resource import JSExpression, Resource
+
+
+class CustomGenerator(HTMLGenerator):
+    @extend_super
+    def attr_embed(self, value: Union[FunctionType, MethodType]):
+        return f"alert('{value.__name__}')"
+
+    @extend_super
+    def js_embed(self, value: Union[FunctionType, MethodType]):
+        return f"'{value.__name__}_function'"
 
 
 @pytest.fixture
 def customgen():
-    @embed.attr_embed.variant
-    def attr_embed(self, attr: str, value: Union[FunctionType, MethodType]):
-        return f"alert('{value.__name__}')"
-
-    @embed.js_embed.variant
-    def js_embed(self, value: Union[FunctionType, MethodType]):
-        return f"'{value.__name__}_function'"
-
-    return standard_html.fork(attr_embed=attr_embed, js_embed=js_embed)
+    return CustomGenerator(
+        tag_rules=standard_html.tag_rules,
+        attr_rules=standard_html.attr_rules,
+    )
 
 
 def test_resource_embed_function(customgen, file_regression):

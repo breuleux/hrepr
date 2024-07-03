@@ -178,6 +178,9 @@ class HTMLGenerator(metaclass=OvldMC):
             assert co.code
             workspace.resources.append(H.script(co.code))
 
+        for tag in [r for r in resources if isinstance(r, Tag)]:
+            workspace.resources.append(tag)
+
         workspace.resources.append(constructor_lib)
         workspace.extra.append(script)
         return workspace

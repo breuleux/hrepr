@@ -38,6 +38,7 @@ class J:
         code=None,
         namespace=None,
         symbol=None,
+        stylesheet=None,
         path=None,
     ):
         self.module = module
@@ -45,6 +46,7 @@ class J:
         self.src = src
         self.code = code
         self.symbol = symbol
+        self.stylesheet = stylesheet
         self.path = path or []
 
     def __getattr__(self, attr):
@@ -56,6 +58,7 @@ class J:
             src=self.src,
             code=self.code,
             symbol=self.symbol,
+            stylesheet=self.stylesheet,
             path=[*self.path, attr],
         )
 
@@ -70,5 +73,6 @@ class J:
             src=self.src,
             code=self.code,
             symbol=self.symbol,
+            stylesheet=self.stylesheet,
             path=[*self.path, args],
         )

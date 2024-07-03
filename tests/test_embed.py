@@ -42,7 +42,10 @@ def test_js_embed():
     assert same({})
     assert same([])
     assert same([[[[]]]])
-    assert js_embed(H.div(id="what")) == "document.getElementById('what')"
+    assert (
+        js_embed(H.div(id="what"))
+        == '$$HREPR.fromHTML("<div id=\\"what\\"></div>")'
+    )
     assert js_embed([jscode]) == f"[{jscode.code}]"
     assert js_embed(jsfn) == "((foo) => foo + 1)"
     assert js_embed(Resource(list(range(10)))) == js_embed(list(range(10)))
@@ -51,9 +54,6 @@ def test_js_embed():
 def test_js_embed_bad():
     with pytest.raises(TypeError):
         js_embed(object())
-
-    with pytest.raises(ValueError):
-        js_embed(H.div())
 
 
 @one_test_per_assert

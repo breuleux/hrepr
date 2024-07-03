@@ -2,7 +2,6 @@ from itertools import count
 
 import pytest
 
-from hrepr import embed as emodule
 from hrepr import h as hmodule
 from hrepr import into
 from hrepr.h import H
@@ -27,7 +26,6 @@ class Counter {
 @pytest.fixture(autouse=True)
 def reset_id_counter():
     hmodule.current_autoid = count()
-    emodule._c = count()
 
 
 def test_global_symbol(file_regression):

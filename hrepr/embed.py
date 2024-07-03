@@ -4,7 +4,7 @@ from typing import Union
 
 from ovld import ovld
 
-from .h import HType, Tag
+from .h import H, HType, Tag
 from .j import Code, Into, J, Module, Script
 from .resource import JSExpression, Resource
 from .textgen_simple import Breakable, Sequence, Text, join
@@ -111,6 +111,20 @@ def gensym(symbol):
 @ovld
 def js_embed(self, j: J):
     resources = []
+    if j.stylesheet is not None:
+        styles = (
+            j.stylesheet
+            if isinstance(j.stylesheet, Sequence)
+            else [j.stylesheet]
+        )
+        resources.extend(
+            [
+                src
+                if isinstance(src, Tag)
+                else H.link(rel="stylesheet", href=src)
+                for src in styles
+            ]
+        )
     if j.namespace is not None:
         varname = gensym(j.symbol or "default")
         resources.append(

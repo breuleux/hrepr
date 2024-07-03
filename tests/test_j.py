@@ -26,6 +26,19 @@ def test_global_symbol(file_regression):
     file_regression.check(str(node.as_page()), extension=".html")
 
 
+def test_stylesheet(file_regression):
+    node = H.div(
+        H.h2(
+            "The page should look purple. Also, the button should show 3, 6, 9... when clicked."
+        ),
+        J(code=incrementer_code, stylesheet="./stylish.css").Counter(
+            into(H.button("ERROR!", style="width:100px;")), {"increment": 3}
+        ),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
 def test_kwargs(file_regression):
     node = H.div(
         H.h2("The button should show 5, 10, 15... when clicked."),

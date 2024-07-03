@@ -2,6 +2,7 @@ from itertools import count
 
 import pytest
 
+from hrepr import embed as emodule
 from hrepr import h as hmodule
 from hrepr import into
 from hrepr.h import H
@@ -26,6 +27,7 @@ class Counter {
 @pytest.fixture(autouse=True)
 def reset_id_counter():
     hmodule.current_autoid = count()
+    emodule._c = count()
 
 
 def test_global_symbol(file_regression):
@@ -71,7 +73,7 @@ def test_module(file_regression):
             "Note: this will NOT work when browsing the file directly, ",
             "view using a server e.g. with `python -m http.server`.",
         ),
-        J(module="./counter.esm.js", symbol="bytwo")(
+        J(namespace="./counter.esm.js").bytwo(
             into(H.button("ERROR!", style="width:100px;")),
         ),
         J(namespace="./counter.esm.js").by.three(
@@ -89,7 +91,7 @@ def test_module(file_regression):
 def test_script(file_regression):
     node = H.div(
         H.h2("The buttons should increment by 2 and 3 respectively."),
-        J(src="./counter.js", symbol="bytwo")(
+        J(src="./counter.js").bytwo(
             into(H.button("ERROR!", style="width:100px;")),
         ),
         J(src="./counter.js").by.three(
@@ -133,6 +135,12 @@ def test_alert(file_regression):
     file_regression.check(str(node.as_page()), extension=".html")
 
 
+def test_no_varname():
+    node = H.div(J()("hello"))
+    with pytest.raises(Exception):
+        str(node.as_page())
+
+
 cystyle = """
 node {
     background-color: #080;
@@ -149,11 +157,12 @@ edge {
 
 
 def test_external_cytoscape(file_regression):
+    cytoscape = J(
+        module="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js",
+    )
     node = H.div(
         H.h2("This should show an interactive graph."),
-        J(
-            module="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js"
-        )(
+        cytoscape(
             container=into(
                 H.div(
                     style={

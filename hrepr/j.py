@@ -14,52 +14,62 @@ class Module:
     module: str
     symbol: Optional[str] = None
     varname: Optional[str] = None
-    namespace: bool = False
 
 
 @dataclass
 class Script:
     src: str
-    symbol: Optional[str] = None
 
 
 @dataclass
 class Code:
     code: str
-    symbol: Optional[str] = None
+
+
+@dataclass
+class JData:
+    namespace: str = None
+    src: str = None
+    code: str = None
+    stylesheet: str = None
 
 
 class J:
     def __init__(
         self,
         *,
+        namespace=None,
         module=None,
         src=None,
         code=None,
-        namespace=None,
-        symbol=None,
         stylesheet=None,
-        path=None,
+        _data=None,
+        _path=None,
     ):
-        self.module = module
-        self.namespace = namespace
-        self.src = src
-        self.code = code
-        self.symbol = symbol
-        self.stylesheet = stylesheet
-        self.path = path or []
+        _path = _path or []
+        if module:
+            assert not namespace
+            namespace = module
+            assert not _path
+            _path.append("default")
+
+        if _data is None:
+            _data = JData(
+                namespace=namespace,
+                src=src,
+                code=code,
+                stylesheet=stylesheet,
+            )
+
+        self._data = _data
+        self._path = _path
 
     def __getattr__(self, attr):
         if attr.startswith("__") and attr.endswith("__"):  # pragma: no cover
             raise AttributeError(attr)
         return type(self)(
-            module=self.module,
-            namespace=self.namespace,
-            src=self.src,
-            code=self.code,
-            symbol=self.symbol,
-            stylesheet=self.stylesheet,
-            path=[*self.path, attr],
+            _data=self._data,
+            _path=[*self._path, attr],
         )
 
     __getitem__ = __getattr__
@@ -68,11 +78,6 @@ class J:
         if kwargs:
             args = (*args, kwargs)
         return type(self)(
-            module=self.module,
-            namespace=self.namespace,
-            src=self.src,
-            code=self.code,
-            symbol=self.symbol,
-            stylesheet=self.stylesheet,
-            path=[*self.path, args],
+            _data=self._data,
+            _path=[*self._path, args],
         )

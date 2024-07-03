@@ -62,7 +62,7 @@
 
 </script></head><body><div><h2>There should be an alert.</h2><placeholder id="AID_0"></placeholder></div><script type="module">const $$INTO = $$HREPR.prepare("AID_0");
 $$HREPR.loadScripts([],()=>{
-const obj = $$HREPR.ucall(window,"alert","hello");
+const obj = $$HREPR.ucall(alert,null,"hello");
 $$INTO.__object.__resolve(obj);
 obj && $$INTO.replaceWith(obj);
 });</script></body></html>

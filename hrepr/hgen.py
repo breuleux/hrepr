@@ -163,11 +163,7 @@ class HTMLGenerator(metaclass=OvldMC):
         lines = [into_line, *lines]
 
         for r in [r for r in resources if isinstance(r, Module)]:
-            if r.namespace:
-                line = (
-                    f"import * as {r.varname} from {self.js_embed(r.module)};"
-                )
-            elif r.symbol:
+            if r.symbol:
                 line = f"import {{ {r.symbol} as {r.varname} }} from {self.js_embed(r.module)};"
             else:
                 line = f"import {r.varname} from {self.js_embed(r.module)};"

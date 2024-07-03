@@ -106,11 +106,20 @@ def gensym(symbol):
 @ovld
 def js_embed(self, j: J):
     resources = []
-    if j.stylesheet is not None:
+    jd = j._data
+
+    if not j._path or not isinstance(j._path[0], str):
+        raise Exception(
+            "The J constructor should first be invoked with a string."
+        )
+
+    symbol, *path = j._path
+
+    if jd.stylesheet is not None:
         styles = (
-            j.stylesheet
-            if isinstance(j.stylesheet, Sequence)
-            else [j.stylesheet]
+            jd.stylesheet
+            if isinstance(jd.stylesheet, Sequence)
+            else [jd.stylesheet]
         )
         resources.extend(
             [
@@ -120,39 +129,31 @@ def js_embed(self, j: J):
                 for src in styles
             ]
         )
-    if j.namespace is not None:
-        varname = gensym(j.symbol or "default")
-        resources.append(
-            Module(module=j.namespace, varname=varname, namespace=True)
-        )
-    elif j.module is not None:
-        varname = gensym(j.symbol or "default")
+    if jd.namespace is not None:
+        varname = gensym(symbol)
         resources.append(
             Module(
-                module=j.module,
-                symbol=j.symbol,
+                module=jd.namespace,
+                symbol=None if symbol == "default" else symbol,
                 varname=varname,
-                namespace=False,
             )
         )
-    elif j.src is not None:
-        varname = j.symbol
-        resources.append(Script(src=j.src, symbol=j.symbol))
-    elif j.code is not None:
-        varname = j.symbol
-        resources.append(Code(code=j.code, symbol=j.symbol))
+    elif jd.src is not None:
+        varname = symbol
+        resources.append(Script(src=jd.src))
+    elif jd.code is not None:
+        varname = symbol
+        resources.append(Code(code=jd.code))
     else:
-        varname = "window"
+        varname = symbol
+
+    assert varname is not None
 
     result = varname
     prev_result = varname
     last_symbol = None
 
-    for entry in j.path:
-        if varname is None:
-            assert isinstance(entry, str)
-            result = prev_result = varname = entry
-            continue
+    for entry in path:
         if isinstance(entry, str):
             prev_result = result
             last_symbol = entry

@@ -60,22 +60,10 @@
     },
 }
 
-</script></head><body><div><h2>The buttons should increment by 2, 3 and 4 respectively.</h2><h4>Note: this will NOT work when browsing the file directly, view using a server e.g. with `python -m http.server`.</h4><button style="width:100px;" id="AID_0">ERROR!</button><button style="width:100px;" id="AID_1">ERROR!</button><button style="width:100px;" id="AID_2">ERROR!</button></div><script type="module">import { bytwo as bytwo__0 } from "./counter.esm.js";
+</script></head><body><div><h2>This should show an interactive graph.</h2><div style="width:500px;height:500px;border:1px solid cyan;" id="AID_0"></div></div><script type="module">import default__0 from "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js";
 const $$INTO = $$HREPR.prepare("AID_0");
 $$HREPR.loadScripts([],()=>{
-const obj = $$HREPR.ucall(bytwo__0,null,$$INTO);
-$$INTO.__object.__resolve(obj);
-
-});</script><script type="module">import { by as by__1 } from "./counter.esm.js";
-const $$INTO = $$HREPR.prepare("AID_1");
-$$HREPR.loadScripts([],()=>{
-const obj = $$HREPR.ucall(by__1,"three",$$INTO);
-$$INTO.__object.__resolve(obj);
-
-});</script><script type="module">import default__2 from "./counter.esm.js";
-const $$INTO = $$HREPR.prepare("AID_2");
-$$HREPR.loadScripts([],()=>{
-const obj = $$HREPR.ucall(default__2,null,$$INTO,{"increment": 4});
+const obj = $$HREPR.ucall(default__0,null,{"container": $$INTO, "elements": [{"data": {"id": "A"}}, {"data": {"id": "B"}}, {"data": {"id": "C"}}, {"data": {"source": "A", "target": "B"}}, {"data": {"source": "B", "target": "C"}}, {"data": {"source": "C", "target": "A"}}], "style": "\nnode {\n    background-color: #080;\n    label: data(id);\n}\nedge {\n    width: 5;\n    line-color: #ccc;\n    target-arrow-color: #ccc;\n    target-arrow-shape: triangle;\n    curve-style: bezier;\n}\n", "layout": {"name": "cose"}});
 $$INTO.__object.__resolve(obj);
 
 });</script></body></html>

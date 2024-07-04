@@ -9,6 +9,17 @@ from hrepr.resource import JSExpression, JSFunction, Resource
 from .common import one_test_per_assert
 
 
+class Custom:
+    def __init__(self, message):
+        self.message = message
+
+    def __js_embed__(self, gen):
+        return f"alert('{self.message}')"
+
+    def __attr_embed__(self, gen):
+        return f"!{self.message}!"
+
+
 def js_embed(obj, **fmt):
     x = standard_html.js_embed(obj)
     if not isinstance(x, str):
@@ -49,6 +60,7 @@ def test_js_embed():
     assert js_embed([jscode]) == f"[{jscode.code}]"
     assert js_embed(jsfn) == "((foo) => foo + 1)"
     assert js_embed(Resource(list(range(10)))) == js_embed(list(range(10)))
+    assert js_embed(Custom("wow")) == "alert('wow')"
 
 
 def test_js_embed_bad():
@@ -62,6 +74,7 @@ def test_attr_embed():
     assert attr_embed(1234) == "1234"
     assert attr_embed(H.div(id="what")) == "#what"
     assert attr_embed(jscode) is jscode
+    assert attr_embed(Custom("wow")) == "!wow!"
 
 
 def test_attr_embed_bad():

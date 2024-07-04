@@ -60,54 +60,6 @@ class Workspace:
 
 
 class HTMLGenerator(metaclass=OvldMC):
-    def __init__(self, tag_rules=None, attr_rules=None):
-        self.tag_rules = tag_rules or {}
-        self.attr_rules = attr_rules or {}
-
-    def register(self, rule, fn=None):
-        def reg(fn):
-            if rule.startswith("tag:"):
-                self.tag_rules[rule[4:]] = fn
-            elif rule.startswith("attr:"):
-                self.attr_rules[rule[5:]] = fn
-            else:  # pragma: no cover
-                raise ValueError(f"Unknown rule type: {rule}")
-            return fn
-
-        if fn is None:
-            return reg
-        else:
-            return reg(fn)
-
-    ############
-    # Defaults #
-    ############
-
-    @staticmethod
-    def _default_tag(self, node, workspace, default):
-        return default(node, workspace)
-
-    @staticmethod
-    def _default_attr(self, node, workspace, attr, value, default):
-        return default(node, workspace, attr, value)
-
-    def default_tag(self, node, workspace):
-        workspace.open = node.name
-        workspace.close = node.name
-
-    def default_attr(self, node, workspace, attr, value):
-        new_value = self.attr_embed(value)
-        if new_value is True:
-            workspace.attributes[attr] = new_value
-        elif isinstance(new_value, resource.JSExpression):
-            workspace.attributes[attr] = self.expand_resources(
-                new_value.code, self.js_embed
-            )
-        elif new_value is not None:
-            workspace.attributes[attr] = self.expand_resources(
-                new_value, self.attr_embed
-            )
-
     #############
     # Utilities #
     #############
@@ -154,6 +106,78 @@ class HTMLGenerator(metaclass=OvldMC):
             string=str(value),
             repl=sub,
         )
+
+    ##############
+    # Tags rules #
+    ##############
+
+    def _tag_default(self, node, workspace):
+        workspace.open = node.name
+        workspace.close = node.name
+
+    def _tag_void(self, node, workspace):
+        assert not workspace.children
+        workspace.open = node.name
+        workspace.close = None
+
+    tagrule_area = _tag_void
+    tagrule_base = _tag_void
+    tagrule_br = _tag_void
+    tagrule_col = _tag_void
+    tagrule_command = _tag_void
+    tagrule_embed = _tag_void
+    tagrule_hr = _tag_void
+    tagrule_img = _tag_void
+    tagrule_input = _tag_void
+    tagrule_keygen = _tag_void
+    tagrule_link = _tag_void
+    tagrule_meta = _tag_void
+    tagrule_param = _tag_void
+    tagrule_source = _tag_void
+    tagrule_track = _tag_void
+    tagrule_wbr = _tag_void
+    tagrule_doctype = _tag_void
+
+    def tagrule_script(self, node, workspace):
+        workspace.escape_children = False
+        new_children = []
+        for child in workspace.children:
+            assert isinstance(child, str)
+            new_children.append(self.expand_resources(child, self.js_embed))
+        workspace.children = new_children
+        return self._tag_default(node, workspace)
+
+    def tagrule_style(self, node, workspace):
+        workspace.escape_children = False
+        return self._tag_default(node, workspace)
+
+    def tagrule_inline(self, node, workspace):
+        return
+
+    def tagrule_raw(self, node, workspace):
+        workspace.escape_children = False
+
+    ####################
+    # Attributes rules #
+    ####################
+
+    def _attr_default(self, node, workspace, attr, value):
+        new_value = self.attr_embed(value)
+        if new_value is True:
+            workspace.attributes[attr] = new_value
+        elif isinstance(new_value, resource.JSExpression):
+            workspace.attributes[attr] = self.expand_resources(
+                new_value.code, self.js_embed
+            )
+        elif new_value is not None:
+            workspace.attributes[attr] = self.expand_resources(
+                new_value, self.attr_embed
+            )
+
+    def attrrule_style(self, node, workspace, key, value):
+        if isinstance(value, dict):
+            value = "".join(f"{k}:{v};" for k, v in value.items())
+        workspace.attributes["style"] = value
 
     ##################
     # process method #
@@ -243,18 +267,18 @@ class HTMLGenerator(metaclass=OvldMC):
                 workspace.resources += child.resources
                 child.resources = []
 
-        tag_rule = self.tag_rules.get(node.name, self._default_tag)
-        if (
-            tag_rule(self, node, workspace, self.default_tag) is False
-        ):  # pragma: no cover
+        node_name = (node.name or "inline").replace("!", "").lower()
+        tag_rule = (
+            getattr(self, f"tagrule_{node_name}", None) or self._tag_default
+        )
+        if tag_rule(node, workspace) is False:  # pragma: no cover
             pass
         else:
             for k, v in node.attributes.items():
-                rule = self.attr_rules.get(k, self._default_attr)
-                if (
-                    rule(self, node, workspace, k, v, self.default_attr)
-                    is False
-                ):  # pragma: no cover
+                rule = (
+                    getattr(self, f"attrrule_{k}", None) or self._attr_default
+                )
+                if rule(node, workspace, k, v) is False:  # pragma: no cover
                     break
 
         return workspace
@@ -451,98 +475,4 @@ class HTMLGenerator(metaclass=OvldMC):
         return f"{body}{extra}"
 
 
-standard_html = HTMLGenerator(tag_rules={}, attr_rules={})
-
-
-######################################
-# Handlers for void/raw/special tags #
-######################################
-
-
-def raw_tag(self, node, workspace, default):
-    workspace.escape_children = False
-    return default(node, workspace)
-
-
-def void_tag(self, node, workspace, default):
-    assert not workspace.children
-    workspace.open = node.name
-    workspace.close = None
-
-
-def virtual_tag(self, node, workspace, default):
-    return
-
-
-def raw_virtual_tag(self, node, workspace, default):
-    workspace.escape_children = False
-
-
-# These tags are self-closing and cannot have children.
-_void_tags = {
-    "area",
-    "base",
-    "br",
-    "col",
-    "command",
-    "embed",
-    "hr",
-    "img",
-    "input",
-    "keygen",
-    "link",
-    "meta",
-    "param",
-    "source",
-    "track",
-    "wbr",
-    "!DOCTYPE",
-}
-
-for t in _void_tags:
-    standard_html.register(f"tag:{t}", void_tag)
-
-
-# We do not escape string children for these tags.
-_raw_tags = {"style"}
-
-for t in _raw_tags:
-    standard_html.register(f"tag:{t}", raw_tag)
-
-
-# These tags do not correspond to real HTML tags. They cannot have
-# attributes, and their children are simply concatenated and inlined
-# in the parent.
-_virtual_tags = {None, "inline"}
-
-for t in _virtual_tags:
-    standard_html.register(f"tag:{t}", virtual_tag)
-
-
-_raw_virtual_tags = {"raw"}
-
-for t in _raw_virtual_tags:
-    standard_html.register(f"tag:{t}", raw_virtual_tag)
-
-
-###################################
-# Handlers for special attributes #
-###################################
-
-
-@standard_html.register("tag:script")
-def script_tag(self, node, workspace, default):
-    workspace.escape_children = False
-    new_children = []
-    for child in workspace.children:
-        assert isinstance(child, str)
-        new_children.append(self.expand_resources(child, self.js_embed))
-    workspace.children = new_children
-    return default(node, workspace)
-
-
-@standard_html.register("attr:style")
-def attr_style(self, node, workspace, key, value, default):
-    if isinstance(value, dict):
-        value = "".join(f"{k}:{v};" for k, v in value.items())
-    workspace.attributes["style"] = value
+standard_html = HTMLGenerator()

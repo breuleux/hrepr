@@ -4,7 +4,7 @@ from typing import Union
 import pytest
 from ovld import extend_super
 
-from hrepr import H, standard_html
+from hrepr import H
 from hrepr.hgen import HTMLGenerator
 from hrepr.resource import JSExpression, Resource
 
@@ -21,10 +21,7 @@ class CustomGenerator(HTMLGenerator):
 
 @pytest.fixture
 def customgen():
-    return CustomGenerator(
-        tag_rules=standard_html.tag_rules,
-        attr_rules=standard_html.attr_rules,
-    )
+    return CustomGenerator()
 
 
 def test_resource_embed_function(customgen, file_regression):

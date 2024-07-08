@@ -184,9 +184,7 @@ def test_as_page_with_resources():
     scr = H.script("x = 1234;")
     resources = (sty, scr)
     inner = H.b("resources").fill(resources=scr)
-    tag = H.div(
-        "with ", inner, __resources=sty
-    )  # Other way to specify resources
+    tag = H.div("with ", inner, resources=sty)  # Other way to specify resources
     utf8 = H.meta(
         {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
     )

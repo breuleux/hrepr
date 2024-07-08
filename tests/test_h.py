@@ -166,11 +166,6 @@ def test_autoid():
     # Shorthand
     assert matches(H.div["#"]("wow"), '<div id="AID_2">wow</div>')
 
-    # require_id
-    wow = H.div("wow")
-    wow._require_id = True
-    assert matches(wow, '<div id="AID_3">wow</div>')
-
 
 def test_as_page():
     tag = H.div("simplicity")

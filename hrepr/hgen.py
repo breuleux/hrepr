@@ -179,20 +179,20 @@ class HTMLGenerator(metaclass=OvldMC):
             value = "".join(f"{k}:{v};" for k, v in value.items())
         workspace.attributes["style"] = value
 
-    ##################
-    # process method #
-    ##################
+    #####################
+    # node_embed method #
+    #####################
 
-    def process(self, node: Union[str, TextFormatter]):
+    def node_embed(self, node: Union[str, TextFormatter]):
         return node
 
-    def process(self, node: object):
+    def node_embed(self, node: object):
         if hasattr(node, "__h__"):
-            return self.process(node.__h__())
+            return self.node_embed(node.__h__())
         else:
             return str(node)
 
-    def process(self, node: J):
+    def node_embed(self, node: J):
         embedded = self.js_embed(node)
         resources = collect_resources(embedded, [])
 
@@ -212,7 +212,7 @@ class HTMLGenerator(metaclass=OvldMC):
             element = H.placeholder().autoid()
             replace_line = "obj && $$INTO.replaceWith(obj);"
 
-        workspace = self.process(element)
+        workspace = self.node_embed(element)
         wid = element.attributes["id"]
 
         lines = [*lines, replace_line]
@@ -247,7 +247,7 @@ class HTMLGenerator(metaclass=OvldMC):
         workspace.extra.append(script)
         return workspace
 
-    def process(self, node: Tag):
+    def node_embed(self, node: Tag):
         workspace = Workspace(
             open=None,
             close=None,
@@ -258,7 +258,7 @@ class HTMLGenerator(metaclass=OvldMC):
             escape_children=True,
         )
 
-        workspace.children = [self.process(child) for child in node.children]
+        workspace.children = [self.node_embed(child) for child in node.children]
         for child in workspace.children:
             if getattr(child, "extra", None):
                 workspace.extra += child.extra
@@ -443,12 +443,12 @@ class HTMLGenerator(metaclass=OvldMC):
     #############
 
     def generate(self, node, filter_resources=True):
-        ws = self.process(node)
+        ws = self.node_embed(node)
         body = self._text_parts(ws)
 
         extra = Breakable(
             start=None,
-            body=[self._text_parts(self.process(x)) for x in ws.extra],
+            body=[self._text_parts(self.node_embed(x)) for x in ws.extra],
             end=None,
         )
 

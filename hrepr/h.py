@@ -76,7 +76,6 @@ class Tag:
         "_attributes",
         "_children",
         "_resources",
-        "_require_id",
     )
 
     specialized_tags = {}
@@ -107,7 +106,6 @@ class Tag:
         self._resources = resources or (
             attributes and attributes.pop("--resources", None)
         )
-        self._require_id = False
 
     def _do_cache(self):
         self._constructed = True
@@ -133,9 +131,6 @@ class Tag:
                     resources.extend(part._resources)
                 else:
                     resources.append(part._resources)
-
-        if self._require_id and "id" not in attributes:
-            attributes["id"] = _nextid()
 
         self._parent = None
         self._attributes = attributes

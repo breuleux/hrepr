@@ -73,7 +73,7 @@ def test_attr_embed():
     assert attr_embed("hello") == "hello"
     assert attr_embed(1234) == "1234"
     assert attr_embed(H.div(id="what")) == "#what"
-    assert attr_embed(jscode) is jscode
+    assert attr_embed(jscode) == "x = 3"
     assert attr_embed(Custom("wow")) == "!wow!"
 
 

@@ -1,10 +1,6 @@
-import os.path
 from itertools import count
 from types import GeneratorType
 
-# CSS for hrepr
-styledir = f"{os.path.dirname(__file__)}/style"
-css_nbreset = open(f"{styledir}/nbreset.css", encoding="utf-8").read()
 
 # Used by __str__, set by __init__ to avoid a circular dependency
 standard_html = None
@@ -170,12 +166,6 @@ class Tag:
     def get_attribute(self, attr, dflt):
         return self.attributes.get(attr, dflt)
 
-    def parts_and_resources(self):
-        return standard_html.generate(self)
-
-    def text_parts(self):
-        return self.parts_and_resources()[0]
-
     def autoid(self):
         return self(id=_nextid())
 
@@ -229,48 +219,19 @@ class Tag:
         return str(self)
 
     def __str__(self):
-        return str(self.text_parts())
+        return standard_html.to_string(self)
 
     def _repr_html_(self):  # pragma: no cover
         """
         Jupyter Notebook hook to print this element as HTML.
         """
-        body, extra, resources = self.parts_and_resources()
-        elem = H.div(
-            H.style(css_nbreset), resources, H.div["hrepr"](body, extra)
-        )
-        return str(elem)
+        return standard_html.to_jupyter(self)
 
     def as_page(self):
         """
-        Wrap this Tag as a self-contained webpage. Create a page with
-        the following structure:
-
-        .. code-block:: html
-
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta http-equiv="Content-type"
-                      content="text/html"
-                      charset="UTF-8" />
-                {self.resources}
-              </head>
-              <body>
-                {self}
-              </body>
-            </html>
+        Wrap this Tag as a self-contained webpage.
         """
-        body, extra, resources = self.parts_and_resources()
-        H = HTML()
-        utf8 = H.meta(
-            {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
-        )
-        node = H.inline(
-            H.raw("<!DOCTYPE html>"),
-            H.html(H.head(utf8, resources), H.body(body, extra)),
-        )
-        return str(node)
+        return standard_html.as_page(self)
 
 
 class HTML:

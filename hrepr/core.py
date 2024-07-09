@@ -8,13 +8,15 @@ from typing import Union
 
 from ovld import OvldMC, extend_super, ovld
 
-from .h import H, Tag, styledir
+from .h import H, Tag
 from .j import J
 from .make import StandardMaker
 
 ABSENT = object()
 
 _type = type
+here = Path(__file__).parent
+styledir = here / "style"
 
 
 class Config:
@@ -229,7 +231,7 @@ def _encode(s):
 
 class StdHrepr(Hrepr):
     def global_resources(self):
-        return (self.H.style((Path(styledir) / "hrepr.css").read_text()),)
+        return (self.H.style((styledir / "hrepr.css").read_text()),)
 
     # Lists
 

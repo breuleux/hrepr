@@ -7,10 +7,10 @@ import pytest
 
 from hrepr import H
 from hrepr import hrepr as real_hrepr
-from hrepr.h import styledir
+from hrepr.core import styledir
 from hrepr.j import J
 
-css_hrepr = open(f"{styledir}/hrepr.css", encoding="utf-8").read()
+css_hrepr = (styledir / "hrepr.css").read_text()
 hrepr = real_hrepr.variant(fill_resources=False)
 
 

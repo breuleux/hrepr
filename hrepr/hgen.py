@@ -376,13 +376,18 @@ class BlockGenerator(OvldBase):
 
 class HTMLGenerator:
     def __init__(self, block_generator_class=BlockGenerator):
+        self.seen_resources = set()
         self.block = block_generator_class
 
-    def blockgen(self, node, process_resources=False):
+    def blockgen(self, node, *, seen_resources=None):
         blk = self.block()
         blk.result = blk.node_embed(node)
-        if process_resources:
-            seen = set()
+        if seen_resources is not True:
+            seen = (
+                self.seen_resources
+                if seen_resources is None
+                else seen_resources
+            )
             blk.processed_resources = proc = []
             while blk.resources:
                 nxt = blk.resources.pop()
@@ -396,7 +401,7 @@ class HTMLGenerator:
         return str(self.blockgen(node).result)
 
     def to_jupyter(self, node):  # pragma: no cover
-        blk = self.blockgen(node, True)
+        blk = self.blockgen(node, seen_resources=set())
         elem = H.div(
             css_nbreset,
             blk.processed_resources,
@@ -424,7 +429,7 @@ class HTMLGenerator:
               </body>
             </html>
         """
-        blk = self.blockgen(node, True)
+        blk = self.blockgen(node, seen_resources=set())
         utf8 = H.meta(
             {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
         )

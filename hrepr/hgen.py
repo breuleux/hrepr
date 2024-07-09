@@ -19,7 +19,9 @@ from .textgen_simple import (
     join,
 )
 
-constructor_lib = H.script((Path(__file__).parent / "hlib.js").read_text())
+here = Path(__file__).parent
+constructor_lib = H.script((here / "hlib.js").read_text())
+css_nbreset = H.style((here / "style/nbreset.css").read_text())
 
 
 class ResourceDeduplicator:
@@ -427,6 +429,46 @@ class HTMLGenerator(metaclass=OvldMC):
     #############
     # Interface #
     #############
+
+    def to_string(self, node):
+        return str(self.generate(node)[0])
+
+    def to_jupyter(self, node):
+        body, extra, resources = self.generate(node)
+        elem = H.div(css_nbreset, resources, H.div["hrepr"](body, extra))
+        return str(elem)
+
+    def as_page(self, node):
+        """
+        Wrap this Tag as a self-contained webpage. Create a page with
+        the following structure:
+
+        .. code-block:: html
+
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta http-equiv="Content-type"
+                      content="text/html"
+                      charset="UTF-8" />
+                {self.resources}
+              </head>
+              <body>
+                {self}
+              </body>
+            </html>
+        """
+        body, extra, resources = self.generate(node)
+        H = HTML()
+        utf8 = H.meta(
+            {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
+        )
+        page = H.inline(
+            H.raw("<!DOCTYPE html>"),
+            H.html(H.head(utf8, resources), H.body(body, extra)),
+        )
+        body2, _, _ = self.generate(page)
+        return str(body2)
 
     def generate(self, node, filter_resources=True):
         ws = self.node_embed(node)

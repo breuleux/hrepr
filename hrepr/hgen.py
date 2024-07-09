@@ -115,37 +115,25 @@ class BlockGenerator(OvldBase):
         return node
 
     def node_embed(self, node: Tag):
+        open = node.name
+        close = node.name not in _void_tags
+        node_embed = self.node_embed
+
+        if node.name == "script":
+            node_embed = self.script_node_embed
+        elif node.name == "style":
+            node_embed=self.raw_node_embed
+        elif node.name == "raw":
+            open = close = None
+            node_embed=self.raw_node_embed
+        elif node.name == "inline":
+            open = close = None
+
         return self.represent_node_generic(
-            open=node.name,
-            close=node.name not in _void_tags,
+            open=open, close=close,
             node=node,
+            node_embed=node_embed,
         )
-
-    def node_embed(self, node: HType.script):
-        return self.represent_node_generic(
-            open=node.name,
-            close=True,
-            node=node,
-            node_embed=self.script_node_embed,
-        )
-
-    def node_embed(self, node: HType.style):
-        return self.represent_node_generic(
-            open=node.name,
-            close=True,
-            node=node,
-            node_embed=self.raw_node_embed,
-        )
-
-    def node_embed(self, node: HType.raw):
-        assert not node.attributes
-        return self.represent_node_generic(
-            open=None, close=None, node=node, node_embed=self.raw_node_embed
-        )
-
-    def node_embed(self, node: HType.inline):
-        assert not node.attributes
-        return self.represent_node_generic(open=None, close=None, node=node)
 
     def node_embed(self, node: J):
         assert not self.script_accumulator

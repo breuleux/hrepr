@@ -429,10 +429,10 @@ class StdHrepr(Hrepr):
     # JavaScript
 
     def hrepr(self, x: J):
-        return H.raw(x)
+        return H.inline(x)
 
     def hrepr_short(self, x: J):
-        return H.raw(x)
+        return H.inline(x)
 
 
 def inject_reference_numbers(hcall, node, refmap):

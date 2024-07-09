@@ -5,11 +5,11 @@ import pytest
 from ovld import extend_super
 
 from hrepr import H
-from hrepr.hgen import HTMLGenerator
+from hrepr.hgen import BlockGenerator, HTMLGenerator
 from hrepr.resource import JSExpression, Resource
 
 
-class CustomGenerator(HTMLGenerator):
+class CustomBlockGenerator(BlockGenerator):
     @extend_super
     def attr_embed(self, value: Union[FunctionType, MethodType]):
         return f"alert('{value.__name__}')"
@@ -21,7 +21,7 @@ class CustomGenerator(HTMLGenerator):
 
 @pytest.fixture
 def customgen():
-    return CustomGenerator()
+    return HTMLGenerator(block_generator_class=CustomBlockGenerator)
 
 
 def test_resource_embed_function(customgen, file_regression):

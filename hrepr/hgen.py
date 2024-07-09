@@ -1,21 +1,20 @@
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from html import escape
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
-from ovld import OvldMC
+from ovld import OvldBase
 
 from . import resource
-from .h import H, Tag, gensym
+from .h import H, HType, Tag, gensym
 from .j import Code, Into, J, Module, Script
 from .textgen_simple import (
     Breakable,
     Sequence,
     Text,
     TextFormatter,
-    collect_resources,
     join,
 )
 
@@ -24,79 +23,47 @@ constructor_lib = H.script((here / "hlib.js").read_text())
 css_nbreset = H.style((here / "style/nbreset.css").read_text())
 
 
-class ResourceDeduplicator:
-    def __init__(self):
-        self.seen_resources = set()
-
-    def __call__(self, resource):
-        if resource in self.seen_resources:
-            return False
-        else:
-            self.seen_resources.add(resource)
-            return True
-
-
-def no_resources(resource):  # pragma: no cover
-    return False
+_void_tags = {
+    "area",
+    "base",
+    "br",
+    "col",
+    "command",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "keygen",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+    "!DOCTYPE",
+}
 
 
 @dataclass
-class Workspace:
-    __slots__ = (
-        "open",
-        "close",
-        "attributes",
-        "children",
-        "resources",
-        "extra",
-        "escape_children",
-    )
-
-    open: str
-    close: str
-    attributes: dict
-    children: list
-    resources: list
-    extra: list
-    escape_children: bool
+class ScriptAccumulator:
+    returns: Optional[object] = None
+    scripts: list = field(default_factory=list)
+    modules: list = field(default_factory=list)
+    codes: list = field(default_factory=list)
+    styles: list = field(default_factory=list)
 
 
-class HTMLGenerator(metaclass=OvldMC):
+@dataclass
+class BlockGenerator(OvldBase):
+    session: "HTMLGenerator" = None
+    result: Tag = None
+    resources: list[Tag] = field(default_factory=list)
+    script_accumulator: Optional[ScriptAccumulator] = None
+    extra: list[Tag] = field(default_factory=list)
+
     #############
     # Utilities #
     #############
-
-    def _text_parts(self, workspace):
-        def convert_child(c):
-            if isinstance(c, TextFormatter):
-                return c
-            elif isinstance(c, str):
-                if workspace.escape_children:
-                    return escape(str(c))
-                else:
-                    return c
-            else:
-                return self._text_parts(c)
-
-        attr = "".join(
-            f" {k}" if v is True else f' {k}="{escape(v)}"'
-            for k, v in workspace.attributes.items()
-        )
-
-        children = list(map(convert_child, workspace.children))
-
-        if workspace.open:
-            if workspace.close:
-                return Breakable(
-                    start=f"<{workspace.open}{attr}>",
-                    body=children,
-                    end=f"</{workspace.open}>",
-                )
-            else:
-                assert not children
-                return Text(f"<{workspace.open}{attr} />")
-        else:
-            return Breakable(start=None, body=children, end=None)
 
     def expand_resources(self, value, embed):
         def sub(m):
@@ -109,95 +76,101 @@ class HTMLGenerator(metaclass=OvldMC):
             repl=sub,
         )
 
-    ##############
-    # Tags rules #
-    ##############
+    def represent_node_generic(self, open, close, node, node_embed=None):
+        self.resources.extend(node.resources)
 
-    def _tag_default(self, node, workspace):
-        workspace.open = node.name
-        workspace.close = node.name
+        node_embed = node_embed or self.node_embed
 
-    def _tag_void(self, node, workspace):
-        assert not workspace.children
-        workspace.open = node.name
-        workspace.close = None
+        attributes = {k: self.attr_embed(v) for k, v in node.attributes.items()}
 
-    tagrule_area = _tag_void
-    tagrule_base = _tag_void
-    tagrule_br = _tag_void
-    tagrule_col = _tag_void
-    tagrule_command = _tag_void
-    tagrule_embed = _tag_void
-    tagrule_hr = _tag_void
-    tagrule_img = _tag_void
-    tagrule_input = _tag_void
-    tagrule_keygen = _tag_void
-    tagrule_link = _tag_void
-    tagrule_meta = _tag_void
-    tagrule_param = _tag_void
-    tagrule_source = _tag_void
-    tagrule_track = _tag_void
-    tagrule_wbr = _tag_void
-    tagrule_doctype = _tag_void
+        attr = "".join(
+            f" {k}" if v is True else f' {k}="{escape(v)}"'
+            for k, v in attributes.items()
+            if v is not None and v is not False
+        )
 
-    def tagrule_script(self, node, workspace):
-        workspace.escape_children = False
-        new_children = []
-        for child in workspace.children:
-            assert isinstance(child, str)
-            new_children.append(self.expand_resources(child, self.js_embed))
-        workspace.children = new_children
-        return self._tag_default(node, workspace)
+        children = list(map(node_embed, node.children))
 
-    def tagrule_style(self, node, workspace):
-        workspace.escape_children = False
-        return self._tag_default(node, workspace)
-
-    def tagrule_inline(self, node, workspace):
-        return
-
-    def tagrule_raw(self, node, workspace):
-        workspace.escape_children = False
+        if open:
+            if close:
+                return Breakable(
+                    start=f"<{open}{attr}>",
+                    body=children,
+                    end=f"</{open}>",
+                )
+            else:
+                assert not children
+                return Text(f"<{open}{attr} />")
+        else:
+            return Breakable(start=None, body=children, end=None)
 
     #####################
     # node_embed method #
     #####################
 
-    def node_embed(self, node: Union[str, TextFormatter]):
+    def node_embed(self, node: str):
+        return escape(node)
+
+    def node_embed(self, node: TextFormatter):
         return node
 
-    def node_embed(self, node: object):
-        if hasattr(node, "__h__"):
-            return self.node_embed(node.__h__())
-        else:
-            return str(node)
+    def node_embed(self, node: Tag):
+        return self.represent_node_generic(
+            open=node.name,
+            close=node.name not in _void_tags,
+            node=node,
+        )
+
+    def node_embed(self, node: HType.script):
+        return self.represent_node_generic(
+            open=node.name,
+            close=True,
+            node=node,
+            node_embed=self.script_node_embed,
+        )
+
+    def node_embed(self, node: HType.style):
+        return self.represent_node_generic(
+            open=node.name,
+            close=True,
+            node=node,
+            node_embed=self.raw_node_embed,
+        )
+
+    def node_embed(self, node: HType.raw):
+        assert not node.attributes
+        return self.represent_node_generic(
+            open=None, close=None, node=node, node_embed=self.raw_node_embed
+        )
+
+    def node_embed(self, node: HType.inline):
+        assert not node.attributes
+        return self.represent_node_generic(open=None, close=None, node=node)
 
     def node_embed(self, node: J):
+        assert not self.script_accumulator
+        self.script_accumulator = ScriptAccumulator()
+
         embedded = self.js_embed(node)
-        resources = collect_resources(embedded, [])
 
         lines = [
             f"const obj = {embedded};",
             "$$INTO.__object.__resolve(obj);",
         ]
 
-        element = None
-
-        for r in [r for r in resources if isinstance(r, Into)]:
-            assert element is None
-            element = r.element.autoid()
+        element = self.script_accumulator.returns
+        if element:
+            element = element.autoid()
             replace_line = ""
-
-        if element is None:
+        else:
             element = H.placeholder().autoid()
             replace_line = "obj && $$INTO.replaceWith(obj);"
 
-        workspace = self.node_embed(element)
         wid = element.attributes["id"]
 
         lines = [*lines, replace_line]
 
-        scripts = {r.src for r in resources if isinstance(r, Script)}
+        scripts = {r.src for r in self.script_accumulator.scripts}
         lines = [
             f"$$HREPR.loadScripts({self.js_embed(list(scripts))},()=>{{",
             *lines,
@@ -207,63 +180,78 @@ class HTMLGenerator(metaclass=OvldMC):
         into_line = f"const $$INTO = $$HREPR.prepare({self.js_embed(wid)});"
         lines = [into_line, *lines]
 
-        for r in [r for r in resources if isinstance(r, Module)]:
+        for r in self.script_accumulator.modules:
             if r.symbol:
                 line = f"import {{ {r.symbol} as {r.varname} }} from {self.js_embed(r.module)};"
             else:
                 line = f"import {r.varname} from {self.js_embed(r.module)};"
             lines = [line, *lines]
 
-        script = H.script("\n".join(lines), type="module")
-
-        for co in [r for r in resources if isinstance(r, Code)]:
+        for co in self.script_accumulator.codes:
             assert co.code
-            workspace.resources.append(H.script(co.code))
+            self.resources.append(H.script(co.code))
 
-        for tag in [r for r in resources if isinstance(r, Tag)]:
-            workspace.resources.append(tag)
+        for sty in self.script_accumulator.styles:
+            self.resources.append(sty)
 
-        workspace.resources.append(constructor_lib)
-        workspace.extra.append(script)
-        return workspace
+        self.resources.append(constructor_lib)
+        self.extra.append(H.script("\n".join(lines), type="module"))
 
-    def node_embed(self, node: Tag):
-        workspace = Workspace(
-            open=None,
-            close=None,
-            attributes={},
-            children=[],
-            resources=list(node.resources),
-            extra=[],
-            escape_children=True,
-        )
+        self.script_accumulator = None
 
-        workspace.children = [self.node_embed(child) for child in node.children]
-        for child in workspace.children:
-            if getattr(child, "extra", None):
-                workspace.extra += child.extra
-                child.extra = []
-            if getattr(child, "resources", None):
-                workspace.resources += child.resources
-                child.resources = []
+        return self.node_embed(element)
 
-        node_name = (node.name or "inline").replace("!", "").lower()
-        tag_rule = (
-            getattr(self, f"tagrule_{node_name}", None) or self._tag_default
-        )
-        if tag_rule(node, workspace) is False:  # pragma: no cover
-            pass
+    def node_embed(self, node: object):
+        if hasattr(node, "__h__"):
+            return self.node_embed(node.__h__())
         else:
-            for k, v in node.attributes.items():
-                rule = getattr(self, f"attrrule_{k}", None)
-                if rule is None:
-                    new_value = self.attr_embed(v)
-                    if new_value is not None:
-                        workspace.attributes[k] = new_value
-                elif rule(node, workspace, k, v) is False:  # pragma: no cover
-                    break
+            return str(node)
 
-        return workspace
+    ###################################
+    # Alternate node embedders method #
+    ###################################
+
+    def raw_node_embed(self, text: str):
+        return text
+
+    def script_node_embed(self, text: str):
+        return self.expand_resources(text, self.js_embed)
+
+    #####################
+    # attr_embed method #
+    #####################
+
+    def attr_embed(self, value: bool):
+        if value is False:
+            return None
+        elif value is True:
+            return value
+
+    def attr_embed(self, value: Union[str, int, float]):
+        return str(value)
+
+    def attr_embed(self, elements: Union[list, tuple, set, frozenset]):
+        return " ".join(self.attr_embed(elem) for elem in elements)
+
+    def attr_embed(self, style: dict):
+        return "".join(f"{k}:{v};" for k, v in style.items())
+
+    def attr_embed(self, expr: resource.JSExpression):
+        return self.expand_resources(expr.code, self.js_embed)
+
+    def attr_embed(self, t: Tag):
+        tag_id = t.get_attribute("id", None)
+        if not tag_id:
+            raise ValueError(f"Cannot embed <{t.name}> element without an id.")
+        return f"#{tag_id}"
+
+    def attr_embed(self, x: object):
+        if hasattr(x, "__attr_embed__"):
+            return x.__attr_embed__(self)
+        else:
+            raise TypeError(
+                f"Resources of type {type(x).__name__} cannot be serialized as an attribute."
+            )
 
     ###################
     # js_embed method #
@@ -300,7 +288,6 @@ class HTMLGenerator(metaclass=OvldMC):
         return f"$$HREPR.fromHTML({self.js_embed(innerhtml)})"
 
     def js_embed(self, j: J):
-        resources = []
         jd = j._data
 
         if not j._path or not isinstance(j._path[0], str):
@@ -316,7 +303,7 @@ class HTMLGenerator(metaclass=OvldMC):
                 if isinstance(jd.stylesheet, Sequence)
                 else [jd.stylesheet]
             )
-            resources.extend(
+            self.script_accumulator.styles.extend(
                 [
                     src
                     if isinstance(src, Tag)
@@ -326,7 +313,7 @@ class HTMLGenerator(metaclass=OvldMC):
             )
         if jd.namespace is not None:
             varname = gensym(symbol)
-            resources.append(
+            self.script_accumulator.modules.append(
                 Module(
                     module=jd.namespace,
                     symbol=None if symbol == "default" else symbol,
@@ -335,10 +322,10 @@ class HTMLGenerator(metaclass=OvldMC):
             )
         elif jd.src is not None:
             varname = symbol
-            resources.append(Script(src=jd.src))
+            self.script_accumulator.scripts.append(Script(src=jd.src))
         elif jd.code is not None:
             varname = symbol
-            resources.append(Code(code=jd.code))
+            self.script_accumulator.codes.append(Code(code=jd.code))
         else:
             varname = symbol
 
@@ -369,12 +356,11 @@ class HTMLGenerator(metaclass=OvldMC):
             else:  # pragma: no cover
                 raise TypeError()
 
-        if resources:
-            result = Sequence(result, resources=resources)
         return result
 
     def js_embed(self, i: Into):
-        return Text("$$INTO", resources=[i])
+        self.script_accumulator.returns = i.element
+        return Text("$$INTO")
 
     def js_embed(self, res: resource.Resource):
         return self.js_embed(res.obj)
@@ -387,56 +373,36 @@ class HTMLGenerator(metaclass=OvldMC):
                 f"Resources of type {type(x).__name__} cannot be serialized to JavaScript."
             )
 
-    #####################
-    # attr_embed method #
-    #####################
 
-    def attr_embed(self, value: bool):
-        if value is False:
-            return None
-        elif value is True:
-            return value
+class HTMLGenerator:
+    def __init__(self, block_generator_class=BlockGenerator):
+        self.block = block_generator_class
 
-    def attr_embed(self, value: str):
-        return self.expand_resources(value, self.attr_embed)
-
-    def attr_embed(self, value: Union[int, float]):
-        return str(value)
-
-    def attr_embed(self, elements: Union[list, tuple, set, frozenset]):
-        return " ".join(self.attr_embed(elem) for elem in elements)
-
-    def attr_embed(self, style: dict):
-        return "".join(f"{k}:{v};" for k, v in style.items())
-
-    def attr_embed(self, expr: resource.JSExpression):
-        return self.expand_resources(expr.code, self.js_embed)
-
-    def attr_embed(self, t: Tag):
-        tag_id = t.get_attribute("id", None)
-        if not tag_id:
-            raise ValueError(f"Cannot embed <{t.name}> element without an id.")
-        return f"#{tag_id}"
-
-    def attr_embed(self, x: object):
-        if hasattr(x, "__attr_embed__"):
-            return x.__attr_embed__(self)
-        else:
-            raise TypeError(
-                f"Resources of type {type(x).__name__} cannot be serialized as an attribute."
-            )
-
-    #############
-    # Interface #
-    #############
+    def blockgen(self, node, process_resources=False):
+        blk = self.block()
+        blk.result = blk.node_embed(node)
+        if process_resources:
+            seen = set()
+            blk.processed_resources = proc = []
+            while blk.resources:
+                nxt = blk.resources.pop()
+                if nxt not in seen:
+                    proc.append(blk.node_embed(nxt))
+                    seen.add(nxt)
+            proc.reverse()
+        return blk
 
     def to_string(self, node):
-        return str(self.generate(node)[0])
+        return str(self.blockgen(node).result)
 
-    def to_jupyter(self, node):
-        body, extra, resources = self.generate(node)
-        elem = H.div(css_nbreset, resources, H.div["hrepr"](body, extra))
-        return str(elem)
+    def to_jupyter(self, node):  # pragma: no cover
+        blk = self.blockgen(node, True)
+        elem = H.div(
+            css_nbreset,
+            blk.processed_resources,
+            H.div["hrepr"](blk.result, blk.extra),
+        )
+        return self.to_string(elem)
 
     def as_page(self, node):
         """
@@ -458,49 +424,22 @@ class HTMLGenerator(metaclass=OvldMC):
               </body>
             </html>
         """
-        body, extra, resources = self.generate(node)
-        H = HTML()
+        blk = self.blockgen(node, True)
         utf8 = H.meta(
             {"http-equiv": "Content-type"}, content="text/html", charset="UTF-8"
         )
         page = H.inline(
             H.raw("<!DOCTYPE html>"),
-            H.html(H.head(utf8, resources), H.body(body, extra)),
+            H.html(
+                H.head(utf8, blk.processed_resources),
+                H.body(blk.result, blk.extra),
+            ),
         )
-        body2, _, _ = self.generate(page)
-        return str(body2)
-
-    def generate(self, node, filter_resources=True):
-        ws = self.node_embed(node)
-        body = self._text_parts(ws)
-
-        extra = Breakable(
-            start=None,
-            body=[self._text_parts(self.node_embed(x)) for x in ws.extra],
-            end=None,
-        )
-
-        if filter_resources is True:
-            filter_resources = ResourceDeduplicator()
-        elif filter_resources is None:  # pragma: no cover
-            filter_resources = no_resources
-
-        resources = []
-        for r in ws.resources:
-            if not filter_resources(r):
-                continue
-            entry, more_extra, more_resources = self.generate(r)
-            assert more_extra.empty()
-            assert more_resources.empty()
-            resources.append(entry)
-
-        resources = Breakable(start=None, body=resources, end=None)
-
-        return body, extra, resources
+        return self.to_string(page)
 
     def __call__(self, node):
-        body, extra, _ = self.generate(node)
-        return f"{body}{extra}"
+        blk = self.blockgen(node)
+        return self.to_string(H.inline(blk.result, blk.extra))
 
 
 standard_html = HTMLGenerator()

@@ -1,7 +1,6 @@
 from itertools import count
 from types import GeneratorType
 
-
 # Used by __str__, set by __init__ to avoid a circular dependency
 standard_html = None
 
@@ -147,7 +146,7 @@ class Tag:
 
     @property
     def resources(self):
-        if not self._constructed:
+        if not self._constructed:  # pragma: no cover
             self._do_cache()
         return self._resources
 

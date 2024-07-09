@@ -21,14 +21,14 @@ class Custom:
 
 
 def js_embed(obj, **fmt):
-    x = standard_html.js_embed(obj)
+    x = standard_html.block().js_embed(obj)
     if not isinstance(x, str):
         x = x.to_string(**fmt)
     return x
 
 
 def attr_embed(obj):
-    return standard_html.attr_embed(obj)
+    return standard_html.block().attr_embed(obj)
 
 
 def same(x):

@@ -157,28 +157,6 @@ class HTMLGenerator(metaclass=OvldMC):
     def tagrule_raw(self, node, workspace):
         workspace.escape_children = False
 
-    ####################
-    # Attributes rules #
-    ####################
-
-    def _attr_default(self, node, workspace, attr, value):
-        new_value = self.attr_embed(value)
-        if new_value is True:
-            workspace.attributes[attr] = new_value
-        elif isinstance(new_value, resource.JSExpression):
-            workspace.attributes[attr] = self.expand_resources(
-                new_value.code, self.js_embed
-            )
-        elif new_value is not None:
-            workspace.attributes[attr] = self.expand_resources(
-                new_value, self.attr_embed
-            )
-
-    def attrrule_style(self, node, workspace, key, value):
-        if isinstance(value, dict):
-            value = "".join(f"{k}:{v};" for k, v in value.items())
-        workspace.attributes["style"] = value
-
     #####################
     # node_embed method #
     #####################
@@ -275,10 +253,12 @@ class HTMLGenerator(metaclass=OvldMC):
             pass
         else:
             for k, v in node.attributes.items():
-                rule = (
-                    getattr(self, f"attrrule_{k}", None) or self._attr_default
-                )
-                if rule(node, workspace, k, v) is False:  # pragma: no cover
+                rule = getattr(self, f"attrrule_{k}", None)
+                if rule is None:
+                    new_value = self.attr_embed(v)
+                    if new_value is not None:
+                        workspace.attributes[k] = new_value
+                elif rule(node, workspace, k, v) is False:  # pragma: no cover
                     break
 
         return workspace
@@ -415,14 +395,20 @@ class HTMLGenerator(metaclass=OvldMC):
         elif value is True:
             return value
 
-    def attr_embed(self, value: Union[str, int, float]):
+    def attr_embed(self, value: str):
+        return self.expand_resources(value, self.attr_embed)
+
+    def attr_embed(self, value: Union[int, float]):
         return str(value)
 
     def attr_embed(self, elements: Union[list, tuple, set, frozenset]):
         return " ".join(self.attr_embed(elem) for elem in elements)
 
+    def attr_embed(self, style: dict):
+        return "".join(f"{k}:{v};" for k, v in style.items())
+
     def attr_embed(self, expr: resource.JSExpression):
-        return expr
+        return self.expand_resources(expr.code, self.js_embed)
 
     def attr_embed(self, t: Tag):
         tag_id = t.get_attribute("id", None)

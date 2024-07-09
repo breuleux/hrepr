@@ -1,5 +1,6 @@
 import json
 import re
+from collections import deque
 from dataclasses import dataclass, field
 from html import escape
 from pathlib import Path
@@ -8,7 +9,7 @@ from typing import Optional, Union
 from ovld import OvldBase
 
 from . import resource
-from .h import H, HType, Tag, gensym
+from .h import H, Tag, gensym
 from .j import Code, Into, J, Module, Script
 from .textgen_simple import (
     Breakable,
@@ -55,11 +56,13 @@ class ScriptAccumulator:
 
 @dataclass
 class BlockGenerator(OvldBase):
-    session: "HTMLGenerator" = None
+    global_generator: "HTMLGenerator" = None
     result: Tag = None
-    resources: list[Tag] = field(default_factory=list)
+    resources: deque[Tag] = field(default_factory=deque)
     script_accumulator: Optional[ScriptAccumulator] = None
-    extra: list[Tag] = field(default_factory=list)
+    extra: deque[Tag] = field(default_factory=deque)
+    processed_resources: list = None
+    processed_extra: list = None
 
     #############
     # Utilities #
@@ -122,15 +125,16 @@ class BlockGenerator(OvldBase):
         if node.name == "script":
             node_embed = self.script_node_embed
         elif node.name == "style":
-            node_embed=self.raw_node_embed
+            node_embed = self.raw_node_embed
         elif node.name == "raw":
             open = close = None
-            node_embed=self.raw_node_embed
+            node_embed = self.raw_node_embed
         elif node.name == "inline":
             open = close = None
 
         return self.represent_node_generic(
-            open=open, close=close,
+            open=open,
+            close=close,
             node=node,
             node_embed=node_embed,
         )
@@ -367,9 +371,16 @@ class HTMLGenerator:
         self.seen_resources = set()
         self.block = block_generator_class
 
-    def blockgen(self, node, *, seen_resources=None):
-        blk = self.block()
+    def blockgen(self, node, *, seen_resources=None, process_extra=True):
+        blk = self.block(global_generator=self)
         blk.result = blk.node_embed(node)
+
+        if process_extra:
+            blk.processed_extra = proc = []
+            while blk.extra:
+                nxt = blk.extra.popleft()
+                proc.append(blk.node_embed(nxt))
+
         if seen_resources is not True:
             seen = (
                 self.seen_resources
@@ -378,22 +389,22 @@ class HTMLGenerator:
             )
             blk.processed_resources = proc = []
             while blk.resources:
-                nxt = blk.resources.pop()
+                nxt = blk.resources.popleft()
                 if nxt not in seen:
                     proc.append(blk.node_embed(nxt))
                     seen.add(nxt)
-            proc.reverse()
+
         return blk
 
     def to_string(self, node):
-        return str(self.blockgen(node).result)
+        return str(self.blockgen(node, seen_resources=True).result)
 
     def to_jupyter(self, node):  # pragma: no cover
         blk = self.blockgen(node, seen_resources=set())
         elem = H.div(
             css_nbreset,
             blk.processed_resources,
-            H.div["hrepr"](blk.result, blk.extra),
+            H.div["hrepr"](blk.result, blk.processed_extra),
         )
         return self.to_string(elem)
 
@@ -425,14 +436,14 @@ class HTMLGenerator:
             H.raw("<!DOCTYPE html>"),
             H.html(
                 H.head(utf8, blk.processed_resources),
-                H.body(blk.result, blk.extra),
+                H.body(blk.result, blk.processed_extra),
             ),
         )
         return self.to_string(page)
 
     def __call__(self, node):
         blk = self.blockgen(node)
-        return self.to_string(H.inline(blk.result, blk.extra))
+        return self.to_string(H.inline(blk.result, blk.processed_extra))
 
 
 standard_html = HTMLGenerator()

@@ -10,7 +10,7 @@ from ovld import OvldBase
 
 from . import resource
 from .h import H, Tag, gensym
-from .j import Code, Into, J, Module, Script
+from .j import J, Returns
 from .textgen_simple import (
     Breakable,
     Sequence,
@@ -160,28 +160,25 @@ class BlockGenerator(OvldBase):
 
         wid = element.attributes["id"]
 
-        lines = [*lines, replace_line]
-
-        scripts = {r.src for r in self.script_accumulator.scripts}
         lines = [
-            f"$$HREPR.loadScripts({self.js_embed(list(scripts))},()=>{{",
+            f"$$HREPR.loadScripts({self.js_embed(list(set(self.script_accumulator.scripts)))},()=>{{",
             *lines,
+            replace_line,
             "});",
         ]
 
         into_line = f"const $$INTO = $$HREPR.prepare({self.js_embed(wid)});"
         lines = [into_line, *lines]
 
-        for r in self.script_accumulator.modules:
-            if r.symbol:
-                line = f"import {{ {r.symbol} as {r.varname} }} from {self.js_embed(r.module)};"
+        for module, symbol, varname in self.script_accumulator.modules:
+            if symbol:
+                line = f"import {{ {symbol} as {varname} }} from {self.js_embed(module)};"
             else:
-                line = f"import {r.varname} from {self.js_embed(r.module)};"
+                line = f"import {varname} from {self.js_embed(module)};"
             lines = [line, *lines]
 
-        for co in self.script_accumulator.codes:
-            assert co.code
-            self.resources.append(H.script(co.code))
+        for code in self.script_accumulator.codes:
+            self.resources.append(H.script(code))
 
         for sty in self.script_accumulator.styles:
             self.resources.append(sty)
@@ -306,18 +303,18 @@ class BlockGenerator(OvldBase):
         if jd.namespace is not None:
             varname = gensym(symbol)
             self.script_accumulator.modules.append(
-                Module(
-                    module=jd.namespace,
-                    symbol=None if symbol == "default" else symbol,
-                    varname=varname,
+                (
+                    jd.namespace,
+                    None if symbol == "default" else symbol,
+                    varname,
                 )
             )
         elif jd.src is not None:
             varname = symbol
-            self.script_accumulator.scripts.append(Script(src=jd.src))
+            self.script_accumulator.scripts.append(jd.src)
         elif jd.code is not None:
             varname = symbol
-            self.script_accumulator.codes.append(Code(code=jd.code))
+            self.script_accumulator.codes.append(jd.code)
         else:
             varname = symbol
 
@@ -350,8 +347,8 @@ class BlockGenerator(OvldBase):
 
         return result
 
-    def js_embed(self, i: Into):
-        self.script_accumulator.returns = i.element
+    def js_embed(self, ret: Returns):
+        self.script_accumulator.returns = ret.value
         return Text("$$INTO")
 
     def js_embed(self, res: resource.Resource):

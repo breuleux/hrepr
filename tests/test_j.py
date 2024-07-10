@@ -3,7 +3,7 @@ from itertools import count
 import pytest
 
 from hrepr import h as hmodule
-from hrepr import into
+from hrepr import returns
 from hrepr.h import H
 from hrepr.j import J
 
@@ -32,7 +32,7 @@ def test_global_symbol(file_regression):
     node = H.div(
         H.h2("The button should show 3, 6, 9... when clicked."),
         J(code=incrementer_code).Counter(
-            into(H.button("ERROR!", style="width:100px;")), {"increment": 3}
+            returns(H.button("ERROR!", style="width:100px;")), {"increment": 3}
         ),
     )
 
@@ -45,7 +45,7 @@ def test_stylesheet(file_regression):
             "The page should look purple. Also, the button should show 3, 6, 9... when clicked."
         ),
         J(code=incrementer_code, stylesheet="./stylish.css").Counter(
-            into(H.button("ERROR!", style="width:100px;")), {"increment": 3}
+            returns(H.button("ERROR!", style="width:100px;")), {"increment": 3}
         ),
     )
 
@@ -56,7 +56,7 @@ def test_kwargs(file_regression):
     node = H.div(
         H.h2("The button should show 5, 10, 15... when clicked."),
         J(code=incrementer_code).Counter(
-            into(H.button("ERROR!", style="width:100px;")),
+            returns(H.button("ERROR!", style="width:100px;")),
             increment=5,
         ),
     )
@@ -72,13 +72,13 @@ def test_module(file_regression):
             "view using a server e.g. with `python -m http.server`.",
         ),
         J(namespace="./counter.esm.js").bytwo(
-            into(H.button("ERROR!", style="width:100px;")),
+            returns(H.button("ERROR!", style="width:100px;")),
         ),
         J(namespace="./counter.esm.js").by.three(
-            into(H.button("ERROR!", style="width:100px;")),
+            returns(H.button("ERROR!", style="width:100px;")),
         ),
         J(module="./counter.esm.js")(
-            into(H.button("ERROR!", style="width:100px;")),
+            returns(H.button("ERROR!", style="width:100px;")),
             increment=4,
         ),
     )
@@ -90,10 +90,10 @@ def test_script(file_regression):
     node = H.div(
         H.h2("The buttons should increment by 2 and 3 respectively."),
         J(src="./counter.js").bytwo(
-            into(H.button("ERROR!", style="width:100px;")),
+            returns(H.button("ERROR!", style="width:100px;")),
         ),
         J(src="./counter.js").by.three(
-            into(H.button("ERROR!", style="width:100px;")),
+            returns(H.button("ERROR!", style="width:100px;")),
         ),
     )
 
@@ -161,7 +161,7 @@ def test_external_cytoscape(file_regression):
     node = H.div(
         H.h2("This should show an interactive graph."),
         cytoscape(
-            container=into(
+            container=returns(
                 H.div(
                     style={
                         "width": "500px",
@@ -192,6 +192,6 @@ def test_external_katex(file_regression):
     )
     node = H.div(
         H.h2("This should show a well-formatted mathematical formula."),
-        katex.render("c = \\pm\\sqrt{a^2 + b^2}", into(H.div())),
+        katex.render("c = \\pm\\sqrt{a^2 + b^2}", returns(H.div())),
     )
     file_regression.check(str(node.as_page()), extension=".html")

@@ -1,29 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional
-
-from .h import Tag
 
 
 @dataclass
-class Into:
-    element: Tag
-
-
-@dataclass
-class Module:
-    module: str
-    symbol: Optional[str] = None
-    varname: Optional[str] = None
-
-
-@dataclass
-class Script:
-    src: str
-
-
-@dataclass
-class Code:
-    code: str
+class Returns:
+    value: object
 
 
 @dataclass

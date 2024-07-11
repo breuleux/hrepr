@@ -159,7 +159,7 @@ class BlockGenerator(OvldBase):
             replace_line = ""
             wid = element._get_id()
         elif element is None:
-            wid = f"${node._serial}"
+            wid = f"H{node._serial}"
             element = H.placeholder(id=wid)
             replace_line = "$$HREPR.swap($$INTO, obj);"
         else:  # pragma: no cover

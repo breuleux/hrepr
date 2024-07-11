@@ -227,10 +227,10 @@ def test_ids():
     inc = J(code=incrementer_code)
 
     c1 = inc(returns(H.div()))
-    assert c1._get_id() == c1._get_id() == "$2"
+    assert c1._get_id() == c1._get_id() == "H2"
 
     c2 = inc(H.div())
-    assert c2._get_id() == "$5" == f"${c2._serial}"
+    assert c2._get_id() == "H5" == f"H{c2._serial}"
 
     c3 = inc(returns(H.div(id="hello")))
     assert c3._get_id() == "hello"

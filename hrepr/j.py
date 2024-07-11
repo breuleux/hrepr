@@ -1,6 +1,8 @@
+from collections import deque
 from dataclasses import dataclass
+from typing import Sequence
 
-from .h import current_id
+from . import h
 
 
 @dataclass
@@ -45,7 +47,38 @@ class J:
 
         self._data = _data
         self._path = _path
-        self._serial = next(current_id)
+        self._returns = None
+        self._serial = next(h.current_id)
+
+    def _get_id(self):
+        ret = self._get_returns()
+        if not ret:
+            return f"${self._serial}"
+        elif isinstance(ret, J):
+            return ret._get_id()
+        else:
+            return ret.id
+
+    def _get_returns(self):
+        if self._returns is not None:
+            return self._returns
+
+        to_process = deque(self._path)
+        while to_process:
+            x = to_process.popleft()
+            if isinstance(x, Sequence):
+                to_process.extend(x)
+            elif isinstance(x, Returns):
+                self._returns = x.value
+                return x.value
+            elif isinstance(x, J):
+                r = x._get_returns()
+                if r:
+                    self._returns = r
+                    return r
+
+        self._returns = False
+        return False
 
     def __getattr__(self, attr):
         if attr.startswith("__") and attr.endswith("__"):  # pragma: no cover

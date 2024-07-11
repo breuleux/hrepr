@@ -173,11 +173,18 @@ class Tag:
             return self
         elif self._constructed:
             raise Exception(
-                "Cannot ensure an ID for this node because it has already been constructed."
+                "It is too late to ensure that this node has an ID, because"
+                " its attributes or children have already been accessed."
+                " Either construct with an explicit id, or call ensure_id() earlier."
             )
         else:
             self._require_id = True
             return self
+
+    @property
+    def id(self):
+        self.ensure_id()
+        return self.attributes["id"]
 
     def __getitem__(self, items):
         if not isinstance(items, tuple):

@@ -22,6 +22,17 @@ class Counter {
 """
 
 
+button_creator = """
+function make_button(border) {
+    const btn = document.createElement("button");
+    btn.innerText = "X";
+    btn.style.border = border;
+    btn.style.width = "100px";
+    return btn;
+}
+"""
+
+
 @pytest.fixture(autouse=True)
 def reset_id_counter():
     global H
@@ -138,6 +149,20 @@ def test_no_varname():
     node = H.div(J()("hello"))
     with pytest.raises(Exception):
         str(node.as_page())
+
+
+def test_node_creation(file_regression):
+    node = H.div(
+        H.h2(
+            "The button should have a purple border and show 3, 6, 9... when clicked."
+        ),
+        J(code=incrementer_code).Counter(
+            returns(J(code=button_creator).make_button("3px solid purple")),
+            {"increment": 3},
+        ),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")
 
 
 cystyle = """

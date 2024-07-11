@@ -1,6 +1,5 @@
 from collections import deque
 from dataclasses import dataclass
-from typing import Sequence
 
 from . import h
 
@@ -66,7 +65,7 @@ class J:
         to_process = deque(self._path)
         while to_process:
             x = to_process.popleft()
-            if isinstance(x, Sequence):
+            if isinstance(x, (list, tuple)):
                 to_process.extend(x)
             elif isinstance(x, Returns):
                 self._returns = x.value

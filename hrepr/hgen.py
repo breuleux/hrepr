@@ -155,7 +155,7 @@ class BlockGenerator(OvldBase):
             element = element.ensure_id()
             replace_line = ""
         else:
-            element = H.placeholder(id=True)
+            element = H.placeholder(id=f"${node._serial}")
             replace_line = "obj && $$INTO.replaceWith(obj);"
 
         wid = element.attributes["id"]

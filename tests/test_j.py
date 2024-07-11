@@ -195,3 +195,22 @@ def test_external_katex(file_regression):
         katex.render("c = \\pm\\sqrt{a^2 + b^2}", returns(H.div())),
     )
     file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_ids():
+    inc = J(code=incrementer_code)
+
+    c1 = inc(returns(H.div()))
+    assert c1._get_id() == c1._get_id() == "$1"
+
+    c2 = inc(H.div())
+    assert c2._get_id() == "$4" == f"${c2._serial}"
+
+    c3 = inc(returns(H.div(id="hello")))
+    assert c3._get_id() == "hello"
+
+    c4 = inc(returns(inc(returns(H.div(id="wow")))))
+    assert c4._get_id() == "wow"
+
+    c5 = inc(inc(returns(H.div(id="yahtzee"))))
+    assert c5._get_id() == "yahtzee"

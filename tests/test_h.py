@@ -169,7 +169,9 @@ def test_ensure_id():
 def test_cannot_ensure_id():
     d = H.div("hello")
     str(d)
-    with pytest.raises(Exception, match="Cannot ensure an ID"):
+    with pytest.raises(
+        Exception, match="It is too late to ensure that this node has an ID"
+    ):
         d.ensure_id()
 
 

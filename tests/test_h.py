@@ -2,15 +2,14 @@ from itertools import count
 
 import pytest
 
-from hrepr import H, Tag
-from hrepr import hgen as hmodule
+from hrepr import H, Tag, h
 
 from .common import one_test_per_assert
 
 
 @pytest.fixture(autouse=True)
 def reset_id_counter():
-    hmodule.id_counter = count()
+    h.current_id = count()
 
 
 def matches(h, s):
@@ -29,7 +28,7 @@ def test_div():
     assert matches(H.div["classy"](), '<div class="classy"></div>')
     assert matches(
         H.div["classy"](id="eyedee", thing="thang"),
-        '<div class="classy" id="eyedee" thing="thang"></div>',
+        '<div class="classy" thing="thang" id="eyedee"></div>',
     )
     assert matches(H.div(dash_es=True), "<div dash-es></div>")
     assert matches(
@@ -39,10 +38,6 @@ def test_div():
     assert matches(
         H.div['qu"ote'](id='qu"ite'),
         '<div class="qu&quot;ote" id="qu&quot;ite"></div>',
-    )
-    assert matches(
-        H.div["classy", "#eyedee"](thing="thang"),
-        '<div class="classy" id="eyedee" thing="thang"></div>',
     )
 
 
@@ -158,13 +153,24 @@ def test_dash():
     assert matches(H.some_tag("xyz"), "<some-tag>xyz</some-tag>")
 
 
-def test_autoid():
+def test_ensure_id():
     # First time
-    assert matches(H.div("wow").autoid(), '<div id="AID_0">wow</div>')
+    assert matches(H.div("wow").ensure_id(), '<div id="$0">wow</div>')
     # Second time
-    assert matches(H.div("wow").autoid(), '<div id="AID_1">wow</div>')
+    assert matches(H.div("wow").ensure_id(), '<div id="$1">wow</div>')
     # Shorthand
-    assert matches(H.div["#"]("wow"), '<div id="AID_2">wow</div>')
+    assert matches(H.div("wow", id=True), '<div id="$2">wow</div>')
+    # Already has an id
+    assert matches(
+        H.div("wow", id="xxx").ensure_id(), '<div id="xxx">wow</div>'
+    )
+
+
+def test_cannot_ensure_id():
+    d = H.div("hello")
+    str(d)
+    with pytest.raises(Exception, match="Cannot ensure an ID"):
+        d.ensure_id()
 
 
 def test_as_page():

@@ -152,10 +152,10 @@ class BlockGenerator(OvldBase):
 
         element = self.script_accumulator.returns
         if element:
-            element = element.autoid()
+            element = element.ensure_id()
             replace_line = ""
         else:
-            element = H.placeholder().autoid()
+            element = H.placeholder(id=True)
             replace_line = "obj && $$INTO.replaceWith(obj);"
 
         wid = element.attributes["id"]

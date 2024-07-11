@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from .h import current_id
+
 
 @dataclass
 class Returns:
@@ -43,6 +45,7 @@ class J:
 
         self._data = _data
         self._path = _path
+        self._serial = next(current_id)
 
     def __getattr__(self, attr):
         if attr.startswith("__") and attr.endswith("__"):  # pragma: no cover

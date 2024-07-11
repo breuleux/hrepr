@@ -2,8 +2,7 @@ from itertools import count
 
 import pytest
 
-from hrepr import h as hmodule
-from hrepr import returns
+from hrepr import Tag, h, returns
 from hrepr.h import H
 from hrepr.j import J
 
@@ -25,7 +24,9 @@ class Counter {
 
 @pytest.fixture(autouse=True)
 def reset_id_counter():
-    hmodule.current_id = count()
+    global H
+    h.current_id = count()
+    H = h.HTML(tag_class=Tag, instantiate=True)
 
 
 def test_global_symbol(file_regression):
@@ -201,10 +202,10 @@ def test_ids():
     inc = J(code=incrementer_code)
 
     c1 = inc(returns(H.div()))
-    assert c1._get_id() == c1._get_id() == "$1"
+    assert c1._get_id() == c1._get_id() == "$2"
 
     c2 = inc(H.div())
-    assert c2._get_id() == "$4" == f"${c2._serial}"
+    assert c2._get_id() == "$5" == f"${c2._serial}"
 
     c3 = inc(returns(H.div(id="hello")))
     assert c3._get_id() == "hello"

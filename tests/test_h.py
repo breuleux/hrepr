@@ -9,7 +9,9 @@ from .common import one_test_per_assert
 
 @pytest.fixture(autouse=True)
 def reset_id_counter():
+    global H
     h.current_id = count()
+    H = h.HTML(tag_class=Tag, instantiate=True)
 
 
 def matches(h, s):
@@ -155,11 +157,11 @@ def test_dash():
 
 def test_ensure_id():
     # First time
-    assert matches(H.div("wow").ensure_id(), '<div id="$0">wow</div>')
-    # Second time
     assert matches(H.div("wow").ensure_id(), '<div id="$1">wow</div>')
+    # Second time
+    assert matches(H.div("wow").ensure_id(), '<div id="$2">wow</div>')
     # Shorthand
-    assert matches(H.div("wow", id=True), '<div id="$2">wow</div>')
+    assert matches(H.div("wow", id=True), '<div id="$3">wow</div>')
     # Already has an id
     assert matches(
         H.div("wow", id="xxx").ensure_id(), '<div id="xxx">wow</div>'

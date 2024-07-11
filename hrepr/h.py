@@ -122,7 +122,7 @@ class Tag:
                 resources.extend(part._resources)
 
         if self._require_id and "id" not in attributes:
-            attributes["id"] = f"${self._serial}"
+            attributes["id"] = f"H{self._serial}"
 
         self._parent = None
         self._attributes = attributes

@@ -52,7 +52,7 @@ class J:
     def _get_id(self):
         ret = self._get_returns()
         if not ret:
-            return f"${self._serial}"
+            return f"H{self._serial}"
         elif isinstance(ret, J):
             return ret._get_id()
         else:

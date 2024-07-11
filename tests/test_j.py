@@ -25,7 +25,7 @@ class Counter {
 
 @pytest.fixture(autouse=True)
 def reset_id_counter():
-    hmodule.current_autoid = count()
+    hmodule.current_id = count()
 
 
 def test_global_symbol(file_regression):

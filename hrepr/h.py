@@ -4,15 +4,11 @@ from types import GeneratorType
 # Used by __str__, set by __init__ to avoid a circular dependency
 standard_html = None
 
-current_autoid = count()
+current_id = count()
 
 
 def gensym(symbol):
-    return f"{symbol}__{next(current_autoid)}"
-
-
-def _nextid():
-    return f"AID_{next(current_autoid)}"
+    return f"{symbol}__{next(current_id)}"
 
 
 def flatten(seq):
@@ -70,6 +66,8 @@ class Tag:
         "_attributes",
         "_children",
         "_resources",
+        "_require_id",
+        "_serial",
     )
 
     specialized_tags = {}
@@ -98,6 +96,8 @@ class Tag:
         self._attributes = attributes
         self._children = children
         self._resources = resources
+        self._require_id = False
+        self._serial = next(current_id)
 
     def _do_cache(self):
         self._constructed = True
@@ -120,6 +120,9 @@ class Tag:
                 children.extend(part._children)
             if part._resources:
                 resources.extend(part._resources)
+
+        if self._require_id and "id" not in attributes:
+            attributes["id"] = f"${self._serial}"
 
         self._parent = None
         self._attributes = attributes
@@ -151,8 +154,6 @@ class Tag:
         return self._resources
 
     def fill(self, children=None, attributes=None, resources=None):
-        if not children and not attributes and not resources:
-            return self
         if isinstance(resources, Tag):
             resources = (resources,)
         return type(self)(
@@ -165,8 +166,18 @@ class Tag:
     def get_attribute(self, attr, dflt):
         return self.attributes.get(attr, dflt)
 
-    def autoid(self):
-        return self(id=_nextid())
+    def ensure_id(self):
+        if self._require_id or (
+            self._attributes and self._attributes.get("id", None)
+        ):
+            return self
+        elif self._constructed:
+            raise Exception(
+                "Cannot ensure an ID for this node because it has already been constructed."
+            )
+        else:
+            self._require_id = True
+            return self
 
     def __getitem__(self, items):
         if not isinstance(items, tuple):
@@ -176,24 +187,23 @@ class Tag:
         classes = [it for it in items if not it.startswith("#")]
         if classes:
             attributes["class"] = (*self.attributes.get("class", ()), *classes)
-        ids = [it for it in items if it.startswith("#")]
-        if ids:
-            the_id = ids[-1][1:]
-            if the_id == "":
-                the_id = f"AID_{next(current_autoid)}"
-            attributes["id"] = the_id
         return self.fill(attributes=attributes)
 
-    def __call__(self, *children, resources=None, **attributes):
+    def __call__(self, *children, resources=None, id=None, **attributes):
         attributes = {
             attr.replace("_", "-"): value for attr, value in attributes.items()
         }
         if len(children) > 0 and isinstance(children[0], dict):
             attributes = {**children[0], **attributes}
             children = children[1:]
-        return self.fill(
+        if id and id is not True:
+            attributes["id"] = id
+        result = self.fill(
             children=children, attributes=attributes, resources=resources
         )
+        if id is True:
+            result = result.ensure_id()
+        return result
 
     def __eq__(self, other):
         return (

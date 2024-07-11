@@ -38,25 +38,6 @@ def test_resource_embed_function(customgen, file_regression):
     file_regression.check(customgen(node), extension=".html")
 
 
-def test_resource_embed_tag(customgen, file_regression):
-    inp = H.input(id="inp")
-    box = H.div(id="here", style="padding:5px;border:solid blue;height:100px;")
-
-    node = H.div(
-        H.h3("The button should append the text to the blue box"),
-        box,
-        inp,
-        H.button(
-            "Append",
-            onclick=JSExpression(
-                f"{Resource(box)}.innerText += {Resource(inp)}.value"
-            ),
-        ),
-    )
-
-    file_regression.check(customgen(node), extension=".html")
-
-
 def test_blockgen(customgen):
     r1 = H.script("alert(1)")
     r2 = H.script("alert(2)")

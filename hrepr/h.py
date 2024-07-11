@@ -112,8 +112,11 @@ class Tag:
         attributes = {}
         children = []
         resources = []
+        serial = None
 
         for part in reversed(sequence):
+            if part._require_id:
+                serial = part._serial
             if part._attributes:
                 attributes.update(part._attributes)
             if part._children:
@@ -121,8 +124,8 @@ class Tag:
             if part._resources:
                 resources.extend(part._resources)
 
-        if self._require_id and "id" not in attributes:
-            attributes["id"] = f"H{self._serial}"
+        if serial is not None and "id" not in attributes:
+            attributes["id"] = f"H{serial}"
 
         self._parent = None
         self._attributes = attributes

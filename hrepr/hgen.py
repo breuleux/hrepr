@@ -151,14 +151,19 @@ class BlockGenerator(OvldBase):
         ]
 
         element = self.script_accumulator.returns
-        if element:
+        if isinstance(element, Tag):
             element = element.ensure_id()
             replace_line = ""
-        else:
-            element = H.placeholder(id=f"${node._serial}")
-            replace_line = "obj && $$INTO.replaceWith(obj);"
-
-        wid = element.attributes["id"]
+            wid = element.id
+        elif isinstance(element, J):
+            replace_line = ""
+            wid = element._get_id()
+        elif element is None:
+            wid = f"${node._serial}"
+            element = H.placeholder(id=wid)
+            replace_line = "$$HREPR.swap($$INTO, obj);"
+        else:  # pragma: no cover
+            raise TypeError("returns() expression must be a Tag or J object.")
 
         lines = [
             f"$$HREPR.loadScripts({self.js_embed(list(set(self.script_accumulator.scripts)))},()=>{{",
@@ -184,11 +189,12 @@ class BlockGenerator(OvldBase):
             self.resources.append(sty)
 
         self.resources.append(constructor_lib)
-        self.extra.append(H.script("\n".join(lines), type="module"))
 
         self.script_accumulator = None
 
-        return self.node_embed(element)
+        result = self.node_embed(element)
+        self.extra.append(H.script("\n".join(lines), type="module"))
+        return result
 
     def node_embed(self, node: object):
         if hasattr(node, "__h__"):

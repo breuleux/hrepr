@@ -13,6 +13,13 @@
         self.__object.__resolve = resolve;
         return self;
     },
+    swap(orig, repl) {
+        if (repl) {
+            repl.__object = orig;
+            repl.setAttribute("id", orig.getAttribute("id"));
+            orig.replaceWith(repl);
+        }
+    },
     isFunc(x) {
         let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
         return (hasprop("arguments") || !hasprop("prototype"));
@@ -64,5 +71,5 @@
 $$HREPR.loadScripts([],()=>{
 const obj = $$HREPR.ucall(alert,null,"hello");
 $$INTO.__object.__resolve(obj);
-obj && $$INTO.replaceWith(obj);
+$$HREPR.swap($$INTO, obj);
 });</script></body></html>

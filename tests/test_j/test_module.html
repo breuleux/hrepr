@@ -13,6 +13,13 @@
         self.__object.__resolve = resolve;
         return self;
     },
+    swap(orig, repl) {
+        if (repl) {
+            repl.__object = orig;
+            repl.setAttribute("id", orig.getAttribute("id"));
+            orig.replaceWith(repl);
+        }
+    },
     isFunc(x) {
         let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
         return (hasprop("arguments") || !hasprop("prototype"));

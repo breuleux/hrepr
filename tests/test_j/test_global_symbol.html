@@ -28,9 +28,17 @@ class Counter {
     },
     swap(orig, repl) {
         if (repl) {
-            repl.__object = orig;
-            repl.setAttribute("id", orig.getAttribute("id"));
-            orig.replaceWith(repl);
+            if (repl.getElement) {
+                repl = repl.getElement();
+            }
+            if (repl instanceof HTMLElement) {
+                repl.__object = orig.__object;
+                repl.setAttribute("id", orig.getAttribute("id"));
+                orig.replaceWith(repl);
+            }
+            else {
+                orig.remove();
+            }
         }
     },
     isFunc(x) {
@@ -80,7 +88,7 @@ class Counter {
     },
 }
 
-</script></head><body><div><h2>The button should show 3, 6, 9... when clicked.</h2><button style="width:100px;" id="H6">ERROR!</button></div><script type="module">const $$INTO = $$HREPR.prepare("H6");
+</script></head><body><div><h2>The button should show 3, 6, 9... when clicked.</h2><button style="width:100px;" id="H6">ERROR!</button></div><script>$$HREPR.prepare("H6");</script><script type="module">const $$INTO = document.getElementById("H6");
 $$HREPR.loadScripts([],()=>{
 const obj = $$HREPR.ucall(Counter,null,$$INTO,{"increment": 3});
 $$INTO.__object.__resolve(obj);

@@ -56,7 +56,7 @@ class ScriptAccumulator:
 
 @dataclass
 class BlockGenerator(OvldBase):
-    global_generator: "HTMLGenerator" = None
+    global_generator: "HTMLGenerator"
     result: Tag = None
     resources: deque[Tag] = field(default_factory=deque)
     script_accumulator: Optional[ScriptAccumulator] = None
@@ -172,7 +172,9 @@ class BlockGenerator(OvldBase):
             "});",
         ]
 
-        into_line = f"const $$INTO = $$HREPR.prepare({self.js_embed(wid)});"
+        self.extra.append(H.script(f"$$HREPR.prepare({self.js_embed(wid)});"))
+
+        into_line = f"const $$INTO = document.getElementById({self.js_embed(wid)});"
         lines = [into_line, *lines]
 
         for module, symbol, varname in self.script_accumulator.modules:
@@ -317,7 +319,8 @@ class BlockGenerator(OvldBase):
             )
         elif jd.src is not None:
             varname = symbol
-            self.script_accumulator.scripts.append(jd.src)
+            src = jd.src if isinstance(jd.src, (list, tuple)) else [jd.src]
+            self.script_accumulator.scripts.extend(src)
         elif jd.code is not None:
             varname = symbol
             self.script_accumulator.codes.append(jd.code)
@@ -372,10 +375,13 @@ class BlockGenerator(OvldBase):
 class HTMLGenerator:
     def __init__(self, block_generator_class=BlockGenerator):
         self.seen_resources = set()
-        self.block = block_generator_class
+        self.block_generator_class = block_generator_class
+
+    def block(self):
+        return self.block_generator_class(global_generator=self)
 
     def blockgen(self, node, *, seen_resources=None, process_extra=True):
-        blk = self.block(global_generator=self)
+        blk = self.block()
         blk.result = blk.node_embed(node)
 
         if process_extra:

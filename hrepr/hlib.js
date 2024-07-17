@@ -15,9 +15,17 @@ $$HREPR = {
     },
     swap(orig, repl) {
         if (repl) {
-            repl.__object = orig;
-            repl.setAttribute("id", orig.getAttribute("id"));
-            orig.replaceWith(repl);
+            if (repl.getElement) {
+                repl = repl.getElement();
+            }
+            if (repl instanceof HTMLElement) {
+                repl.__object = orig.__object;
+                repl.setAttribute("id", orig.getAttribute("id"));
+                orig.replaceWith(repl);
+            }
+            else {
+                orig.remove();
+            }
         }
     },
     isFunc(x) {

@@ -15,9 +15,17 @@
     },
     swap(orig, repl) {
         if (repl) {
-            repl.__object = orig;
-            repl.setAttribute("id", orig.getAttribute("id"));
-            orig.replaceWith(repl);
+            if (repl.getElement) {
+                repl = repl.getElement();
+            }
+            if (repl instanceof HTMLElement) {
+                repl.__object = orig.__object;
+                repl.setAttribute("id", orig.getAttribute("id"));
+                orig.replaceWith(repl);
+            }
+            else {
+                orig.remove();
+            }
         }
     },
     isFunc(x) {
@@ -67,8 +75,8 @@
     },
 }
 
-</script></head><body><div><h2>This should show a well-formatted mathematical formula.</h2><div id="H5"></div></div><script type="module">import default__9 from "https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.mjs";
-const $$INTO = $$HREPR.prepare("H5");
+</script></head><body><div><h2>This should show a well-formatted mathematical formula.</h2><div id="H5"></div></div><script>$$HREPR.prepare("H5");</script><script type="module">import default__9 from "https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.mjs";
+const $$INTO = document.getElementById("H5");
 $$HREPR.loadScripts([],()=>{
 const obj = $$HREPR.ucall(default__9,"render","c = \\pm\\sqrt{a^2 + b^2}",$$INTO);
 $$INTO.__object.__resolve(obj);

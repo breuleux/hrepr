@@ -15,9 +15,17 @@
     },
     swap(orig, repl) {
         if (repl) {
-            repl.__object = orig;
-            repl.setAttribute("id", orig.getAttribute("id"));
-            orig.replaceWith(repl);
+            if (repl.getElement) {
+                repl = repl.getElement();
+            }
+            if (repl instanceof HTMLElement) {
+                repl.__object = orig.__object;
+                repl.setAttribute("id", orig.getAttribute("id"));
+                orig.replaceWith(repl);
+            }
+            else {
+                orig.remove();
+            }
         }
     },
     isFunc(x) {
@@ -67,7 +75,7 @@
     },
 }
 
-</script></head><body><div><h2>There should be an alert.</h2><placeholder id="H5"></placeholder></div><script type="module">const $$INTO = $$HREPR.prepare("H5");
+</script></head><body><div><h2>There should be an alert.</h2><placeholder id="H5"></placeholder></div><script>$$HREPR.prepare("H5");</script><script type="module">const $$INTO = document.getElementById("H5");
 $$HREPR.loadScripts([],()=>{
 const obj = $$HREPR.ucall(alert,null,"hello");
 $$INTO.__object.__resolve(obj);

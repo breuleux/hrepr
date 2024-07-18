@@ -68,6 +68,10 @@ class BlockGenerator(OvldBase):
     # Utilities #
     #############
 
+    @property
+    def constructor_lib(self):
+        return constructor_lib
+
     def expand_resources(self, value, embed):
         def sub(m):
             res = resource.registry.resolve(int(m.groups()[0]))
@@ -131,6 +135,16 @@ class BlockGenerator(OvldBase):
             node_embed = self.raw_node_embed
         elif node.name == "inline":
             open = close = None
+        elif node.name == "construct":
+            if node.children:  # pragma: no cover
+                raise Exception("<construct> nodes should not have children")
+            j = node.attributes["constructor"]
+            j._model_attributes = {
+                k: v
+                for k, v in node.attributes.items()
+                if k != "constructor" and not k.startswith("-")
+            }
+            return self.node_embed(j)
 
         return self.represent_node_generic(
             open=open,
@@ -165,8 +179,11 @@ class BlockGenerator(OvldBase):
         else:  # pragma: no cover
             raise TypeError("returns() expression must be a Tag or J object.")
 
+        if isinstance(element, Tag) and node._model_attributes:
+            element = element(**node._model_attributes)
+
         lines = [
-            f"$$HREPR.loadScripts({self.js_embed(list(set(self.script_accumulator.scripts)))},()=>{{",
+            f"$$HREPR.run({self.js_embed(list(set(self.script_accumulator.scripts)))},'#{wid}',()=>{{",
             *lines,
             replace_line,
             "});",
@@ -174,7 +191,9 @@ class BlockGenerator(OvldBase):
 
         self.extra.append(H.script(f"$$HREPR.prepare({self.js_embed(wid)});"))
 
-        into_line = f"const $$INTO = document.getElementById({self.js_embed(wid)});"
+        into_line = (
+            f"const $$INTO = document.getElementById({self.js_embed(wid)});"
+        )
         lines = [into_line, *lines]
 
         for module, symbol, varname in self.script_accumulator.modules:
@@ -190,7 +209,8 @@ class BlockGenerator(OvldBase):
         for sty in self.script_accumulator.styles:
             self.resources.append(sty)
 
-        self.resources.append(constructor_lib)
+        if clib := self.constructor_lib:
+            self.resources.append(clib)
 
         self.script_accumulator = None
 

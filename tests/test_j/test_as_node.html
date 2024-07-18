@@ -120,22 +120,9 @@ class Counter {
         }
     },
 }
-</script><script>
-function make_button(border) {
-    const btn = document.createElement("button");
-    btn.innerText = "X";
-    btn.style.border = border;
-    btn.style.width = "100px";
-    return btn;
-}
-</script></head><body><div><h2>The button should have a purple border and show 3, 6, 9... when clicked.</h2><placeholder id="H7"></placeholder></div><script>$$HREPR.prepare("H7");</script><script>$$HREPR.prepare("H7");</script><script type="module">const $$INTO = document.getElementById("H7");
-$$HREPR.run([],'#H7',()=>{
-const obj = $$HREPR.ucall(make_button,null,"3px solid purple");
-$$INTO.__object.__resolve(obj);
-$$HREPR.swap($$INTO, obj);
-});</script><script type="module">const $$INTO = document.getElementById("H7");
-$$HREPR.run([],'#H7',()=>{
-const obj = $$HREPR.ucall(Counter,null,$$INTO,{"increment": 3});
+</script></head><body><div><h2>The button should show 33, 66, 99... when clicked and should have a magenta border.</h2><button id="H6" style="width:100px;border:3px solid magenta;">ERROR!</button></div><script>$$HREPR.prepare("H6");</script><script type="module">const $$INTO = document.getElementById("H6");
+$$HREPR.run([],'#H6',()=>{
+const obj = $$HREPR.ucall(Counter,null,$$INTO,{"increment": 33});
 $$INTO.__object.__resolve(obj);
 
 });</script></body></html>

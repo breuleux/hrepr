@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 from itertools import count
 
 import pytest
 
-from hrepr import Tag, h, returns
+from hrepr import Tag, h, hrepr, returns
 from hrepr.h import H
 from hrepr.j import J
 
@@ -240,3 +241,35 @@ def test_ids():
 
     c5 = inc(inc(returns(H.div(id="yahtzee"))))
     assert c5._get_id() == "yahtzee"
+
+
+@dataclass
+class Toot:
+    increment: int
+
+    def __hrepr__(self, H, hrepr):
+        return J(code=incrementer_code).Counter(
+            returns(H.button("ERROR!", style="width:100px;")),
+            increment=self.increment,
+        )
+
+
+def test_j_from_hrepr(file_regression):
+    node = H.div(
+        H.h2("The button should show 100, 200, 300... when clicked."),
+        hrepr(Toot(100)),
+    )
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_as_node(file_regression):
+    node = H.div(
+        H.h2(
+            "The button should show 33, 66, 99... when clicked and should have a magenta border."
+        ),
+        J(code=incrementer_code)
+        .Counter(returns(H.button("ERROR!")), {"increment": 33})
+        .as_node(style="width:100px;border:3px solid magenta;"),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")

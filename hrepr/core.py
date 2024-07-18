@@ -199,6 +199,8 @@ class Hrepr(metaclass=OvldMC):
 
         # Check that it's the right type
         htype = self.H._tag_class
+        if isinstance(rval, J):
+            rval = rval.as_node()
         if not isinstance(rval, htype):
             raise TypeError(
                 f"Return value of hrepr({type(obj)}) must be an "

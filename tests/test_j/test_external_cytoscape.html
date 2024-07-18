@@ -14,54 +14,87 @@
         return self;
     },
     swap(orig, repl) {
-        if (repl) {
-            if (repl.getElement) {
-                repl = repl.getElement();
+        if (repl?.getElement) {
+            repl = repl.getElement();
+        }
+        if (!(repl instanceof HTMLElement)) {
+            repl = window.$$REPRESENT?.(repl);
+        }
+        if (repl instanceof HTMLElement) {
+            repl.__object = orig.__object;
+            for (let attr of orig.attributes) {
+                if (attr.name === "class") {
+                    repl.classList.add(...orig.classList);
+                }
+                else {
+                    repl.setAttribute(attr.name, attr.value);
+                }
             }
-            if (repl instanceof HTMLElement) {
-                repl.__object = orig.__object;
-                repl.setAttribute("id", orig.getAttribute("id"));
-                orig.replaceWith(repl);
-            }
-            else {
-                orig.remove();
-            }
+            orig.replaceWith(repl);
+        }
+        else {
+            orig.remove();
         }
     },
     isFunc(x) {
         let hasprop = prop => Object.getOwnPropertyNames(x).includes(prop);
         return (hasprop("arguments") || !hasprop("prototype"));
     },
-    loadScripts(scripts, cb) {
-        if (scripts.length == 0) {
+    trycb(cb, ecb, sel) {
+        try {
             cb();
+        }
+        catch (error) {
+            if (!ecb?.(error, sel)) {
+                throw error;
+            };
+        }
+    },
+    run(scripts, sel, cb, ecb = null) {
+        ecb = ecb || window.$$ERROR;
+        if (scripts.length == 0) {
+            $$HREPR.trycb(cb, ecb, sel);
             return;
         }
-        const counter = {count: scripts.length, callback: cb};
+        const counter = {count: scripts.length, cb, ecb, sel};
         for (let script of scripts) {
             let counters = (this.counters[script] ||= []);
             counters.push(counter);
-            if (this.scriptStatus[script] === undefined) {
+            let status = this.scriptStatus[script];
+            if (status === undefined) {
                 this.scriptStatus[script] = false;
-                function onLoad() {
-                    $$HREPR.scriptStatus[script] = true;
-                    $$HREPR.triggerScript(script);
-                }
                 let scriptTag = document.createElement("script");
                 scriptTag.src = script;
-                scriptTag.onload = onLoad;
+                scriptTag.onerror = (err) => {
+                    err = Error(`Could not load script: ${script}`);
+                    err.stack = null;
+                    $$HREPR.scriptStatus[script] = err;
+                    $$HREPR.triggerScript(script, err);
+                };
+                scriptTag.onload = () => {
+                    $$HREPR.scriptStatus[script] = true;
+                    $$HREPR.triggerScript(script);
+                };
                 document.head.appendChild(scriptTag);    
             }
-            else if (this.scriptStatus[script]) {
+            else if (status instanceof Error) {
+                ecb?.(status, sel);
+            }
+            else if (status) {
                 $$HREPR.triggerScript(script);
             }
         }
     },
-    triggerScript(script) {
+    triggerScript(script, error = null) {
         for (let counter of this.counters[script] || []) {
             counter.count--;
             if (!counter.count) {
-                counter.callback();
+                if (error) {
+                    counter.ecb?.(error, counter.sel);
+                }
+                else {
+                    $$HREPR.trycb(counter.cb, counter.ecb, counter.sel);
+                }
             }
         }
     },
@@ -74,10 +107,9 @@
         }
     },
 }
-
 </script></head><body><div><h2>This should show an interactive graph.</h2><div style="width:500px;height:500px;border:1px solid cyan;" id="H4"></div></div><script>$$HREPR.prepare("H4");</script><script type="module">import default__7 from "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js";
 const $$INTO = document.getElementById("H4");
-$$HREPR.loadScripts([],()=>{
+$$HREPR.run([],'#H4',()=>{
 const obj = $$HREPR.ucall(default__7,null,{"container": $$INTO, "elements": [{"data": {"id": "A"}}, {"data": {"id": "B"}}, {"data": {"id": "C"}}, {"data": {"source": "A", "target": "B"}}, {"data": {"source": "B", "target": "C"}}, {"data": {"source": "C", "target": "A"}}], "style": "\nnode {\n    background-color: #080;\n    label: data(id);\n}\nedge {\n    width: 5;\n    line-color: #ccc;\n    target-arrow-color: #ccc;\n    target-arrow-shape: triangle;\n    curve-style: bezier;\n}\n", "layout": {"name": "cose"}});
 $$INTO.__object.__resolve(obj);
 

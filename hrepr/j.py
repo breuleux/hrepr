@@ -46,6 +46,7 @@ class J:
 
         self._data = _data
         self._path = _path
+        self._model_attributes = None
         self._returns = None
         self._serial = next(h.current_id)
 
@@ -78,6 +79,11 @@ class J:
 
         self._returns = False
         return False
+
+    def as_node(self, *args, **kwargs):
+        from .h import H
+
+        return H.construct(*args, **kwargs, constructor=self)
 
     def __getattr__(self, attr):
         if attr.startswith("__") and attr.endswith("__"):  # pragma: no cover

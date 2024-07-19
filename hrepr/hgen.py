@@ -10,7 +10,7 @@ from ovld import OvldBase
 
 from . import resource
 from .h import H, Tag, gensym
-from .j import J, Returns
+from .j import Eval, J, Returns
 from .textgen_simple import (
     Breakable,
     Sequence,
@@ -309,7 +309,7 @@ class BlockGenerator(OvldBase):
 
         if not j._path or not isinstance(j._path[0], str):
             raise Exception(
-                "The J constructor should first be invoked with a string."
+                "The J constructor should first be invoked with an attribute or a selector."
             )
 
         symbol, *path = j._path
@@ -370,6 +370,15 @@ class BlockGenerator(OvldBase):
                         sep=",",
                     ),
                     end=")",
+                )
+            elif isinstance(entry, Eval):
+                result = Sequence(
+                    "(function () { ",
+                    "" if entry.exec else "return ",
+                    entry.code,
+                    " }).bind(",
+                    prev_result,
+                    ")()",
                 )
             else:  # pragma: no cover
                 raise TypeError()

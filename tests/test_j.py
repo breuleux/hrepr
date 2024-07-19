@@ -259,7 +259,11 @@ def test_j_from_hrepr(file_regression):
         H.h2("The button should show 100, 200, 300... when clicked."),
         hrepr(Toot(100)),
     )
-    file_regression.check(str(node.as_page()), extension=".html")
+    # Little hack to make the output consistent depending on whether the whole suite
+    # is run, or only this test.
+    file_regression.check(
+        str(node.as_page()).replace("H6", "H5"), extension=".html"
+    )
 
 
 def test_as_node(file_regression):
@@ -270,6 +274,42 @@ def test_as_node(file_regression):
         J(code=incrementer_code)
         .Counter(returns(H.button("ERROR!")), {"increment": 33})
         .as_node(style="width:100px;border:3px solid magenta;"),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_exec(file_regression):
+    node = H.div(
+        H.h2("The box should be blue."),
+        H.div("hello", id="thisbox", style="color:white;background:red"),
+        J(selector="#thisbox").exec("this.style.background = 'blue';"),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_eval(file_regression):
+    node = H.div(
+        H.h2("The color of the box should be written under it."),
+        H.script(
+            "function $$REPRESENT(x) { let node = document.createElement('div'); node.innerText = x; return node; }"
+        ),
+        H.div("hello", id="thisbox", style="color:white;background:red"),
+        J(selector="#thisbox").eval("this.style.background"),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_suppress_using_exec(file_regression):
+    node = H.div(
+        H.h2("The button should show 'GOOD!'."),
+        J(code=incrementer_code)
+        .Counter(
+            returns(H.button("GOOD!", style="width:100px;")), {"increment": 3}
+        )
+        .exec(),
     )
 
     file_regression.check(str(node.as_page()), extension=".html")

@@ -10,6 +10,12 @@ class Returns:
 
 
 @dataclass
+class Eval:
+    code: str
+    exec: bool
+
+
+@dataclass
 class JData:
     namespace: str = None
     src: str = None
@@ -25,6 +31,7 @@ class J:
         module=None,
         src=None,
         code=None,
+        selector=None,
         stylesheet=None,
         _data=None,
         _path=None,
@@ -35,6 +42,11 @@ class J:
             namespace = module
             assert not _path
             _path.append("default")
+
+        if selector:
+            assert not namespace
+            assert not _path
+            _path.append(f'document.querySelector("{selector}")')
 
         if _data is None:
             _data = JData(
@@ -79,6 +91,16 @@ class J:
 
         self._returns = False
         return False
+
+    def eval(self, code="this"):
+        return type(self)(
+            _data=self._data, _path=[*self._path, Eval(code, exec=False)]
+        )
+
+    def exec(self, code="this"):
+        return type(self)(
+            _data=self._data, _path=[*self._path, Eval(code, exec=True)]
+        )
 
     def as_node(self, *args, **kwargs):
         from .h import H

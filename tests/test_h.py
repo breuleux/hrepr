@@ -9,9 +9,10 @@ from .common import one_test_per_assert
 
 @pytest.fixture(autouse=True)
 def reset_id_counter():
-    global H
     h.current_id = count()
-    H = h.HTML(tag_class=Tag, instantiate=True)
+    to_delete = {k for k, v in H.__dict__.items() if isinstance(v, Tag)}
+    for k in to_delete:
+        delattr(H, k)
 
 
 def matches(h, s):

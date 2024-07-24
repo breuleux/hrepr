@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from . import h
 
 
+class Await:
+    pass
+
+
 @dataclass
 class Returns:
     value: object
@@ -32,6 +36,7 @@ class J:
         src=None,
         code=None,
         selector=None,
+        object=None,
         stylesheet=None,
         _data=None,
         _path=None,
@@ -48,6 +53,15 @@ class J:
             assert not _path
             _path.append(f'document.querySelector("{selector}")')
 
+        if object:
+            assert not selector
+            assert not namespace
+            assert not _path
+            _path.append(
+                f'(x => x.__object || x)(document.querySelector("{object}"))'
+            )
+            _path.append(Await())
+
         if _data is None:
             _data = JData(
                 namespace=namespace,
@@ -60,6 +74,7 @@ class J:
         self._path = _path
         self._model_attributes = None
         self._returns = None
+        self._async = None
         self._serial = next(h.current_id)
 
     def _get_id(self):
@@ -91,6 +106,23 @@ class J:
 
         self._returns = False
         return False
+
+    def _is_async(self):
+        if self._async is not None:
+            return self._async
+        is_async = False
+        for p in self._path:
+            if isinstance(p, Await):
+                is_async = True
+            elif isinstance(p, (list, tuple)):
+                is_async = any(isinstance(x, J) and x._is_async() for x in p)
+            if is_async:
+                break
+        self._async = is_async
+        return is_async
+
+    def await_(self):  # pragma: no cover
+        return type(self)(_data=self._data, _path=[*self._path, Await()])
 
     def eval(self, code="this"):
         return type(self)(

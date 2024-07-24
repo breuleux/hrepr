@@ -10,7 +10,7 @@ from ovld import OvldBase
 
 from . import resource
 from .h import H, Tag, gensym
-from .j import Eval, J, Returns
+from .j import Await, Eval, J, Returns
 from .textgen_simple import (
     Breakable,
     Sequence,
@@ -182,8 +182,9 @@ class BlockGenerator(OvldBase):
         if isinstance(element, Tag) and node._model_attributes:
             element = element(**node._model_attributes)
 
+        async_txt = "async " if node._is_async() else ""
         lines = [
-            f"$$HREPR.run({self.js_embed(list(set(self.script_accumulator.scripts)))},'#{wid}',()=>{{",
+            f"$$HREPR.run({self.js_embed(list(set(self.script_accumulator.scripts)))},'#{wid}',{async_txt}()=>{{",
             *lines,
             replace_line,
             "});",
@@ -359,7 +360,7 @@ class BlockGenerator(OvldBase):
                 last_symbol = entry
                 result = Sequence(result, ".", entry)
             elif isinstance(entry, (list, tuple)):
-                result = Breakable(
+                prev_result = result = Breakable(
                     start="$$HREPR.ucall(",
                     body=join(
                         [
@@ -372,13 +373,17 @@ class BlockGenerator(OvldBase):
                     end=")",
                 )
             elif isinstance(entry, Eval):
-                result = Sequence(
+                prev_result = result = Sequence(
                     "(function () { ",
                     "" if entry.exec else "return ",
                     entry.code,
                     " }).bind(",
-                    prev_result,
+                    result,
                     ")()",
+                )
+            elif isinstance(entry, Await):
+                prev_result = result = Breakable(
+                    start="(", body=["await ", result], end=")"
                 )
             else:  # pragma: no cover
                 raise TypeError()

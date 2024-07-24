@@ -306,11 +306,20 @@ def test_eval(file_regression):
 def test_suppress_using_exec(file_regression):
     node = H.div(
         H.h2("The button should show 'GOOD!'."),
-        J(code=incrementer_code)
-        .Counter(
-            returns(H.button("GOOD!", style="width:100px;")), {"increment": 3}
-        )
-        .exec(),
+        J(code=incrementer_creator).make_counter(7).exec(),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_object_reference(file_regression):
+    node = H.div(
+        H.h2("The button should show 103, 106, 109... when clicked."),
+        J(code=incrementer_code).Counter(
+            returns(H.button("ERROR!", style="width:100px;", id="inc")),
+            {"increment": 3},
+        ),
+        J(object="#inc").exec("this.current += 100"),
     )
 
     file_regression.check(str(node.as_page()), extension=".html")

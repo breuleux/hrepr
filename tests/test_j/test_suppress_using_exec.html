@@ -1,15 +1,14 @@
 <!DOCTYPE html><html><head><meta http-equiv="Content-type" content="text/html" charset="UTF-8" /><script>
-class Counter {
-    constructor(node, options) {
-        this.node = node;
-        this.increment = options.increment;
-        this.current = 0;
-        this.node.innerText = "Click me!";
-        this.node.onclick = evt => {
-            this.current += this.increment;
-            this.node.innerText = this.current;
-        }
-    }
+function make_counter(increment) {
+    let node = document.createElement("button");
+    let current = 0;
+    node.innerText = "Click me!";
+    node.style.width = "100px";
+    node.onclick = evt => {
+        current += increment;
+        node.innerText = current;
+    };
+    return node;
 }
 </script><script>$$HREPR = {
     scriptStatus: {},
@@ -120,9 +119,9 @@ class Counter {
         }
     },
 }
-</script></head><body><div><h2>The button should show &#x27;GOOD!&#x27;.</h2><button style="width:100px;" id="H6">GOOD!</button></div><script>$$HREPR.prepare("H6");</script><script type="module">const $$INTO = document.getElementById("H6");
+</script></head><body><div><h2>The button should show &#x27;GOOD!&#x27;.</h2><placeholder id="H6"></placeholder></div><script>$$HREPR.prepare("H6");</script><script type="module">const $$INTO = document.getElementById("H6");
 $$HREPR.run([],'#H6',()=>{
-const obj = (function () { this }).bind(Counter)();
+const obj = (function () { this }).bind($$HREPR.ucall(make_counter,null,7))();
 $$INTO.__object.__resolve(obj);
-
+$$HREPR.swap($$INTO, obj);
 });</script></body></html>

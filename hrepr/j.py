@@ -1,22 +1,66 @@
+import re
 from collections import deque
 from dataclasses import dataclass
 
 from . import h
+from .textgen_simple import Sequence
 
 
-class Await:
-    pass
+class CodeWrapper:
+    is_async = False
+
+    def wrap(self, current):  # pragma: no cover
+        raise NotImplementedError()
+
+    def __call__(self, current):
+        result = self.wrap(current)
+        if isinstance(result, (list, tuple)):
+            result = Sequence(*result)
+        return result
+
+
+class Await(CodeWrapper):
+    is_async = True
+
+    def wrap(self, current):
+        return ["(await ", current, ")"]
+
+
+@dataclass
+class Eval(CodeWrapper):
+    code: str
+    exec: bool
+    is_async: bool = None
+
+    def __post_init__(self):
+        if self.is_async is None:
+            self.is_async = bool(
+                re.match(pattern=r"\bawait\b", string=self.code)
+            )
+
+    def wrap(self, current):
+        return [
+            "(function () { ",
+            "" if self.exec else "return ",
+            self.code,
+            " }).bind(",
+            current,
+            ")()",
+        ]
+
+
+@dataclass
+class Wrap(CodeWrapper):
+    before: str = ""
+    after: str = ""
+
+    def wrap(self, current):
+        return [self.before, current, self.after]
 
 
 @dataclass
 class Returns:
     value: object
-
-
-@dataclass
-class Eval:
-    code: str
-    exec: bool
 
 
 @dataclass
@@ -112,8 +156,8 @@ class J:
             return self._async
         is_async = False
         for p in self._path:
-            if isinstance(p, Await):
-                is_async = True
+            if isinstance(p, CodeWrapper):
+                is_async = p.is_async
             elif isinstance(p, (list, tuple)):
                 is_async = any(isinstance(x, J) and x._is_async() for x in p)
             if is_async:
@@ -121,18 +165,24 @@ class J:
         self._async = is_async
         return is_async
 
+    def _append_path(self, *extra):
+        return type(self)(_data=self._data, _path=[*self._path, *extra])
+
     def await_(self):  # pragma: no cover
-        return type(self)(_data=self._data, _path=[*self._path, Await()])
+        return self._append_path(Await())
+
+    def wrap_code(self, before="", after=""):
+        return self._append_path(Wrap(before=before, after=after))
+
+    def thunk(self):
+        asynk = "async " if self._is_async() else ""
+        return self.wrap_code(f"({asynk}()=>", ")")
 
     def eval(self, code="this"):
-        return type(self)(
-            _data=self._data, _path=[*self._path, Eval(code, exec=False)]
-        )
+        return self._append_path(Eval(code, exec=False))
 
     def exec(self, code="this"):
-        return type(self)(
-            _data=self._data, _path=[*self._path, Eval(code, exec=True)]
-        )
+        return self._append_path(Eval(code, exec=True))
 
     def as_node(self, *args, **kwargs):
         from .h import H
@@ -142,17 +192,11 @@ class J:
     def __getattr__(self, attr):
         if attr.startswith("__") and attr.endswith("__"):  # pragma: no cover
             raise AttributeError(attr)
-        return type(self)(
-            _data=self._data,
-            _path=[*self._path, attr],
-        )
+        return self._append_path(attr)
 
     __getitem__ = __getattr__
 
     def __call__(self, *args, **kwargs):
         if kwargs:
             args = (*args, kwargs)
-        return type(self)(
-            _data=self._data,
-            _path=[*self._path, args],
-        )
+        return self._append_path(args)

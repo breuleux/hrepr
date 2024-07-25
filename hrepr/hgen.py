@@ -10,7 +10,7 @@ from ovld import OvldBase
 
 from . import resource
 from .h import H, Tag, gensym
-from .j import Await, Eval, J, Returns
+from .j import CodeWrapper, J, Returns
 from .textgen_simple import (
     Breakable,
     Sequence,
@@ -372,21 +372,10 @@ class BlockGenerator(OvldBase):
                     ),
                     end=")",
                 )
-            elif isinstance(entry, Eval):
-                prev_result = result = Sequence(
-                    "(function () { ",
-                    "" if entry.exec else "return ",
-                    entry.code,
-                    " }).bind(",
-                    result,
-                    ")()",
-                )
-            elif isinstance(entry, Await):
-                prev_result = result = Breakable(
-                    start="(", body=["await ", result], end=")"
-                )
+            elif isinstance(entry, CodeWrapper):
+                prev_result = result = entry(result)
             else:  # pragma: no cover
-                raise TypeError()
+                raise TypeError(f"Cannot process {type(entry).__name__}.")
 
         return result
 

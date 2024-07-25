@@ -323,3 +323,18 @@ def test_object_reference(file_regression):
     )
 
     file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_thunk(file_regression):
+    node = H.div(
+        H.h2("The value should increase every 100 milliseconds."),
+        H.p(0, id="target"),
+        J().setInterval(
+            J(selector="#target")
+            .exec("this.innerText = Number(this.innerText) + 1")
+            .thunk(),
+            100,
+        ),
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")

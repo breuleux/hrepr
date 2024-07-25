@@ -95,14 +95,16 @@ class J:
         if selector:
             assert not namespace
             assert not _path
-            _path.append(f'document.querySelector("{selector}")')
+            sanitized = selector.replace("\\", "\\\\").replace('"', r"\"")
+            _path.append(f'document.querySelector("{sanitized}")')
 
         if object:
             assert not selector
             assert not namespace
             assert not _path
+            sanitized = object.replace("\\", "\\\\").replace('"', r"\"")
             _path.append(
-                f'(x => x.__object || x)(document.querySelector("{object}"))'
+                f'(x => x.__object || x)(document.querySelector("{sanitized}"))'
             )
             _path.append(Await())
 

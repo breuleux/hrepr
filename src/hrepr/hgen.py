@@ -58,9 +58,9 @@ class ScriptAccumulator:
 class BlockGenerator(OvldBase):
     global_generator: "HTMLGenerator"
     result: Tag = None
-    resources: deque[Tag] = field(default_factory=deque)
+    resources: deque = field(default_factory=deque)
     script_accumulator: Optional[ScriptAccumulator] = None
-    extra: deque[Tag] = field(default_factory=deque)
+    extra: deque = field(default_factory=deque)
     processed_resources: list = None
     processed_extra: list = None
 

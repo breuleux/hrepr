@@ -191,6 +191,9 @@ class J:
 
         return H.construct(*args, **kwargs, constructor=self)
 
+    def as_page(self):
+        return self.as_node().as_page()
+
     def __getattr__(self, attr):
         if attr.startswith("__") and attr.endswith("__"):  # pragma: no cover
             raise AttributeError(attr)

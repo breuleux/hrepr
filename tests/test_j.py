@@ -337,3 +337,12 @@ def test_thunk(file_regression):
     )
 
     file_regression.check(str(node.as_page()), extension=".html")
+
+
+def test_j_as_page(file_regression):
+    node = J(code=incrementer_code).Counter(
+        returns(J(code=button_creator).make_button("3px solid purple")),
+        {"increment": 1},
+    )
+
+    file_regression.check(str(node.as_page()), extension=".html")

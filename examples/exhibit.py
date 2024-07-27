@@ -3,9 +3,8 @@
 import math
 from dataclasses import dataclass
 
+from hrepr import H, J, hrepr, returns
 from ovld import OvldMC, extend_super, has_attribute
-
-from hrepr import H, J, hrepr, into
 
 
 @dataclass
@@ -133,7 +132,7 @@ def cytoscape_graph(*edges):
         module="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js"
     )
     return cy(
-        container=into(
+        container=returns(
             H.div(style="width:300px;height:300px;border:1px solid black;")
         ),
         elements=data,
@@ -206,10 +205,10 @@ if __name__ == "__main__":
 
     subtitle("Plot with plotly")
     data = [math.sin(x / 10) for x in range(100)]
-    Plotly = J(src="https://cdn.plot.ly/plotly-latest.min.js", symbol="Plotly")
+    Plotly = J(src="https://cdn.plot.ly/plotly-latest.min.js").Plotly
     hprint(
         Plotly.newPlot(
-            into(H.div()),
+            returns(H.div()),
             [{"x": list(range(len(data))), "y": list(data)}],
         )
     )

@@ -143,33 +143,40 @@ This can be handy if you want to tweak generated HTML a little. For example, `hr
 * `hrepr.make.bracketed(body, start, end, type=None)`: formats the body with the specified start/end bracket.
 
 
-### Constructed elements
+### Using JavaScript libraries
 
-To make it a bit easier to include and use JavaScript libraries, you can use the special `__constructor` attribute.
+The `J` function lets you create JavaScript expressions. If an expression takes an HTML element as an argument, you can create one and pass it along with the `returns()` statement, which tells hrepr to insert it where the `J()` expression is located.
 
 For example, you can load Plotly and create a plot like this:
 
 ```python
-def Plot(data):
-    return H.div(
-        __constructor={
-            "script": "https://cdn.plot.ly/plotly-latest.min.js",
-            "symbol": "Plotly.newPlot",
-            "options": [{"x": list(range(len(data))), "y": list(data)}],
-        }
+from hrepr import H, J, returns
+
+def plot(data):
+    Plotly = J(src="https://cdn.plot.ly/plotly-latest.min.js").Plotly
+    return Plotly.newPlot(
+        returns(H.div()),
+        [{"x": list(range(len(data))), "y": list(data)}],
     )
-print(Plot([math.sin(x / 10) for x in range(100)]))
+
+print(plot([math.sin(x / 10) for x in range(100)]).as_page())
 ```
 
 The above will:
 
-* Load the specified script.
+* Put the specified script in the `<head>` element of the page (hence why you need the `as_page()` call for it to work).
+* Insert some hrepr library code.
+* Insert a `<div>`, as specified in `returns(H.div())`, where the `J()` call is, with an auto-generated ID.
 * Get the `Plotly.newPlot` function in the global namespace.
-* Call it with the `div` element as the first argument, and the `options` as the second argument.
+* Call it with the `div` element as the first argument, and any other arguments given (as long as they can be serialized to JSON).
 
 It will look like this:
 
 <img src="https://raw.githubusercontent.com/breuleux/hrepr/master/images/hrepr6.png" width="600px">
+
+You can, of course, nest `J` inside `H`, e.g. `H.body(H.h1(...), H.div(J(...)))`, as much as you'd like, so you can easily combine multiple libraries. Note that if a JavaScript has no `returns()` argument, it may to return some HTML element to insert in its stead (a placeholder will be created automatically).
+
+Be careful with `J` objects: since they override `__getattr__` and `__call__`, they will almost never raise exceptions and it is easy to accidentally generate improper expressions.
 
 
 ### Modules
@@ -177,35 +184,31 @@ It will look like this:
 Another example, this time using ESM (modules):
 
 ```python
-node = H.div(
-    style="width:500px;height:500px;border:1px solid black;",
-    __constructor={
-        "module": "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js",
-        "arguments": {
-            "container": H.self(),
-            "elements": [
-                {"data": {"id": "A"}},
-                {"data": {"id": "B"}},
-                {"data": {"id": "C"}},
-                {"data": {"source": "A", "target": "B"}},
-                {"data": {"source": "B", "target": "C"}},
-                {"data": {"source": "C", "target": "A"}},
-            ],
-            "style": cystyle,
-            "layout": {"name": "cose"},
-        },
-    },
+cystyle = [{"selector": "node","style": {"background-color": "#800", "label": "data(id)"},},{"selector": "edge","style": {"width": 3,"line-color": "#ccc","target-arrow-color": "#ccc","target-arrow-shape": "triangle","curve-style": "bezier"}}]
+
+cytoscape = J(module="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.23.0/cytoscape.esm.min.js")
+j = cytoscape(
+    container=returns(H.div(style="width:500px;height:500px;border:1px solid black;")),
+    elements=[
+        {"data": {"id": "A"}},
+        {"data": {"id": "B"}},
+        {"data": {"id": "C"}},
+        {"data": {"source": "A", "target": "B"}},
+        {"data": {"source": "B", "target": "C"}},
+        {"data": {"source": "C", "target": "A"}},
+    ],
+    style=cystyle,
+    layout={"name": "cose"},
 )
-print(node)
+print(j.as_page())
 ```
 
-The above will:
+The above will work like the previous example, with the following differences:
 
 * Import the specified module.
-* Call the module's default export with `arguments`.
-  * Note the use of `H.self()` to refer to the target `div` in the arguments.
+* All keyword arguments are packed into an object, which will be passed as the last (in this cas, only) argument to the module's default export.
 
-If you wish to use a non-default export, set the `symbol` key in the `__constructor` attribute to the name of the export you want.
+If you wish to use a non-default export, use `namespace=` instead of `module=`. For example, if you want to use the JavaScript import `import {fn} from "xxx"`, use `J(namespace="xxx").fn(...)`.
 
 
 ## Customize hrepr

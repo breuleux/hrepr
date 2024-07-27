@@ -1,7 +1,6 @@
 from itertools import count
 
 import pytest
-
 from hrepr import H, Tag, h
 
 from .common import one_test_per_assert

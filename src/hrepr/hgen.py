@@ -11,13 +11,7 @@ from ovld import OvldBase
 from . import resource
 from .h import H, Tag, gensym
 from .j import CodeWrapper, J, Returns
-from .textgen_simple import (
-    Breakable,
-    Sequence,
-    Text,
-    TextFormatter,
-    join,
-)
+from .textgen import Breakable, Sequence, Text, TextFormatter, join
 
 here = Path(__file__).parent
 constructor_lib = H.script((here / "hlib.js").read_text())

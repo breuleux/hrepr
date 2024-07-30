@@ -2,10 +2,11 @@ from types import FunctionType, MethodType
 from typing import Union
 
 import pytest
+from ovld import extend_super
+
 from hrepr import H
 from hrepr.hgen import BlockGenerator, HTMLGenerator
 from hrepr.resource import JSExpression, Resource
-from ovld import extend_super
 
 
 class CustomBlockGenerator(BlockGenerator):

@@ -3,7 +3,7 @@ from collections import deque
 from dataclasses import dataclass
 
 from . import h
-from .textgen_simple import Sequence
+from .textgen import Sequence
 
 
 class CodeWrapper:

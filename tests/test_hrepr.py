@@ -4,6 +4,7 @@ import sys
 from dataclasses import dataclass
 
 import pytest
+
 from hrepr import H
 from hrepr import hrepr as real_hrepr
 from hrepr.core import styledir

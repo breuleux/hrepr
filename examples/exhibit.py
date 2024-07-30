@@ -3,8 +3,9 @@
 import math
 from dataclasses import dataclass
 
-from hrepr import H, J, hrepr, returns
 from ovld import OvldMC, extend_super, has_attribute
+
+from hrepr import H, J, hrepr, returns
 
 
 @dataclass

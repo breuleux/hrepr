@@ -1,6 +1,6 @@
 """Extensible HTML representation for Python objects."""
 
-from . import h
+from . import elements, h
 from .core import Config, Hrepr, HreprState, Interface, StdHrepr  # noqa: F401
 from .h import HTML, H, HType, Tag  # noqa: F401
 from .hgen import BlockGenerator, HTMLGenerator, standard_html

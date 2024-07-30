@@ -1,7 +1,6 @@
 from itertools import count
 
 import pytest
-
 from hrepr import H, Tag, h
 
 from .common import one_test_per_assert
@@ -216,3 +215,9 @@ def test_subclasses():
     assert tdiv1 is tdiv2
     assert issubclass(tspan, Tag)
     assert issubclass(tdiv1, Tag)
+
+
+def test_import_elements():
+    from hrepr.elements import div, span
+
+    assert div("hello", span("world")) == H.div("hello", H.span("world"))

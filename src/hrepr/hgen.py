@@ -4,7 +4,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from html import escape
 from pathlib import Path
-from typing import Optional, Union
+from typing import Callable, Optional, Union
 
 from ovld import OvldBase
 
@@ -51,6 +51,7 @@ class ScriptAccumulator:
 @dataclass
 class BlockGenerator(OvldBase):
     global_generator: "HTMLGenerator"
+    hrepr: Callable = None
     result: Tag = None
     resources: deque = field(default_factory=deque)
     script_accumulator: Optional[ScriptAccumulator] = None
@@ -213,9 +214,14 @@ class BlockGenerator(OvldBase):
         self.extra.append(H.script("\n".join(lines), type="module"))
         return result
 
+    def node_embed(self, node: type(None)):
+        return ""
+
     def node_embed(self, node: object):
         if hasattr(node, "__h__"):
             return self.node_embed(node.__h__())
+        elif self.hrepr:
+            return self.node_embed(self.hrepr(node))
         else:
             return str(node)
 
@@ -390,12 +396,15 @@ class BlockGenerator(OvldBase):
 
 
 class HTMLGenerator:
-    def __init__(self, block_generator_class=BlockGenerator):
+    def __init__(self, block_generator_class=BlockGenerator, hrepr=None):
         self.seen_resources = set()
         self.block_generator_class = block_generator_class
+        self.hrepr = hrepr
 
     def block(self):
-        return self.block_generator_class(global_generator=self)
+        return self.block_generator_class(
+            global_generator=self, hrepr=self.hrepr
+        )
 
     def blockgen(self, node, *, seen_resources=None, process_extra=True):
         blk = self.block()

@@ -21,6 +21,7 @@ def matches(h, s):
 @one_test_per_assert
 def test_div():
     assert matches(H.div(), "<div></div>")
+    assert matches(H.div(None), "<div></div>")
     assert matches(H.div("Some content"), "<div>Some content</div>")
     assert matches(
         H.div("  \n\n    Some  content \n      "),

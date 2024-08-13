@@ -113,6 +113,9 @@ class BlockGenerator(OvldBase):
     def node_embed(self, node: str):
         return escape(node)
 
+    def node_embed(self, node: Union[int, float]):
+        return str(node)
+
     def node_embed(self, node: TextFormatter):
         return node
 

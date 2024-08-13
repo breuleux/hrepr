@@ -1,8 +1,9 @@
+from html import escape
 from types import FunctionType, MethodType
 from typing import Union
 
 import pytest
-from hrepr import H
+from hrepr import H, hrepr
 from hrepr.hgen import BlockGenerator, HTMLGenerator
 from hrepr.resource import JSExpression, Resource
 from ovld import extend_super
@@ -52,3 +53,26 @@ def test_blockgen(customgen):
 
     blk4 = customgen.blockgen(H.div("c", resources=[r1, r2, r3]))
     assert len(blk4.processed_resources) == 1
+
+
+class X:
+    def __str__(self):
+        return "S"
+
+    def __hrepr__(self, H, hrepr):
+        return H.b("H")
+
+
+def test_embed_object(customgen):
+    assert customgen(X()) == "S"
+    o = object()
+    assert customgen(o) == escape(str(o))
+
+
+def test_embed_object_hrepr():
+    customgen = HTMLGenerator(
+        block_generator_class=CustomBlockGenerator, hrepr=hrepr
+    )
+    assert customgen(X()) == "<b>H</b>"
+    o = object()
+    assert customgen(o) == str(hrepr(o))

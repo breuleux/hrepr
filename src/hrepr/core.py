@@ -3,6 +3,7 @@ import types
 from collections import Counter
 from dataclasses import fields as dataclass_fields
 from dataclasses import is_dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Union
 
@@ -324,6 +325,12 @@ class StdHrepr(Hrepr):
             type=type(obj),
             layout="h",
         )["hrepr-error"]
+
+    # Enums
+
+    def hrepr_short(self, e: Enum):
+        typ = type(e).__name__
+        return H.span["hrepr-enum", f"hrepr-enum-{typ}"](f"{typ}.{e.name}")
 
     # Functions and methods
 

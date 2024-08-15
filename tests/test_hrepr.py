@@ -2,6 +2,7 @@ import dataclasses
 import re
 import sys
 from dataclasses import dataclass
+from enum import Enum
 
 import pytest
 from hrepr import H
@@ -24,6 +25,12 @@ class Point:
 
 class Opaque:
     pass
+
+
+class Size(Enum):
+    SMALL = "small"
+    MEDIUM = "medium"
+    BIG = "big"
 
 
 def hshort(x, **kw):
@@ -172,6 +179,7 @@ factory.dict({"a": 1, "b": 2, "c": 3}, standard)
 factory.dict_keys({"a": 1, "b": 2, "c": 3}.keys(), standard, depth(0))
 factory.dict_values({"a": 1, "b": 2, "c": 3}.values(), standard, depth(0))
 factory.dataclass(Point(1, 2), standard, depth(0))
+factory.enum(Size.BIG, standard)
 factory.unknown(Opaque, standard)
 
 factory.list10(

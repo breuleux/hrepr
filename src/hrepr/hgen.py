@@ -305,7 +305,7 @@ class BlockGenerator(OvldBase):
         return expr.code
 
     def js_embed(self, t: Tag):
-        innerhtml = str(t)
+        innerhtml = self.global_generator.to_string(t)
         return f"$$HREPR.fromHTML({self.js_embed(innerhtml)})"
 
     def js_embed(self, j: J):

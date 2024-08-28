@@ -2,12 +2,11 @@ import math
 import types
 from collections import Counter
 from dataclasses import fields as dataclass_fields
-from dataclasses import is_dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Union
+from typing import Protocol, Union, runtime_checkable
 
-from ovld import OvldMC, extend_super, ovld
+from ovld import Dataclass, OvldMC, extend_super, ovld
 
 from .h import H, Tag
 from .j import J
@@ -33,6 +32,22 @@ class Config:
         if self._parent:
             return getattr(self._parent, attr)
         return None
+
+
+@runtime_checkable
+class HreprProtocol(Protocol):  # pragma: no cover
+    def __hrepr__(self, H, hrepr): ...
+
+
+@runtime_checkable
+class HreprShortProtocol(Protocol):  # pragma: no cover
+    def __hrepr_short__(self, H, hrepr): ...
+
+
+@runtime_checkable
+class HreprResourcesProtocol(Protocol):  # pragma: no cover
+    @classmethod
+    def __hrepr_resources__(cls): ...
 
 
 class HreprState:
@@ -112,47 +127,36 @@ class Hrepr(metaclass=OvldMC):
         return ()
 
     @ovld
-    def hrepr_resources(self, cls: object):
-        if hasattr(cls, "__hrepr_resources__"):
-            return cls.__hrepr_resources__(self.H)
-        else:
-            return []
+    def hrepr_resources(self, cls: type[object]):
+        return []
 
-    @ovld.dispatch
-    def hrepr(ovldcall, obj):
-        self = ovldcall.obj
-        rval = ovldcall.resolve(obj)(obj)
+    @ovld(priority=10)
+    def hrepr_resources(self, cls: type[HreprResourcesProtocol]):
+        return cls.__hrepr_resources__(self.H)
+
+    @ovld(priority=1000)
+    def hrepr(self, obj):
+        rval = self.hrepr.next(obj)
         if rval is NotImplemented:
             return self.hrepr_short(obj)
         else:
             self.state.register(id(obj), rval)
             return rval
 
+    @ovld(priority=10)
+    def hrepr(self, obj: HreprProtocol):
+        return obj.__hrepr__(self.H, self)
+
+    @ovld(priority=-100)
     def hrepr(self, obj: object):
-        if hasattr(obj, "__hrepr__"):
-            return obj.__hrepr__(self.H, self)
-        elif is_dataclass(type(obj)):
-            return self.make.instance(
-                title=type(obj).__name__,
-                fields=[
-                    [field.name, getattr(obj, field.name)]
-                    for field in dataclass_fields(obj)
-                ],
-                delimiter="=",
-                type=type(obj),
-            )
-        else:
-            return NotImplemented
+        return NotImplemented
 
-    @ovld
+    @ovld(priority=10)
+    def hrepr_short(self, obj: HreprShortProtocol):
+        return obj.__hrepr_short__(self.H, self)
+
+    @ovld(priority=-100)
     def hrepr_short(self, obj: object):
-        if hasattr(obj, "__hrepr_short__"):
-            return obj.__hrepr_short__(self.H, self)
-        elif is_dataclass(type(obj)):
-            return self.make.title_box(
-                title=type(obj).__name__, body="...", type=type(obj), layout="s"
-            )
-
         def _xtn(x):
             tx = type(x)
             mn = tx.__module__
@@ -213,8 +217,7 @@ class Hrepr(metaclass=OvldMC):
         self.state.stack[ido] -= 1
 
         # Collect resources for this object
-        cls = type(obj)
-        resources = self.hrepr_resources[cls](cls)
+        resources = self.hrepr_resources(type(obj))
         rval = rval.fill(resources=resources)
         self.state.reregister(id(obj), rval)
 
@@ -239,12 +242,14 @@ class StdHrepr(Hrepr):
     # Lists
 
     @extend_super
+    @ovld(priority=-1)
     def hrepr(self, xs: list):
         return self.make.bracketed(
             self.make.flow(xs), start="[", end="]", type=type(xs)
         )
 
     @extend_super
+    @ovld(priority=-1)
     def hrepr_short(self, xs: list):
         return self.make.bracketed(
             self.make.short("..."), start="[", end="]", type=type(xs)
@@ -252,11 +257,13 @@ class StdHrepr(Hrepr):
 
     # Tuples
 
+    @ovld(priority=-1)
     def hrepr(self, xs: tuple):
         return self.make.bracketed(
             self.make.flow(xs), start="(", end=")", type=type(xs)
         )
 
+    @ovld(priority=-1)
     def hrepr_short(self, xs: tuple):
         return self.make.bracketed(
             self.make.short("..."), start="(", end=")", type=type(xs)
@@ -264,11 +271,13 @@ class StdHrepr(Hrepr):
 
     # Sets
 
+    @ovld(priority=-1)
     def hrepr(self, xs: Union[set, frozenset]):
         return self.make.bracketed(
             self.make.flow(xs), start="{", end="}", type=type(xs)
         )
 
+    @ovld(priority=-1)
     def hrepr_short(self, xs: Union[set, frozenset]):
         return self.make.bracketed(
             self.make.short("..."), start="{", end="}", type=type(xs)
@@ -276,6 +285,7 @@ class StdHrepr(Hrepr):
 
     # Dictionaries
 
+    @ovld(priority=-1)
     def hrepr(self, obj: dict):
         return self.make.bracketed(
             self.make.table(
@@ -286,28 +296,53 @@ class StdHrepr(Hrepr):
             type=type(obj),
         )
 
+    @ovld(priority=-1)
     def hrepr_short(self, xs: dict):
         return self.make.bracketed(
             self.make.short("..."), start="{", end="}", type=type(xs)
         )
 
+    # Dataclasses
+
+    @ovld(priority=-1)
+    def hrepr(self, obj: Dataclass):
+        return self.make.instance(
+            title=type(obj).__name__,
+            fields=[
+                [field.name, getattr(obj, field.name)]
+                for field in dataclass_fields(obj)
+            ],
+            delimiter="=",
+            type=type(obj),
+        )
+
+    @ovld(priority=-1)
+    def hrepr_short(self, obj: Dataclass):
+        return self.make.title_box(
+            title=type(obj).__name__, body="...", type=type(obj), layout="s"
+        )
+
     # Other structures
 
+    @ovld(priority=-1)
     def hrepr(self, dk: _type({}.keys())):
         return self.make.bracketed(
             self.make.flow(dk), start="dict_keys(", end=")", type=type(dk)
         )
 
+    @ovld(priority=-1)
     def hrepr_short(self, dk: _type({}.keys())):
         return self.make.bracketed(
             self.make.short("..."), start="dict_keys(", end=")", type=type(dk)
         )
 
+    @ovld(priority=-1)
     def hrepr(self, dv: _type({}.values())):
         return self.make.bracketed(
             self.make.flow(dv), start="dict_values(", end=")", type=type(dv)
         )
 
+    @ovld(priority=-1)
     def hrepr_short(self, dv: _type({}.values())):
         return self.make.bracketed(
             self.make.short("..."), start="dict_values(", end=")", type=type(dv)
@@ -315,6 +350,7 @@ class StdHrepr(Hrepr):
 
     # Exceptions
 
+    @ovld(priority=-1)
     def hrepr(self, obj: Exception):
         return self.make.title_box(
             title=type(obj).__name__,
@@ -328,25 +364,31 @@ class StdHrepr(Hrepr):
 
     # Enums
 
+    @ovld(priority=-1)
     def hrepr_short(self, e: Enum):
         typ = type(e).__name__
         return H.span["hrepr-enum", f"hrepr-enum-{typ}"](f"{typ}.{e.name}")
 
     # Functions and methods
 
+    @ovld(priority=-1)
     def hrepr_short(self, obj: types.FunctionType):
         # types.LambdaType is types.FunctionType
         return self.make.defn("function", obj.__name__)
 
+    @ovld(priority=-1)
     def hrepr_short(self, obj: types.CoroutineType):
         return self.make.defn("coroutine", obj.__name__)
 
+    @ovld(priority=-1)
     def hrepr_short(self, obj: types.GeneratorType):
         return self.make.defn("generator", obj.__name__)
 
+    @ovld(priority=-1)
     def hrepr_short(self, obj: types.AsyncGeneratorType):
         return self.make.defn("async_generator", obj.__name__)
 
+    @ovld(priority=-1)
     def hrepr_short(self, obj: Union[types.MethodType, _type([].__str__)]):
         # Second one is types.MethodWrapperType but it's not exposed
         # in the types module in 3.6
@@ -354,6 +396,7 @@ class StdHrepr(Hrepr):
         slf = getattr(slf, "__name__", f"<{type(slf).__name__}>")
         return self.make.defn("method", f"{slf}.{obj.__name__}")
 
+    @ovld(priority=-1)
     def hrepr_short(
         self, obj: Union[_type(object.__str__), _type(dict.update)]
     ):
@@ -362,6 +405,7 @@ class StdHrepr(Hrepr):
         objc = obj.__objclass__.__name__
         return self.make.defn("descriptor", f"{objc}.{obj.__name__}")
 
+    @ovld(priority=-1)
     def hrepr_short(self, obj: types.BuiltinMethodType):
         # types.BuiltinFunctionType is types.BuiltinMethodType
         slf = obj.__self__
@@ -372,15 +416,18 @@ class StdHrepr(Hrepr):
         else:
             return self.make.defn("builtin", f"{slf}.{obj.__name__}")
 
+    @ovld(priority=-1)
     def hrepr_short(self, obj: type):
         key = "metaclass" if issubclass(obj, type) else "class"
         return self.make.defn(key, obj.__name__)
 
+    @ovld(priority=-1)
     def hrepr_short(self, obj: types.ModuleType):
         return self.make.defn("module", obj.__name__)
 
     # Strings
 
+    @ovld(priority=-1)
     def hrepr(self, x: str):
         cutoff = self.config.string_cutoff or math.inf
         if len(x) <= cutoff:
@@ -390,6 +437,7 @@ class StdHrepr(Hrepr):
         else:
             return self.make.atom(_encode(x), type="str")
 
+    @ovld(priority=-1)
     def hrepr_short(self, x: str):
         cutoff = self.config.string_cutoff or math.inf
         if len(x) > cutoff:
@@ -398,6 +446,7 @@ class StdHrepr(Hrepr):
 
     # Bytes
 
+    @ovld(priority=-1)
     def hrepr(self, x: bytes):
         cutoff = self.config.bytes_cutoff or math.inf
         if len(x) <= cutoff:
@@ -405,6 +454,7 @@ class StdHrepr(Hrepr):
         else:
             return self.make.atom(x.hex(), type="bytes")
 
+    @ovld(priority=-1)
     def hrepr_short(self, x: bytes):
         cutoff = self.config.bytes_cutoff or math.inf
         hx = x.hex()
@@ -414,32 +464,39 @@ class StdHrepr(Hrepr):
 
     # Numbers
 
+    @ovld(priority=-1)
     def hrepr_short(self, x: Union[int, float]):
         return self.make.atom(str(x), type=type(x))
 
     # Booleans
 
+    @ovld(priority=-1)
     def hrepr_short(self, x: bool):
         return self.make.atom(str(x), value=x)
 
     # None
 
+    @ovld(priority=-1)
     def hrepr_short(self, x: _type(None)):
         return self.make.atom(str(x), value=x)
 
     # Tags
 
+    @ovld(priority=-1)
     def hrepr(self, x: Tag):
         return x
 
+    @ovld(priority=-1)
     def hrepr_short(self, x: Tag):
         return x
 
     # JavaScript
 
+    @ovld(priority=-1)
     def hrepr(self, x: J):
         return H.inline(x)
 
+    @ovld(priority=-1)
     def hrepr_short(self, x: J):
         return H.inline(x)
 

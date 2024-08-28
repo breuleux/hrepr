@@ -84,7 +84,7 @@ def test_bad_return_type():
 
 class MyIntRepr:
     @extend_super
-    def hrepr_resources(self, cls: int):
+    def hrepr_resources(self, cls: type[int]):
         return self.H.style(".my-integer { color: fuchsia; }")
 
     @extend_super

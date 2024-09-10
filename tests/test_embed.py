@@ -1,6 +1,7 @@
 import json
 
 import pytest
+
 from hrepr import standard_html
 from hrepr.h import H
 from hrepr.resource import JSExpression, JSFunction, Resource

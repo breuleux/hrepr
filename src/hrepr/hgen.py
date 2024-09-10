@@ -6,7 +6,8 @@ from html import escape
 from pathlib import Path
 from typing import Callable, Optional, Union
 
-from ovld import OvldBase
+from ovld import OvldBase, recurse
+from ovld.dependent import CodeGen, ParametrizedDependentType
 
 from . import resource
 from .h import H, Tag, gensym
@@ -16,6 +17,28 @@ from .textgen import Breakable, Sequence, Text, TextFormatter, join
 here = Path(__file__).parent
 constructor_lib = H.script((here / "hlib.js").read_text())
 css_nbreset = H.style((here / "style/nbreset.css").read_text())
+
+
+class HasNodeName(ParametrizedDependentType):
+    exclusive_type = True
+    keyable_type = False
+
+    def default_bound(self, name):
+        return Tag
+
+    def check(self, value):  # pragma: no cover
+        # codegen/keygen/get_key will take care of it
+        return value.name == self.parameter
+
+    @classmethod
+    def keygen(self):  # pragma: no cover
+        return "{arg}.name"
+
+    def get_keys(self):  # pragma: no cover
+        return [self.parameter]
+
+    def codegen(self):
+        return CodeGen("({arg}.name == {p})", {"p": self.parameter})
 
 
 _void_tags = {
@@ -78,8 +101,13 @@ class BlockGenerator(OvldBase):
             repl=sub,
         )
 
-    def represent_node_generic(self, open, close, node, node_embed=None):
+    def represent_node_generic(
+        self, node, open=None, close=None, node_embed=None
+    ):
         self.resources.extend(node.resources)
+
+        open = node.name if open is None else open
+        close = (node.name not in _void_tags) if close is None else close
 
         node_embed = node_embed or self.node_embed
 
@@ -119,37 +147,46 @@ class BlockGenerator(OvldBase):
     def node_embed(self, node: TextFormatter):
         return node
 
-    def node_embed(self, node: Tag):
-        open = node.name
-        close = node.name not in _void_tags
-        node_embed = self.node_embed
-
-        if node.name == "script":
-            node_embed = self.script_node_embed
-        elif node.name == "style":
-            node_embed = self.raw_node_embed
-        elif node.name == "raw":
-            open = close = None
-            node_embed = self.raw_node_embed
-        elif node.name == "inline":
-            open = close = None
-        elif node.name == "construct":
-            if node.children:  # pragma: no cover
-                raise Exception("<construct> nodes should not have children")
-            j = node.attributes["constructor"]
-            j._model_attributes = {
-                k: v
-                for k, v in node.attributes.items()
-                if k != "constructor" and not k.startswith("-")
-            }
-            return self.node_embed(j)
-
+    def node_embed(self, node: HasNodeName["script"]):
         return self.represent_node_generic(
-            open=open,
-            close=close,
             node=node,
-            node_embed=node_embed,
+            node_embed=self.script_node_embed,
         )
+
+    def node_embed(self, node: HasNodeName["style"]):
+        return self.represent_node_generic(
+            node=node,
+            node_embed=self.raw_node_embed,
+        )
+
+    def node_embed(self, node: HasNodeName["raw"]):
+        return self.represent_node_generic(
+            node=node,
+            open=False,
+            close=False,
+            node_embed=self.raw_node_embed,
+        )
+
+    def node_embed(self, node: HasNodeName["inline"]):
+        return self.represent_node_generic(
+            node=node,
+            open=False,
+            close=False,
+        )
+
+    def node_embed(self, node: HasNodeName["construct"]):
+        if node.children:  # pragma: no cover
+            raise Exception("<construct> nodes should not have children")
+        j = node.attributes["constructor"]
+        j._model_attributes = {
+            k: v
+            for k, v in node.attributes.items()
+            if k != "constructor" and not k.startswith("-")
+        }
+        return recurse(j)
+
+    def node_embed(self, node: Tag):
+        return self.represent_node_generic(node=node)
 
     def node_embed(self, node: J):
         assert not self.script_accumulator
@@ -213,7 +250,7 @@ class BlockGenerator(OvldBase):
 
         self.script_accumulator = None
 
-        result = self.node_embed(element)
+        result = recurse(element)
         self.extra.append(H.script("\n".join(lines), type="module"))
         return result
 
@@ -222,9 +259,9 @@ class BlockGenerator(OvldBase):
 
     def node_embed(self, node: object):
         if hasattr(node, "__h__"):
-            return self.node_embed(node.__h__())
+            return recurse(node.__h__())
         elif self.hrepr:
-            return self.node_embed(self.hrepr(node))
+            return recurse(self.hrepr(node))
         else:
             return str(node)
 
@@ -252,7 +289,7 @@ class BlockGenerator(OvldBase):
         return str(value)
 
     def attr_embed(self, elements: Union[list, tuple, set, frozenset]):
-        return " ".join(self.attr_embed(elem) for elem in elements)
+        return " ".join(recurse(elem) for elem in elements)
 
     def attr_embed(self, style: dict):
         return "".join(f"{k}:{v};" for k, v in style.items())
@@ -282,10 +319,7 @@ class BlockGenerator(OvldBase):
         return Breakable(
             start="{",
             body=join(
-                [
-                    Sequence(self.js_embed(k), ": ", self.js_embed(v))
-                    for k, v in d.items()
-                ],
+                [Sequence(recurse(k), ": ", recurse(v)) for k, v in d.items()],
                 sep=", ",
             ),
             end="}",
@@ -306,7 +340,7 @@ class BlockGenerator(OvldBase):
 
     def js_embed(self, t: Tag):
         innerhtml = self.global_generator.to_string(t)
-        return f"$$HREPR.fromHTML({self.js_embed(innerhtml)})"
+        return f"$$HREPR.fromHTML({recurse(innerhtml)})"
 
     def js_embed(self, j: J):
         jd = j._data
@@ -368,8 +402,8 @@ class BlockGenerator(OvldBase):
                     body=join(
                         [
                             prev_result,
-                            self.js_embed(last_symbol),
-                            *[self.js_embed(x) for x in entry],
+                            recurse(last_symbol),
+                            *[recurse(x) for x in entry],
                         ],
                         sep=",",
                     ),
@@ -387,7 +421,7 @@ class BlockGenerator(OvldBase):
         return Text("$$INTO")
 
     def js_embed(self, res: resource.Resource):
-        return self.js_embed(res.obj)
+        return recurse(res.obj)
 
     def js_embed(self, x: object):
         if hasattr(x, "__js_embed__"):

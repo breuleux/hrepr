@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import pytest
+
 from hrepr import H
 from hrepr import hrepr as real_hrepr
 from hrepr.core import styledir

@@ -7,22 +7,24 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/breuleux/hrepr"
-repository = "https://github.com/breuleux/hrepr"
 classifiers = [
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
 ]
 dependencies = [
-    "ovld~=0.3.6",
+    "ovld~=0.4.0",
 ]
 requires-python = ">= 3.9"
+
+[project.urls]
+Homepage = "https://github.com/breuleux/hrepr"
+Repository = "https://github.com/breuleux/hrepr"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
+[tool.uv]
 managed = true
 dev-dependencies = [
     "pytest>=8.3.2",

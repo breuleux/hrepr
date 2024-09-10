@@ -1,6 +1,7 @@
 import pytest
-from hrepr import H, StdHrepr
 from ovld import extend_super
+
+from hrepr import H, StdHrepr
 
 from .common import one_test_per_assert
 

@@ -3,8 +3,10 @@
 import math
 from dataclasses import dataclass
 
+from ovld import OvldMC, extend_super
+from ovld.types import HasMethod
+
 from hrepr import H, J, hrepr, returns
-from ovld import OvldMC, extend_super, has_attribute
 
 
 @dataclass
@@ -82,7 +84,7 @@ class MyMixin(metaclass=OvldMC):
 
     # Specially handle any object with a "quack" method
 
-    def hrepr_short(self, duck: has_attribute("quack")):
+    def hrepr_short(self, duck: HasMethod["quack"]):
         # Note: if there is no hrepr it falls back to hrepr_short
         return self.H.span("🦆")
 

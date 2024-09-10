@@ -1,5 +1,4 @@
 from hrepr.textgen import Breakable, Sequence, Text
-
 from tests.common import one_test_per_assert
 
 

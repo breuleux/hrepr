@@ -6,7 +6,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Protocol, Union, runtime_checkable
 
-from ovld import Dataclass, OvldMC, extend_super, ovld
+from ovld import Dataclass, OvldMC, call_next, extend_super, ovld
 
 from .h import H, Tag
 from .j import J
@@ -136,7 +136,7 @@ class Hrepr(metaclass=OvldMC):
 
     @ovld(priority=1000)
     def hrepr(self, obj):
-        rval = self.hrepr.next(obj)
+        rval = call_next(obj)
         if rval is NotImplemented:
             return self.hrepr_short(obj)
         else:

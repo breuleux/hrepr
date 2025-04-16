@@ -1,6 +1,6 @@
 [project]
 name = "hrepr"
-version = "0.9.0"
+version = "0.9.1"
 description = "Extensible HTML representation for Python objects."
 authors = [
     { name = "Olivier Breuleux", email = "breuleux@gmail.com" }

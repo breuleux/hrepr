@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Callable, Optional, Union
 
 from ovld import OvldBase, recurse
-from ovld.dependent import CodeGen, ParametrizedDependentType
+from ovld.dependent import Code, ParametrizedDependentType
 
 from . import resource
 from .h import H, Tag, gensym
@@ -32,13 +32,13 @@ class HasNodeName(ParametrizedDependentType):
 
     @classmethod
     def keygen(self):  # pragma: no cover
-        return "{arg}.name"
+        return Code("$arg.name")
 
     def get_keys(self):  # pragma: no cover
         return [self.parameter]
 
     def codegen(self):
-        return CodeGen("({arg}.name == {p})", {"p": self.parameter})
+        return Code("($arg.name == $p)", p=self.parameter)
 
 
 _void_tags = {

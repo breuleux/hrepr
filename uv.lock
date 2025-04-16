@@ -95,7 +95,7 @@ wheels = [
 
 [[package]]
 name = "hrepr"
-version = "0.8.0"
+version = "0.8.1"
 source = { editable = "." }
 dependencies = [
     { name = "ovld" },
@@ -109,7 +109,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "ovld", specifier = "~=0.4.0" }]
+requires-dist = [{ name = "ovld", specifier = "~=0.5.1" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -129,11 +129,11 @@ wheels = [
 
 [[package]]
 name = "ovld"
-version = "0.4.5"
+version = "0.5.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/39/6b/e9c11f83471750e711130ff55f532e3b99894a85d4092b452184010ffb34/ovld-0.4.5.tar.gz", hash = "sha256:c0f0393fc1bf5bbf55530a6bedbdae2a22d854590b55954a5a9b8e6292442b0d", size = 1166101 }
+sdist = { url = "https://files.pythonhosted.org/packages/71/9d/2a4f7bf6e6e5f0718f23d0d88338abfd1fba2a4b3d6158419a832b88140d/ovld-0.5.1.tar.gz", hash = "sha256:189a65b00033d9414da140df65bc892d4412377497e93ee3f332fb09605803ff", size = 96607 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/72/73116206447b302447e1adf3741ab4acb2c30eddca550cca1b0a1d3362fe/ovld-0.4.5-py3-none-any.whl", hash = "sha256:fe603d9f1f5eca110aa6a821ef2d12528be380a15969fc666f8cacabc473da61", size = 30643 },
+    { url = "https://files.pythonhosted.org/packages/ea/c7/661680579287d44c7d1adab7b82ce65a5c896eff01a619501c0e3c46f1b5/ovld-0.5.1-py3-none-any.whl", hash = "sha256:292d789783db5cb3ee234347d8acd2a2c5a064debca3a80cba028f4c658961f6", size = 38341 },
 ]
 
 [[package]]

@@ -12,7 +12,7 @@ classifiers = [
     'Intended Audience :: Developers',
 ]
 dependencies = [
-    "ovld~=0.4.0",
+    "ovld~=0.5.1",
 ]
 requires-python = ">= 3.9"
 
